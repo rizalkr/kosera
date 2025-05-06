@@ -11,7 +11,7 @@ const recommendations = [
 export default function RecommendationCarousel() {
   return (
     <div>
-      <h2 className="text-2xl font-semibold mb-4">Rekomendasi</h2>
+      <h2 className="text-2xl font-semibold mb-4 text-black">Rekomendasi</h2>
       <Swiper spaceBetween={16} slidesPerView={1} loop>
         {recommendations.map(room => (
           <SwiperSlide key={room.id}>
