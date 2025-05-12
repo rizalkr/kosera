@@ -12,6 +12,7 @@
     "dotenv": "^16.5.0",
     "leaflet": "^1.9.4",
     "next": "15.3.1",
+    "npx": "^10.2.2",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "react-leaflet": "^5.0.0",
@@ -31,7 +32,7 @@
     "eslint-config-prettier": "^10.1.2",
     "postcss": "^8.5.3",
     "prettier": "^3.5.3",
-    "tailwindcss": "^4",
+    "tailwindcss": "^4.1.6",
     "typescript": "^5"
   }
 }

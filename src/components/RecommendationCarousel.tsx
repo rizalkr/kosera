@@ -4,7 +4,7 @@ import 'swiper/css';
 import FeaturedCard from './FeaturedCard';
 
 const recommendations = [
-  { id: 1, images: ['/images/room1.jpg', '/images/room2.jpg'], price: '500K', description: 'Double kos...', area: 'Tlogosari', city: 'Semarang' },
+  { id: 1, images: ['/images/rooms/room1.jpg', '/images/room2.jpg'], price: '500K', description: 'Double kos...', area: 'Tlogosari', city: 'Semarang' },
   { id: 2, images: ['/images/room3.jpg', '/images/room1.jpg'], price: '600K', description: 'Single kos...', area: 'Tlogosari', city: 'Semarang' },
 ];
 

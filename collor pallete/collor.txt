@@ -1,0 +1,6 @@
+Main : #A9CDD7
+Secondary : #D0EDEF
+Third ( background ) : #A9E4DE
+Fourth : #E1F6F2
+Fifth : #F3D17C
+Strong sixth : #83B8C6

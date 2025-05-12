@@ -35,7 +35,7 @@ export default function MapSection() {
   }, []);
 
   return (
-    <div className="h-80 rounded-lg overflow-hidden shadow">
+    <div className="h-80 rounded-lg overflow-hidden shadow z-[-1]">
       {position ? (
         <MapContainer center={position} zoom={15} className="h-full w-full">
           <TileLayer
