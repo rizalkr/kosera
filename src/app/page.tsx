@@ -1,7 +1,7 @@
 import Header from '@/components/Header';
 import FilterBar from '@/components/FilterBar';
 import FeaturedList from '@/components/FeaturedList';
-import MapSection from '@/components/MapSection';
+import MapSection from '@/components/maps/MapSection';
 import RecommendationCarousel from '@/components/RecommendationCarousel';
 import Footer from '@/components/Footer';
 
