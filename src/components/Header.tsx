@@ -1,13 +1,16 @@
-"use client"
+"use client";
 import { useEffect, useState, useRef } from "react";
+import { usePathname } from "next/navigation";
 
 export default function Header() {
   const [scrolled, setScrolled] = useState(false);
   const [open, setOpen] = useState(false);
-  const [servicesOpen, setServicesOpen] = useState(false); 
+  const [servicesOpen, setServicesOpen] = useState(false);
+  const pathname = usePathname();
 
   const servicesRef = useRef<HTMLDivElement>(null);
-    useEffect(() => {
+
+  useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
       if (
         servicesRef.current &&
@@ -19,6 +22,12 @@ export default function Header() {
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
+
+  // Helper untuk cek active link
+  const isActive = (href: string) => {
+    if (href === "/") return pathname === "/";
+    return pathname.startsWith(href);
+  };
 
   return (
     <header
@@ -58,10 +67,22 @@ export default function Header() {
               : "ml-auto"
           } hidden lg:flex`}
         >
-          <a href="#" className="underline text-[#83B8C6]">Home</a>
-          <a href="#" className="hover:underline text-[#83B8C6]">Daftar</a>
-          <a href="#" className="hover:underline text-[#83B8C6]">Kontak</a>
-          {/* Services with submenu */}
+          <a
+            href="/"
+            className={`text-[#83B8C6] hover:underline transition-all duration-150 ${
+              isActive("/") ? "underline font-semibold" : ""
+            }`}
+          >
+            Home
+          </a>
+          <a
+            href="/list"
+            className={`text-[#83B8C6] hover:underline transition-all duration-150 ${
+              isActive("/list") ? "underline font-semibold" : ""
+            }`}
+          >
+            Daftar
+          </a>
           <div className="relative inline-block" ref={servicesRef}>
             <button
               className="hover:underline text-[#83B8C6] flex items-center gap-1"
@@ -69,21 +90,73 @@ export default function Header() {
               type="button"
             >
               Services
-              <svg className={`w-4 h-4 transition-transform ${servicesOpen ? "rotate-180" : ""}`} fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-                <path d="M19 9l-7 7-7-7"/>
+              <svg
+                className={`w-4 h-4 transition-transform ${
+                  servicesOpen ? "rotate-180" : ""
+                }`}
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                viewBox="0 0 24 24"
+              >
+                <path d="M19 9l-7 7-7-7" />
               </svg>
             </button>
-            {/* Submenu */}
-            {servicesOpen && (
-              <div className="absolute left-0 mt-2 w-40 bg-white rounded shadow-lg z-50 flex flex-col text-[#83B8C6]">
-                <a href="#" className="px-4 py-2 hover:bg-blue-50 hover:underline">Angkut Barang</a>
-                <a href="#" className="px-4 py-2 hover:bg-blue-50 hover:underline">Titip Barang</a>
-              </div>
-            )}
+            {/* Submenu with animation */}
+            <div
+              className={`
+                absolute left-0 mt-2 w-40 bg-white shadow-lg z-50 flex flex-col text-[#83B8C6]
+                transition-all duration-300 origin-top rounded-2xl
+                ${servicesOpen
+                  ? "opacity-100 scale-y-100 pointer-events-auto"
+                  : "opacity-0 scale-y-95 pointer-events-none"
+                }
+              `}
+              style={{ transformOrigin: "top" }}
+            >
+              <a
+                href="/services/angkutBarang"
+                className="px-4 py-2 hover:bg-blue-50 hover:underline transition rounded-t-2xl"
+                onClick={() => setServicesOpen(false)}
+              >
+                Angkut Barang
+              </a>
+              <a
+                href="/services/titipBarang"
+                className="px-4 py-2 hover:bg-blue-50 hover:underline transition rounded-b-2xl"
+                onClick={() => setServicesOpen(false)}
+              >
+                Titip Barang
+              </a>
+            </div>
           </div>
-          <a href="#" className="hover:underline text-[#83B8C6]">Bookings</a>
-          <a href="#" className="hover:underline text-[#83B8C6]">Aduan</a>
-          <button className="ml-4 bg-[#F3D17C] text-white px-4 py-2 rounded">Login</button>
+          <a
+            href="/bookings"
+            className={`text-[#83B8C6] hover:underline transition-all duration-150 ${
+              isActive("/bookings") ? "underline font-semibold" : ""
+            }`}
+          >
+            Bookings
+          </a>
+          <a
+            href="/complaint"
+            className={`text-[#83B8C6] hover:underline transition-all duration-150 ${
+              isActive("/complaint") ? "underline font-semibold" : ""
+            }`}
+          >
+            Aduan
+          </a>
+          <a
+            href="/contact"
+            className={`text-[#83B8C6] hover:underline transition-all duration-150 ${
+              isActive("/contact") ? "underline font-semibold" : ""
+            }`}
+          >
+            Kontak
+          </a>
+          <button className="ml-4 bg-[#F3D17C] text-white px-4 py-2 rounded">
+            Login
+          </button>
         </nav>
         {/* Mobile nav */}
         <div
@@ -93,9 +166,24 @@ export default function Header() {
               : "opacity-0 pointer-events-none -translate-y-2"
           }`}
         >
-          <a href="#" className="underline text-blue-400" onClick={() => setOpen(false)}>Home</a>
-          <a href="#" className="hover:underline text-blue-400" onClick={() => setOpen(false)}>Daftar</a>
-          <a href="#" className="hover:underline text-blue-400" onClick={() => setOpen(false)}>Kontak</a>
+          <a
+            href="/"
+            className={`text-blue-400 hover:underline transition-all duration-150 ${
+              isActive("/") ? "underline font-semibold" : ""
+            }`}
+            onClick={() => setOpen(false)}
+          >
+            Home
+          </a>
+          <a
+            href="/list"
+            className={`text-blue-400 hover:underline transition-all duration-150 ${
+              isActive("/list") ? "underline font-semibold" : ""
+            }`}
+            onClick={() => setOpen(false)}
+          >
+            Daftar
+          </a>
           {/* Mobile Services with submenu */}
           <div className="w-full flex flex-col items-center">
             <button
@@ -104,20 +192,84 @@ export default function Header() {
               type="button"
             >
               Services
-              <svg className={`w-4 h-4 transition-transform ${servicesOpen ? "rotate-180" : ""}`} fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-                <path d="M19 9l-7 7-7-7"/>
+              <svg
+                className={`w-4 h-4 transition-transform ${
+                  servicesOpen ? "rotate-180" : ""
+                }`}
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                viewBox="0 0 24 24"
+              >
+                <path d="M19 9l-7 7-7-7" />
               </svg>
             </button>
-            {servicesOpen && (
-              <div className="flex flex-col w-full items-center mt-1">
-                <a href="#" className="px-4 py-2 text-blue-400 hover:underline" onClick={() => { setOpen(false); setServicesOpen(false); }}>Angkut Barang</a>
-                <a href="#" className="px-4 py-2 text-blue-400 hover:underline" onClick={() => { setOpen(false); setServicesOpen(false); }}>Titip Barang</a>
-              </div>
-            )}
+            <div
+              className={`
+                flex flex-col w-full items-center mt-1
+                transition-all duration-300 origin-top rounded-2xl
+                ${servicesOpen
+                  ? "opacity-100 scale-y-100 pointer-events-auto"
+                  : "opacity-0 scale-y-95 pointer-events-none"
+                }
+              `}
+              style={{ transformOrigin: "top" }}
+            >
+              <a
+                href="/services/angkutBarang"
+                className="px-4 py-2 text-blue-400 hover:underline transition rounded-t-2xl"
+                onClick={() => {
+                  setOpen(false);
+                  setServicesOpen(false);
+                }}
+              >
+                Angkut Barang
+              </a>
+              <a
+                href="/services/titipBarang"
+                className="px-4 py-2 text-blue-400 hover:underline transition rounded-b-2xl"
+                onClick={() => {
+                  setOpen(false);
+                  setServicesOpen(false);
+                }}
+              >
+                Titip Barang
+              </a>
+            </div>
           </div>
-          <a href="#" className="hover:underline text-blue-400" onClick={() => setOpen(false)}>Bookings</a>
-          <a href="#" className="hover:underline text-blue-400" onClick={() => setOpen(false)}>Aduan</a>
-          <button className="bg-blue-600 text-white px-4 py-2 rounded" onClick={() => setOpen(false)}>Login</button>
+          <a
+            href="/bookings"
+            className={`text-blue-400 hover:underline transition-all duration-150 ${
+              isActive("/bookings") ? "underline font-semibold" : ""
+            }`}
+            onClick={() => setOpen(false)}
+          >
+            Bookings
+          </a>
+          <a
+            href="/complaint"
+            className={`text-blue-400 hover:underline transition-all duration-150 ${
+              isActive("/complaint") ? "underline font-semibold" : ""
+            }`}
+            onClick={() => setOpen(false)}
+          >
+            Aduan
+          </a>
+          <a
+            href="/contact"
+            className={`text-blue-400 hover:underline transition-all duration-150 ${
+              isActive("/contact") ? "underline font-semibold" : ""
+            }`}
+            onClick={() => setOpen(false)}
+          >
+            Kontak
+          </a>
+          <button
+            className="bg-blue-600 text-white px-4 py-2 rounded"
+            onClick={() => setOpen(false)}
+          >
+            Login
+          </button>
         </div>
       </div>
     </header>
