@@ -1,5 +1,6 @@
 import { db, users, posts, kos } from './index';
 import { eq } from 'drizzle-orm';
+import { hashPassword } from '../lib/auth';
 
 async function seed() {
   try {
@@ -12,13 +13,20 @@ async function seed() {
 
     console.log('🗑️  Cleared existing data');
 
+    // Hash passwords
+    const adminPassword = await hashPassword('admin123');
+    const sellerPassword = await hashPassword('seller123');
+    const renterPassword = await hashPassword('renter123');
+
+    console.log('🔐 Passwords hashed');
+
     // Insert users
     const [adminUser] = await db.insert(users).values({
       name: 'Admin Kosera',
       username: 'admin',
       contact: 'admin@kosera.com',
       role: 'ADMIN',
-      password: 'hashed_password_admin', // In production, use proper hashing
+      password: adminPassword,
     }).returning();
 
     const [sellerUser] = await db.insert(users).values({
@@ -26,7 +34,7 @@ async function seed() {
       username: 'seller1',
       contact: 'seller1@gmail.com',
       role: 'SELLER',
-      password: 'hashed_password_seller1',
+      password: sellerPassword,
     }).returning();
 
     const [renterUser] = await db.insert(users).values({
@@ -34,7 +42,7 @@ async function seed() {
       username: 'renter1',
       contact: 'john@gmail.com',
       role: 'RENTER',
-      password: 'hashed_password_renter1',
+      password: renterPassword,
     }).returning();
 
     console.log('👥 Created users');
