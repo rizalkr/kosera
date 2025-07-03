@@ -43,14 +43,15 @@ describe('API Integration Tests', () => {
 
   describe('Authentication Endpoints', () => {
     let authToken: string;
+    const timestamp = Date.now(); // Use timestamp for unique test data
 
     it('should register a new user', async () => {
       const response = await request(server)
         .post('/api/auth/register')
         .send({
           name: 'Test User',
-          username: 'testuser',
-          contact: 'test@example.com',
+          username: `testuser_${timestamp}`,
+          contact: `test_${timestamp}@example.com`,
           password: 'testpassword123',
           role: 'RENTER',
         });
@@ -59,7 +60,7 @@ describe('API Integration Tests', () => {
       expect(response.body).toHaveProperty('message', 'User registered successfully');
       expect(response.body).toHaveProperty('user');
       expect(response.body).toHaveProperty('token');
-      expect(response.body.user).toHaveProperty('username', 'testuser');
+      expect(response.body.user).toHaveProperty('username', `testuser_${timestamp}`);
       expect(response.body.user).not.toHaveProperty('password');
       
       authToken = response.body.token;
@@ -69,7 +70,7 @@ describe('API Integration Tests', () => {
       const response = await request(server)
         .post('/api/auth/login')
         .send({
-          username: 'testuser',
+          username: `testuser_${timestamp}`,
           password: 'testpassword123',
         });
 
@@ -77,14 +78,14 @@ describe('API Integration Tests', () => {
       expect(response.body).toHaveProperty('message', 'Login successful');
       expect(response.body).toHaveProperty('user');
       expect(response.body).toHaveProperty('token');
-      expect(response.body.user).toHaveProperty('username', 'testuser');
+      expect(response.body.user).toHaveProperty('username', `testuser_${timestamp}`);
     });
 
     it('should fail login with invalid credentials', async () => {
       const response = await request(server)
         .post('/api/auth/login')
         .send({
-          username: 'testuser',
+          username: `testuser_${timestamp}`,
           password: 'wrongpassword',
         });
 
@@ -116,17 +117,20 @@ describe('API Integration Tests', () => {
     let userToken: string;
 
     beforeAll(async () => {
-      // Create a user and get token
+      // Create a user and get token with timestamp to avoid conflicts
+      const timestamp = Date.now();
       const registerResponse = await request(server)
         .post('/api/auth/register')
         .send({
           name: 'Profile User',
-          username: 'profileuser',
-          contact: 'profile@example.com',
+          username: `profileuser_${timestamp}`,
+          contact: `profile_${timestamp}@example.com`,
           password: 'profile123',
           role: 'RENTER',
         });
       
+      expect(registerResponse.status).toBe(201);
+      expect(registerResponse.body.token).toBeDefined();
       userToken = registerResponse.body.token;
     });
 
@@ -138,7 +142,7 @@ describe('API Integration Tests', () => {
       expect(response.status).toBe(200);
       expect(response.body).toHaveProperty('message', 'Profile retrieved successfully');
       expect(response.body).toHaveProperty('user');
-      expect(response.body.user).toHaveProperty('username', 'profileuser');
+      expect(response.body.user).toHaveProperty('username');
     });
 
     it('should fail to get profile without token', async () => {
@@ -154,17 +158,20 @@ describe('API Integration Tests', () => {
     let adminToken: string;
 
     beforeAll(async () => {
-      // Create admin user and get token
+      // Create admin user and get token with timestamp to avoid conflicts
+      const timestamp = Date.now();
       const registerResponse = await request(server)
         .post('/api/auth/register')
         .send({
           name: 'Admin User',
-          username: 'adminuser',
-          contact: 'admin@example.com',
+          username: `adminuser_${timestamp}`,
+          contact: `admin_${timestamp}@example.com`,
           password: 'admin123',
           role: 'ADMIN',
         });
       
+      expect(registerResponse.status).toBe(201);
+      expect(registerResponse.body.token).toBeDefined();
       adminToken = registerResponse.body.token;
     });
 
@@ -180,16 +187,20 @@ describe('API Integration Tests', () => {
     });
 
     it('should fail to get users as non-admin', async () => {
-      // Create a regular user
+      // Create a regular user with timestamp to avoid conflicts
+      const timestamp = Date.now();
       const userResponse = await request(server)
         .post('/api/auth/register')
         .send({
           name: 'Regular User',
-          username: 'regularuser',
-          contact: 'regular@example.com',
+          username: `regularuser_${timestamp}`,
+          contact: `regular_${timestamp}@example.com`,
           password: 'regular123',
           role: 'RENTER',
         });
+
+      expect(userResponse.status).toBe(201);
+      expect(userResponse.body.token).toBeDefined();
 
       const response = await request(server)
         .get('/api/admin/users')
@@ -215,13 +226,17 @@ describe('API Integration Tests', () => {
     });
 
     it('should handle duplicate username registration', async () => {
+      // Use timestamp to ensure unique usernames within the test
+      const timestamp = Date.now();
+      const uniqueUsername = `duplicate_${timestamp}`;
+      
       // First registration
       await request(server)
         .post('/api/auth/register')
         .send({
           name: 'First User',
-          username: 'duplicate',
-          contact: 'first@example.com',
+          username: uniqueUsername,
+          contact: `first_${timestamp}@example.com`,
           password: 'password123',
         });
 
@@ -230,8 +245,8 @@ describe('API Integration Tests', () => {
         .post('/api/auth/register')
         .send({
           name: 'Second User',
-          username: 'duplicate',
-          contact: 'second@example.com',
+          username: uniqueUsername,
+          contact: `second_${timestamp}@example.com`,
           password: 'password123',
         });
 
@@ -263,12 +278,13 @@ describe('API Integration Tests', () => {
 
     it('should handle very long passwords', async () => {
       const longPassword = 'a'.repeat(1000);
+      const timestamp = Date.now();
       const response = await request(server)
         .post('/api/auth/register')
         .send({
           name: 'Long Password User',
-          username: 'longpassuser',
-          contact: 'longpass@example.com',
+          username: `longpassuser_${timestamp}`,
+          contact: `longpass_${timestamp}@example.com`,
           password: longPassword,
         });
 

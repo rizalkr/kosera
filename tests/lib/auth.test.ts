@@ -1,4 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
+import jwt from 'jsonwebtoken';
 import {
   hashPassword,
   verifyPassword,
@@ -7,13 +8,12 @@ import {
   extractTokenFromHeader,
 } from '@/lib/auth';
 
+// Mock jsonwebtoken
 vi.mock('jsonwebtoken', () => ({
   default: {
     sign: vi.fn(),
     verify: vi.fn(),
   },
-  sign: vi.fn(),
-  verify: vi.fn(),
 }));
 
 // Mock bcryptjs
@@ -79,8 +79,8 @@ describe('Auth Utilities', () => {
 
   describe('generateToken', () => {
     it('should generate token successfully', () => {
-      const jwt = vi.mocked(require('jsonwebtoken'));
-      jwt.sign.mockReturnValue('generated-token');
+      const mockJwt = vi.mocked(jwt);
+      mockJwt.sign.mockReturnValue('generated-token' as any);
 
       const payload = {
         userId: 1,
@@ -90,7 +90,7 @@ describe('Auth Utilities', () => {
 
       const result = generateToken(payload);
 
-      expect(jwt.sign).toHaveBeenCalledWith(
+      expect(mockJwt.sign).toHaveBeenCalledWith(
         payload,
         process.env.JWT_SECRET || 'your-secret-key-change-in-production',
         { expiresIn: '7d' }
@@ -101,17 +101,17 @@ describe('Auth Utilities', () => {
 
   describe('verifyToken', () => {
     it('should verify valid token', () => {
-      const jwt = vi.mocked(require('jsonwebtoken'));
+      const mockJwt = vi.mocked(jwt);
       const mockPayload = {
         userId: 1,
         username: 'testuser',
         role: 'ADMIN',
       };
-      jwt.verify.mockReturnValue(mockPayload);
+      mockJwt.verify.mockReturnValue(mockPayload as any);
 
       const result = verifyToken('valid-token');
 
-      expect(jwt.verify).toHaveBeenCalledWith(
+      expect(mockJwt.verify).toHaveBeenCalledWith(
         'valid-token',
         process.env.JWT_SECRET || 'your-secret-key-change-in-production'
       );
@@ -119,8 +119,8 @@ describe('Auth Utilities', () => {
     });
 
     it('should return null for invalid token', () => {
-      const jwt = vi.mocked(require('jsonwebtoken'));
-      jwt.verify.mockImplementation(() => {
+      const mockJwt = vi.mocked(jwt);
+      mockJwt.verify.mockImplementation(() => {
         throw new Error('Invalid token');
       });
 
@@ -130,8 +130,8 @@ describe('Auth Utilities', () => {
     });
 
     it('should return null for expired token', () => {
-      const jwt = vi.mocked(require('jsonwebtoken'));
-      jwt.verify.mockImplementation(() => {
+      const mockJwt = vi.mocked(jwt);
+      mockJwt.verify.mockImplementation(() => {
         const error = new Error('Token expired');
         error.name = 'TokenExpiredError';
         throw error;
