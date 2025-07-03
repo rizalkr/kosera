@@ -628,9 +628,9 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ## 👥 Team
 
-- **Developer**: [Your Name](https://github.com/yourusername)
-- **Designer**: [Designer Name](https://github.com/designerusername)
-- **Product Manager**: [PM Name](https://github.com/pmusername)
+- **Developer**: [Rizal Kurnia](https://github.com/rizalkr)
+- **Designer**: [Rizal Kurnia](https://github.com/rizalkr)
+- **Product Manager**: [Rizal Kurnia](https://github.com/rizalkr)
 
 ## 🙏 Acknowledgments
 
