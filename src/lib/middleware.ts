@@ -13,7 +13,7 @@ export function withAuth(handler: (req: AuthenticatedRequest) => Promise<NextRes
 
     if (!token) {
       return NextResponse.json(
-        { error: 'Authentication required' },
+        { success: false, error: 'Authentication required' },
         { status: 401 }
       );
     }
@@ -22,7 +22,7 @@ export function withAuth(handler: (req: AuthenticatedRequest) => Promise<NextRes
 
     if (!payload) {
       return NextResponse.json(
-        { error: 'Invalid or expired token' },
+        { success: false, error: 'Invalid or expired token' },
         { status: 401 }
       );
     }
@@ -43,7 +43,7 @@ export function withRole(roles: UserRole[]) {
 
       if (!roles.includes(user.role)) {
         return NextResponse.json(
-          { error: 'Insufficient permissions' },
+          { success: false, error: 'Insufficient permissions' },
           { status: 403 }
         );
       }
