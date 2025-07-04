@@ -2,6 +2,11 @@ import { NextRequest, NextResponse } from 'next/server';
 import { generateToken } from '@/lib/auth';
 import type { UserRole } from '@/lib/auth';
 import { vi } from 'vitest';
+import { db, users, posts, kos } from '@/db';
+import { eq, or } from 'drizzle-orm';
+
+// Base URL for API testing
+export const BASE_URL = 'http://localhost:3000';
 
 // Mock user data for testing
 export const mockUsers = {
@@ -52,6 +57,88 @@ export const testTokens = {
     role: mockUsers.renter.role,
   }),
 };
+
+// Create a test user in the database
+export async function createUser(userData: {
+  name: string;
+  username: string;
+  contact: string;
+  role: 'ADMIN' | 'SELLER' | 'RENTER';
+  password: string;
+}) {
+  try {
+    const response = await fetch(`${BASE_URL}/api/auth/register`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(userData),
+    });
+
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(`Failed to create user: ${error.error || response.statusText}`);
+    }
+
+    const data = await response.json();
+    return data.user;
+  } catch (error) {
+    console.error('Error creating test user:', error);
+    throw error;
+  }
+}
+
+// Login and get a token for a test user
+export async function createLoginToken(username: string, password: string): Promise<string> {
+  try {
+    const response = await fetch(`${BASE_URL}/api/auth/login`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ username, password }),
+    });
+
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(`Failed to login: ${error.error || response.statusText}`);
+    }
+
+    const data = await response.json();
+    return data.token;
+  } catch (error) {
+    console.error('Error creating login token:', error);
+    throw error;
+  }
+}
+
+// Delete all test data from the database
+export async function deleteTestData() {
+  try {
+    // Delete kos first (due to foreign key constraints)
+    await db.delete(kos);
+    
+    // Delete posts
+    await db.delete(posts);
+    
+    // Delete test users (those with test prefixes)
+    await db.delete(users).where(
+      or(
+        eq(users.username, 'testseller_kos'),
+        eq(users.username, 'testadmin_kos'),
+        eq(users.username, 'testrenter_kos'),
+        eq(users.username, 'testseller2_kos'),
+        eq(users.username, 'testadmin2_kos'),
+        eq(users.username, 'testrenter2_kos')
+      )
+    );
+    
+    console.log('Test data cleaned up successfully');
+  } catch (error) {
+    console.error('Error cleaning up test data:', error);
+    // Don't throw the error to avoid failing tests due to cleanup issues
+  }
+}
 
 // Helper function to create mock request
 export function createMockRequest(
