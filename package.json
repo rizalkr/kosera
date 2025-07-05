@@ -26,6 +26,9 @@
     "test:performance": "vitest run tests/performance/",
     "test:auth-integration": "tsx test-auth.ts",
     "test:auth-api": "vitest run tests/auth/",
+    "test:search": "tsx tests/search-test-runner.ts",
+    "test:search-unit": "vitest run tests/unit/search-api.test.ts",
+    "test:search-integration": "vitest run tests/integration/search-api.integration.test.ts",
     "test:all": "tsx tests/runner.ts"
   },
   "dependencies": {
