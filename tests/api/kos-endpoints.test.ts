@@ -32,11 +32,15 @@ describe('KOS Additional API Endpoints', () => {
   afterAll(async () => {
     if (server) {
       await new Promise<void>((resolve) => {
-        server.close(() => resolve());
+        server.close(() => {
+          console.log('Test server closed');
+          resolve();
+        });
       });
     }
     if (app) {
       await app.close();
+      console.log('Next.js app closed');
     }
   });
 

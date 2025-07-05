@@ -55,6 +55,12 @@ async function seed() {
       price: 500000,
       totalPost: 1,
       totalPenjualan: 0,
+      isFeatured: true,
+      viewCount: 150,
+      favoriteCount: 25,
+      averageRating: '4.5',
+      reviewCount: 12,
+      photoCount: 8,
     }).returning();
 
     const [post2] = await db.insert(posts).values({
@@ -64,6 +70,12 @@ async function seed() {
       price: 750000,
       totalPost: 1,
       totalPenjualan: 0,
+      isFeatured: false,
+      viewCount: 89,
+      favoriteCount: 15,
+      averageRating: '4.2',
+      reviewCount: 8,
+      photoCount: 12,
     }).returning();
 
     const [post3] = await db.insert(posts).values({
@@ -73,6 +85,12 @@ async function seed() {
       price: 300000,
       totalPost: 1,
       totalPenjualan: 0,
+      isFeatured: true,
+      viewCount: 203,
+      favoriteCount: 40,
+      averageRating: '4.0',
+      reviewCount: 18,
+      photoCount: 5,
     }).returning();
 
     console.log('📝 Created posts');
@@ -85,6 +103,8 @@ async function seed() {
         address: 'Jl. Mawar No. 12, Tembalang',
         city: 'Semarang',
         facilities: 'AC, WiFi, Kamar Mandi Dalam, Dapur Bersama, Parkir Motor',
+        latitude: -7.055,
+        longitude: 110.438,
       },
       {
         postId: post2.id,
@@ -92,6 +112,8 @@ async function seed() {
         address: 'Jl. Anggrek No. 5, Tlogosari',
         city: 'Semarang',
         facilities: 'AC, WiFi, Kamar Mandi Dalam, Lemari, Kasur Queen, TV, Kulkas Mini',
+        latitude: -7.012,
+        longitude: 110.462,
       },
       {
         postId: post3.id,
@@ -99,6 +121,8 @@ async function seed() {
         address: 'Jl. Melati No. 20, Pleburan',
         city: 'Semarang',
         facilities: 'WiFi, Kamar Mandi Luar, Dapur Bersama, Parkir Motor',
+        latitude: -7.048,
+        longitude: 110.434,
       },
     ]);
 
