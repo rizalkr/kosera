@@ -144,23 +144,24 @@ export async function deleteTestData() {
 export function createMockRequest(
   method: string = 'GET',
   body?: any,
-  headers?: Record<string, string>
+  headers?: Record<string, string>,
+  url?: string
 ): NextRequest {
-  const url = 'http://localhost:3000/api/test';
+  const requestUrl = url || 'http://localhost:3000/api/test';
   const requestHeaders = new Headers({
     'content-type': 'application/json',
     ...headers,
   });
 
   if (body) {
-    return new NextRequest(url, {
+    return new NextRequest(requestUrl, {
       method,
       headers: requestHeaders,
       body: JSON.stringify(body),
     });
   }
 
-  return new NextRequest(url, {
+  return new NextRequest(requestUrl, {
     method,
     headers: requestHeaders,
   });

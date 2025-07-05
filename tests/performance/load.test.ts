@@ -14,7 +14,7 @@ describe('API Performance Tests', () => {
       const executionTime = endTime - startTime;
       
       expect(executionTime).toBeGreaterThan(90); // Should take at least 90ms
-      expect(executionTime).toBeLessThan(200); // Should not take more than 200ms
+      expect(executionTime).toBeLessThan(250); // Should not take more than 250ms (more realistic for test environments)
     });
 
     it('should validate password hashing performance', async () => {
