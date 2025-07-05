@@ -47,6 +47,50 @@ export const kos = pgTable('kos', {
   longitude: doublePrecision('longitude'),
 });
 
+// Reviews table
+export const reviews = pgTable('reviews', {
+  id: serial('id').primaryKey(),
+  kosId: integer('kos_id').references(() => kos.id, { onDelete: 'cascade' }).notNull(),
+  userId: integer('user_id').references(() => users.id, { onDelete: 'cascade' }).notNull(),
+  rating: integer('rating').notNull(), // 1-5 rating
+  comment: text('comment').notNull(),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+});
+
+// Favorites table
+export const favorites = pgTable('favorites', {
+  id: serial('id').primaryKey(),
+  userId: integer('user_id').references(() => users.id, { onDelete: 'cascade' }).notNull(),
+  kosId: integer('kos_id').references(() => kos.id, { onDelete: 'cascade' }).notNull(),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+});
+
+// Photos table for kos
+export const kosPhotos = pgTable('kos_photos', {
+  id: serial('id').primaryKey(),
+  kosId: integer('kos_id').references(() => kos.id, { onDelete: 'cascade' }).notNull(),
+  url: text('url').notNull(),
+  caption: text('caption'),
+  isPrimary: boolean('is_primary').default(false).notNull(),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+});
+
+// Bookings table
+export const bookings = pgTable('bookings', {
+  id: serial('id').primaryKey(),
+  kosId: integer('kos_id').references(() => kos.id, { onDelete: 'cascade' }).notNull(),
+  userId: integer('user_id').references(() => users.id, { onDelete: 'cascade' }).notNull(),
+  checkInDate: timestamp('check_in_date').notNull(),
+  checkOutDate: timestamp('check_out_date'),
+  duration: integer('duration').notNull(), // in months
+  totalPrice: integer('total_price').notNull(),
+  status: text('status').default('pending').notNull(), // pending, confirmed, cancelled, completed
+  notes: text('notes'),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+});
+
 // Types
 export type User = typeof users.$inferSelect;
 export type NewUser = typeof users.$inferInsert;
@@ -56,3 +100,15 @@ export type NewPost = typeof posts.$inferInsert;
 
 export type Kos = typeof kos.$inferSelect;
 export type NewKos = typeof kos.$inferInsert;
+
+export type Review = typeof reviews.$inferSelect;
+export type NewReview = typeof reviews.$inferInsert;
+
+export type Favorite = typeof favorites.$inferSelect;
+export type NewFavorite = typeof favorites.$inferInsert;
+
+export type KosPhoto = typeof kosPhotos.$inferSelect;
+export type NewKosPhoto = typeof kosPhotos.$inferInsert;
+
+export type Booking = typeof bookings.$inferSelect;
+export type NewBooking = typeof bookings.$inferInsert;
