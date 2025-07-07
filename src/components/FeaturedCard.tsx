@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { useTrackView, useAddFavorite, useRemoveFavorite } from '@/hooks/useApi';
+import { useProtectedAction } from '@/hooks/useProtectedAction';
 
 interface FeaturedCardProps {
   id: number;
@@ -32,6 +33,7 @@ export default function FeaturedCard({
   const trackView = useTrackView();
   const addFavorite = useAddFavorite();
   const removeFavorite = useRemoveFavorite();
+  const { executeProtectedAction } = useProtectedAction();
 
   const handleCardClick = () => {
     // Track view when card is clicked
@@ -43,15 +45,19 @@ export default function FeaturedCard({
   const handleFavoriteClick = (e: React.MouseEvent) => {
     e.stopPropagation(); // Prevent card click
     
-    if (isLiked) {
-      removeFavorite.mutate(id, {
-        onSuccess: () => setIsLiked(false),
-      });
-    } else {
-      addFavorite.mutate(id, {
-        onSuccess: () => setIsLiked(true),
-      });
-    }
+    executeProtectedAction(() => {
+      if (isLiked) {
+        removeFavorite.mutate(id, {
+          onSuccess: () => setIsLiked(false),
+        });
+      } else {
+        addFavorite.mutate(id, {
+          onSuccess: () => setIsLiked(true),
+        });
+      }
+    }, {
+      message: 'Login untuk menambahkan kos ke favorit'
+    });
   };
 
   const renderStars = (rating: number) => {

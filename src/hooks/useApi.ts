@@ -55,8 +55,14 @@ export const useLogin = () => {
       authApi.login(username, password),
     onSuccess: (data) => {
       if (data.success && data.data.token) {
-        // Store token and invalidate queries
+        // Store token in localStorage for the AuthContext to pick up
+        localStorage.setItem('auth_token', data.data.token);
+        localStorage.setItem('user_data', JSON.stringify(data.data.user));
+        
+        // Invalidate queries
         queryClient.invalidateQueries({ queryKey: ['user'] });
+        queryClient.invalidateQueries({ queryKey: ['favorites'] });
+        queryClient.invalidateQueries({ queryKey: ['bookings'] });
       }
     },
   });
@@ -69,7 +75,7 @@ export const useRegister = () => {
       username: string;
       password: string;
       contact: string;
-      role?: 'USER' | 'SELLER';
+      role?: 'RENTER' | 'SELLER';
     }) => authApi.register(userData),
   });
 };

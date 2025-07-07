@@ -22,251 +22,265 @@ async function seed() {
     const sellerPassword = await hashPassword('seller123'); 
     const renterPassword = await hashPassword('renter123');
 
-    const [adminUser] = await db.insert(users).values({
-      name: 'Admin User',
-      username: 'admin',
-      contact: '081234567890',
-      role: 'ADMIN',
-      password: adminPassword,
-    }).returning();
+    // Create 5 admins
+    const adminUsers = [];
+    for (let i = 1; i <= 5; i++) {
+      const [admin] = await db.insert(users).values({
+        name: `Admin User ${i}`,
+        username: `admin${i}`,
+        contact: `08123456789${i}`,
+        role: 'ADMIN',
+        password: adminPassword,
+      }).returning();
+      adminUsers.push(admin);
+    }
 
-    const [sellerUser] = await db.insert(users).values({
-      name: 'Seller User',
-      username: 'seller1',
-      contact: '081234567891',
-      role: 'SELLER',
-      password: sellerPassword,
-    }).returning();
+    // Create 20 sellers
+    const sellerUsers = [];
+    for (let i = 1; i <= 20; i++) {
+      const [seller] = await db.insert(users).values({
+        name: `Seller User ${i}`,
+        username: `seller${i}`,
+        contact: `08234567890${i}`,
+        role: 'SELLER',
+        password: sellerPassword,
+      }).returning();
+      sellerUsers.push(seller);
+    }
 
-    const [renterUser] = await db.insert(users).values({
-      name: 'Renter User',
-      username: 'renter1',
-      contact: '081234567892',
-      role: 'RENTER',
-      password: renterPassword,
-    }).returning();
+    // Create 100 renters
+    const renterUsers = [];
+    for (let i = 1; i <= 100; i++) {
+      const [renter] = await db.insert(users).values({
+        name: `Renter User ${i}`,
+        username: `renter${i}`,
+        contact: `08345678901${i}`,
+        role: 'RENTER',
+        password: renterPassword,
+      }).returning();
+      renterUsers.push(renter);
+    }
 
-    console.log('👥 Created users');
+    console.log('👥 Created users: 5 admins, 20 sellers, 100 renters');
 
-    // Insert posts
-    const [post1] = await db.insert(posts).values({
-      userId: sellerUser.id,
-      title: 'Kos Putri Mawar - Strategis dekat Universitas',
-      description: 'Kos putri dengan kamar mandi dalam, AC, WiFi gratis. Lokasi strategis dekat universitas dan pusat kota.',
-      price: 500000,
-      totalPost: 1,
-      totalPenjualan: 0,
-      isFeatured: true,
-      viewCount: 150,
-      favoriteCount: 25,
-      averageRating: '4.5',
-      reviewCount: 12,
-      photoCount: 8,
-    }).returning();
+    // Insert 100 posts
+    const kosNames = [
+      'Kos Putri Mawar', 'Kos Putra Elite', 'Kos Ekonomis', 'Kos Sejahtera', 'Kos Indah',
+      'Kos Nyaman', 'Kos Asri', 'Kos Harmoni', 'Kos Bahagia', 'Kos Tentram',
+      'Kos Damai', 'Kos Cemerlang', 'Kos Mulia', 'Kos Berkah', 'Kos Sentosa',
+      'Kos Indira', 'Kos Cahaya', 'Kos Permata', 'Kos Sari', 'Kos Melati'
+    ];
+    
+    const cities = ['Semarang', 'Jakarta', 'Yogyakarta', 'Bandung', 'Surabaya', 'Malang', 'Solo'];
+    const priceRanges = [300000, 400000, 500000, 600000, 750000, 850000, 1000000];
+    
+    const allPosts = [];
+    for (let i = 1; i <= 100; i++) {
+      const sellerIndex = ((i - 1) % sellerUsers.length);
+      const nameIndex = ((i - 1) % kosNames.length);
+      const cityIndex = ((i - 1) % cities.length);
+      const priceIndex = ((i - 1) % priceRanges.length);
+      
+      const [post] = await db.insert(posts).values({
+        userId: sellerUsers[sellerIndex].id,
+        title: `${kosNames[nameIndex]} ${i} - ${cities[cityIndex]}`,
+        description: `Kos dengan fasilitas lengkap di ${cities[cityIndex]}. Lokasi strategis, nyaman dan aman.`,
+        price: priceRanges[priceIndex],
+        totalPost: 1,
+        totalPenjualan: Math.floor(Math.random() * 5),
+        isFeatured: i <= 20, // First 20 are featured
+        viewCount: Math.floor(Math.random() * 300) + 50,
+        favoriteCount: Math.floor(Math.random() * 50) + 5,
+        averageRating: (3.5 + Math.random() * 1.5).toFixed(1),
+        reviewCount: Math.floor(Math.random() * 20) + 1,
+        photoCount: Math.floor(Math.random() * 8) + 3,
+      }).returning();
+      allPosts.push(post);
+    }
 
-    const [post2] = await db.insert(posts).values({
-      userId: sellerUser.id,
-      title: 'Kos Putra Elite - Full Furnished',
-      description: 'Kos putra mewah dengan fasilitas lengkap, kamar mandi dalam, AC, lemari, kasur queen size.',
-      price: 750000,
-      totalPost: 1,
-      totalPenjualan: 0,
-      isFeatured: false,
-      viewCount: 89,
-      favoriteCount: 15,
-      averageRating: '4.2',
-      reviewCount: 8,
-      photoCount: 12,
-    }).returning();
+    console.log('📝 Created 100 posts');
 
-    const [post3] = await db.insert(posts).values({
-      userId: adminUser.id,
-      title: 'Kos Ekonomis - Budget Friendly',
-      description: 'Kos dengan harga terjangkau, fasilitas standar, cocok untuk mahasiswa.',
-      price: 300000,
-      totalPost: 1,
-      totalPenjualan: 0,
-      isFeatured: true,
-      viewCount: 203,
-      favoriteCount: 40,
-      averageRating: '4.0',
-      reviewCount: 18,
-      photoCount: 5,
-    }).returning();
+    // Insert 100 kos details
+    const addresses = [
+      'Jl. Mawar No.', 'Jl. Anggrek No.', 'Jl. Melati No.', 'Jl. Kenanga No.', 'Jl. Tulip No.',
+      'Jl. Dahlia No.', 'Jl. Sakura No.', 'Jl. Flamboyan No.', 'Jl. Bougenville No.', 'Jl. Cempaka No.'
+    ];
+    
+    const areas = ['Tembalang', 'Tlogosari', 'Pleburan', 'Pedurungan', 'Candisari', 'Gajahmungkur', 'Banyumanik'];
+    const facilitiesOptions = [
+      'AC, WiFi, Kamar Mandi Dalam, Dapur Bersama, Parkir Motor',
+      'AC, WiFi, Kamar Mandi Dalam, Lemari, Kasur Queen, TV, Kulkas Mini',
+      'WiFi, Kamar Mandi Luar, Dapur Bersama, Parkir Motor',
+      'AC, WiFi, Kamar Mandi Dalam, Laundry, Security 24 Jam',
+      'WiFi, Kamar Mandi Dalam, Dapur Pribadi, Balkon',
+      'AC, WiFi, Kamar Mandi Dalam, Gym, Rooftop Garden'
+    ];
+    
+    const allKos = [];
+    for (let i = 0; i < 100; i++) {
+      const addressIndex = i % addresses.length;
+      const areaIndex = i % areas.length;
+      const cityIndex = i % cities.length;
+      const facilityIndex = i % facilitiesOptions.length;
+      
+      // Generate random coordinates around central Indonesia
+      const baseLat = -7.0 + (Math.random() - 0.5) * 0.2; // Around -7.0 ± 0.1
+      const baseLng = 110.4 + (Math.random() - 0.5) * 0.2; // Around 110.4 ± 0.1
+      
+      const [kosDetail] = await db.insert(kos).values({
+        postId: allPosts[i].id,
+        name: allPosts[i].title.split(' - ')[0], // Extract name from title
+        address: `${addresses[addressIndex]} ${i + 1}, ${areas[areaIndex]}`,
+        city: cities[cityIndex],
+        facilities: facilitiesOptions[facilityIndex],
+        latitude: parseFloat(baseLat.toFixed(6)),
+        longitude: parseFloat(baseLng.toFixed(6)),
+      }).returning();
+      allKos.push(kosDetail);
+    }
 
-    console.log('📝 Created posts');
+    console.log('🏠 Created 100 kos details');
 
-    // Insert kos details
-    const [kos1] = await db.insert(kos).values({
-      postId: post1.id,
-      name: 'Kos Putri Mawar',
-      address: 'Jl. Mawar No. 12, Tembalang',
-      city: 'Semarang',
-      facilities: 'AC, WiFi, Kamar Mandi Dalam, Dapur Bersama, Parkir Motor',
-      latitude: -7.055,
-      longitude: 110.438,
-    }).returning();
+    // Insert sample reviews (multiple reviews for each kos)
+    const reviewComments = [
+      'Kos sangat bagus, bersih dan nyaman. Pemilik ramah. Highly recommended!',
+      'Lokasi strategis, fasilitas oke. Hanya wifi kadang lambat di malam hari.',
+      'Kos mewah dengan fasilitas lengkap. Agak mahal tapi worth it.',
+      'Sesuai budget mahasiswa, bersih dan aman. Kamar mandi luar agak antri.',
+      'Pelayanan baik, lingkungan aman. Cocok untuk mahasiswa.',
+      'Fasilitas lengkap, AC dingin, wifi cepat. Recommended!',
+      'Tempat strategis dekat kampus, tapi agak bising di malam hari.',
+      'Kos bersih, aman, pemilik baik. Harga sesuai fasilitas.',
+      'Lumayan bagus, tapi perlu perbaikan di beberapa bagian.',
+      'Sangat puas dengan pelayanan dan fasilitas yang disediakan.'
+    ];
 
-    const [kos2] = await db.insert(kos).values({
-      postId: post2.id,
-      name: 'Kos Putra Elite',
-      address: 'Jl. Anggrek No. 5, Tlogosari',
-      city: 'Semarang',
-      facilities: 'AC, WiFi, Kamar Mandi Dalam, Lemari, Kasur Queen, TV, Kulkas Mini',
-      latitude: -7.012,
-      longitude: 110.462,
-    }).returning();
+    const reviewsToInsert = [];
+    for (let i = 0; i < allKos.length; i++) {
+      // Each kos gets 1-3 reviews
+      const numReviews = Math.floor(Math.random() * 3) + 1;
+      for (let j = 0; j < numReviews; j++) {
+        const renterIndex = Math.floor(Math.random() * renterUsers.length);
+        const commentIndex = Math.floor(Math.random() * reviewComments.length);
+        reviewsToInsert.push({
+          kosId: allKos[i].id,
+          userId: renterUsers[renterIndex].id,
+          rating: Math.floor(Math.random() * 2) + 4, // 4 or 5 stars
+          comment: reviewComments[commentIndex],
+        });
+      }
+    }
 
-    const [kos3] = await db.insert(kos).values({
-      postId: post3.id,
-      name: 'Kos Ekonomis Mahasiswa',
-      address: 'Jl. Melati No. 20, Pleburan',
-      city: 'Semarang',
-      facilities: 'WiFi, Kamar Mandi Luar, Dapur Bersama, Parkir Motor',
-      latitude: -7.048,
-      longitude: 110.434,
-    }).returning();
-
-    console.log('🏠 Created kos details');
-
-    // Insert sample reviews
-    await db.insert(reviews).values([
-      {
-        kosId: kos1.id,
-        userId: renterUser.id,
-        rating: 5,
-        comment: 'Kos sangat bagus, bersih dan nyaman. Pemilik ramah. Highly recommended!',
-      },
-      {
-        kosId: kos1.id,
-        userId: adminUser.id,
-        rating: 4,
-        comment: 'Lokasi strategis, fasilitas oke. Hanya wifi kadang lambat di malam hari.',
-      },
-      {
-        kosId: kos2.id,
-        userId: renterUser.id,
-        rating: 4,
-        comment: 'Kos mewah dengan fasilitas lengkap. Agak mahal tapi worth it.',
-      },
-      {
-        kosId: kos3.id,
-        userId: renterUser.id,
-        rating: 4,
-        comment: 'Sesuai budget mahasiswa, bersih dan aman. Kamar mandi luar agak antri.',
-      },
-    ]);
-
-    console.log('⭐ Created sample reviews');
+    await db.insert(reviews).values(reviewsToInsert);
+    console.log(`⭐ Created ${reviewsToInsert.length} sample reviews`);
 
     // Insert sample favorites
-    await db.insert(favorites).values([
-      {
-        userId: renterUser.id,
-        kosId: kos1.id,
-      },
-      {
-        userId: renterUser.id,
-        kosId: kos3.id,
-      },
-      {
-        userId: adminUser.id,
-        kosId: kos2.id,
-      },
-    ]);
+    const favoritesToInsert = [];
+    for (let i = 0; i < renterUsers.length; i++) {
+      // Each renter favorites 2-5 random kos
+      const numFavorites = Math.floor(Math.random() * 4) + 2;
+      const selectedKos: number[] = [];
+      
+      for (let j = 0; j < numFavorites; j++) {
+        let kosIndex;
+        do {
+          kosIndex = Math.floor(Math.random() * allKos.length);
+        } while (selectedKos.includes(kosIndex));
+        
+        selectedKos.push(kosIndex);
+        favoritesToInsert.push({
+          userId: renterUsers[i].id,
+          kosId: allKos[kosIndex].id,
+        });
+      }
+    }
 
-    console.log('❤️ Created sample favorites');
+    await db.insert(favorites).values(favoritesToInsert);
+    console.log(`❤️ Created ${favoritesToInsert.length} sample favorites`);
 
     // Insert sample photos
-    await db.insert(kosPhotos).values([
-      // Kos 1 photos
-      {
-        kosId: kos1.id,
-        url: 'https://example.com/kos1-room1.jpg',
-        caption: 'Kamar utama dengan AC dan lemari',
-        isPrimary: true,
-      },
-      {
-        kosId: kos1.id,
-        url: 'https://example.com/kos1-bathroom.jpg',
-        caption: 'Kamar mandi dalam yang bersih',
-        isPrimary: false,
-      },
-      {
-        kosId: kos1.id,
-        url: 'https://example.com/kos1-common.jpg',
-        caption: 'Ruang bersama dan dapur',
-        isPrimary: false,
-      },
-      // Kos 2 photos
-      {
-        kosId: kos2.id,
-        url: 'https://example.com/kos2-room1.jpg',
-        caption: 'Kamar elite dengan kasur queen size',
-        isPrimary: true,
-      },
-      {
-        kosId: kos2.id,
-        url: 'https://example.com/kos2-facility.jpg',
-        caption: 'Fasilitas lengkap termasuk TV dan kulkas',
-        isPrimary: false,
-      },
-      // Kos 3 photos
-      {
-        kosId: kos3.id,
-        url: 'https://example.com/kos3-room1.jpg',
-        caption: 'Kamar ekonomis untuk mahasiswa',
-        isPrimary: true,
-      },
-    ]);
+    const photoCaptions = [
+      'Kamar utama dengan AC dan lemari',
+      'Kamar mandi dalam yang bersih',
+      'Ruang bersama dan dapur',
+      'Fasilitas lengkap termasuk TV dan kulkas',
+      'Kamar ekonomis untuk mahasiswa',
+      'Area parkir yang luas',
+      'Taman dan area santai',
+      'Dapur bersama yang modern',
+      'Kamar dengan pemandangan bagus',
+      'Balkon pribadi'
+    ];
 
-    console.log('📸 Created sample photos');
+    const photosToInsert = [];
+    for (let i = 0; i < allKos.length; i++) {
+      // Each kos gets 3-6 photos
+      const numPhotos = Math.floor(Math.random() * 4) + 3;
+      for (let j = 0; j < numPhotos; j++) {
+        const captionIndex = Math.floor(Math.random() * photoCaptions.length);
+        photosToInsert.push({
+          kosId: allKos[i].id,
+          url: `https://example.com/kos${i + 1}-photo${j + 1}.jpg`,
+          caption: photoCaptions[captionIndex],
+          isPrimary: j === 0, // First photo is primary
+        });
+      }
+    }
+
+    await db.insert(kosPhotos).values(photosToInsert);
+    console.log(`📸 Created ${photosToInsert.length} sample photos`);
 
     // Insert sample bookings
-    const checkInDate1 = new Date();
-    checkInDate1.setDate(checkInDate1.getDate() + 7); // 1 week from now
-    const checkOutDate1 = new Date(checkInDate1);
-    checkOutDate1.setMonth(checkOutDate1.getMonth() + 3); // 3 months later
+    const bookingsToInsert = [];
+    for (let i = 0; i < 50; i++) { // Create 50 bookings
+      const renterIndex = Math.floor(Math.random() * renterUsers.length);
+      const kosIndex = Math.floor(Math.random() * allKos.length);
+      
+      const checkInDate = new Date();
+      checkInDate.setDate(checkInDate.getDate() + Math.floor(Math.random() * 60) + 1); // 1-60 days from now
+      
+      const duration = Math.floor(Math.random() * 11) + 1; // 1-12 months
+      const checkOutDate = new Date(checkInDate);
+      checkOutDate.setMonth(checkOutDate.getMonth() + duration);
+      
+      const kosPrice = allPosts[kosIndex].price;
+      const totalPrice = kosPrice * duration;
+      
+      const statuses = ['pending', 'confirmed', 'cancelled'];
+      const status = statuses[Math.floor(Math.random() * statuses.length)];
+      
+      const notes = [
+        'Untuk semester depan, mohon kamar yang menghadap timur',
+        'Booking untuk tahun ajaran baru',
+        'Mohon kamar di lantai atas',
+        'Prefer kamar yang tenang',
+        'Booking untuk anak kuliah'
+      ];
+      
+      bookingsToInsert.push({
+        kosId: allKos[kosIndex].id,
+        userId: renterUsers[renterIndex].id,
+        checkInDate: checkInDate,
+        checkOutDate: checkOutDate,
+        duration: duration,
+        totalPrice: totalPrice,
+        status: status,
+        notes: notes[Math.floor(Math.random() * notes.length)],
+      });
+    }
 
-    const checkInDate2 = new Date();
-    checkInDate2.setDate(checkInDate2.getDate() + 30); // 1 month from now
-    const checkOutDate2 = new Date(checkInDate2);
-    checkOutDate2.setMonth(checkOutDate2.getMonth() + 6); // 6 months later
-
-    await db.insert(bookings).values([
-      {
-        kosId: kos1.id,
-        userId: renterUser.id,
-        checkInDate: checkInDate1,
-        checkOutDate: checkOutDate1,
-        duration: 3,
-        totalPrice: 1500000, // 500k * 3 months
-        status: 'confirmed',
-        notes: 'Untuk semester depan, mohon kamar yang menghadap timur',
-      },
-      {
-        kosId: kos2.id,
-        userId: renterUser.id,
-        checkInDate: checkInDate2,
-        checkOutDate: checkOutDate2,
-        duration: 6,
-        totalPrice: 4500000, // 750k * 6 months
-        status: 'pending',
-        notes: 'Booking untuk tahun ajaran baru',
-      },
-    ]);
-
-    console.log('📋 Created sample bookings');
+    await db.insert(bookings).values(bookingsToInsert);
+    console.log(`📋 Created ${bookingsToInsert.length} sample bookings`);
 
     console.log('✅ Database seeding completed successfully!');
     console.log(`📊 Summary:
-    - Users: 3 (1 admin, 1 seller, 1 renter)
-    - Posts: 3
-    - Kos: 3
-    - Reviews: 4
-    - Favorites: 3
-    - Photos: 6
-    - Bookings: 2`);
+    - Users: ${adminUsers.length + sellerUsers.length + renterUsers.length} (${adminUsers.length} admins, ${sellerUsers.length} sellers, ${renterUsers.length} renters)
+    - Posts: ${allPosts.length}
+    - Kos: ${allKos.length}
+    - Reviews: ${reviewsToInsert.length}
+    - Favorites: ${favoritesToInsert.length}
+    - Photos: ${photosToInsert.length}
+    - Bookings: ${bookingsToInsert.length}`);
 
   } catch (error) {
     console.error('❌ Error seeding database:', error);

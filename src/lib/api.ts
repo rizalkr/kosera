@@ -222,21 +222,42 @@ export const authApi = {
     username: string;
     password: string;
     contact: string;
-    role?: 'USER' | 'SELLER';
+    role?: 'ADMIN' | 'SELLER' | 'RENTER';
   }): Promise<ApiResponse<{ token: string; user: any }>> => {
+    // Map RENTER to USER for API compatibility
+    const apiUserData = {
+      ...userData,
+      role: userData.role === 'RENTER' ? 'USER' : userData.role
+    };
+    
     const response = await fetch(`${API_BASE_URL}/api/auth/register`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(userData),
+      body: JSON.stringify(apiUserData),
     });
     return response.json();
   },
 
   verify: async (token: string): Promise<ApiResponse<{ user: any }>> => {
     const response = await fetch(`${API_BASE_URL}/api/auth/verify`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ token }),
+      method: 'GET',
+      headers: { 
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      },
+    });
+    return response.json();
+  },
+
+  verifyToken: async (): Promise<ApiResponse<{ user: any }>> => {
+    const token = getAuthToken();
+    if (!token) {
+      return { success: false, message: 'No token found', data: { user: null }, error: 'No token found' };
+    }
+    
+    const response = await fetch(`${API_BASE_URL}/api/auth/verify`, {
+      method: 'GET',
+      headers: createAuthHeaders(),
     });
     return response.json();
   },

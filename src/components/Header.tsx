@@ -1,14 +1,20 @@
 "use client";
 import { useEffect, useState, useRef } from "react";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
+import Link from "next/link";
+import { useAuth } from "@/contexts/AuthContext";
 
 export default function Header() {
   const [scrolled, setScrolled] = useState(false);
   const [open, setOpen] = useState(false);
   const [servicesOpen, setServicesOpen] = useState(false);
+  const [userMenuOpen, setUserMenuOpen] = useState(false);
   const pathname = usePathname();
+  const router = useRouter();
+  const { user, isAuthenticated, logout, isLoading } = useAuth();
 
   const servicesRef = useRef<HTMLDivElement>(null);
+  const userMenuRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
@@ -17,6 +23,12 @@ export default function Header() {
         !servicesRef.current.contains(event.target as Node)
       ) {
         setServicesOpen(false);
+      }
+      if (
+        userMenuRef.current &&
+        !userMenuRef.current.contains(event.target as Node)
+      ) {
+        setUserMenuOpen(false);
       }
     }
     document.addEventListener("mousedown", handleClickOutside);
@@ -154,9 +166,101 @@ export default function Header() {
           >
             Kontak
           </a>
-          <button className="ml-4 bg-[#F3D17C] text-white px-4 py-2 rounded">
-            Login
-          </button>
+          {/* Authentication Section for Desktop */}
+          {isLoading ? (
+            <div className="ml-4 bg-gray-200 animate-pulse rounded px-4 py-2 w-20"></div>
+          ) : isAuthenticated ? (
+            <div className="relative ml-4" ref={userMenuRef}>
+              <button
+                className="flex items-center space-x-2 bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition-colors"
+                onClick={() => setUserMenuOpen(!userMenuOpen)}
+              >
+                <div className="w-6 h-6 bg-blue-200 rounded-full flex items-center justify-center">
+                  <span className="text-blue-600 text-sm font-semibold">
+                    {user?.username?.charAt(0).toUpperCase()}
+                  </span>
+                </div>
+                <span className="hidden sm:inline">{user?.username}</span>
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                </svg>
+              </button>
+              
+              {/* User Dropdown Menu */}
+              <div
+                className={`absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg py-2 border transition-all duration-200 ${
+                  userMenuOpen ? 'opacity-100 scale-100' : 'opacity-0 scale-95 pointer-events-none'
+                }`}
+              >
+                <div className="px-4 py-2 border-b border-gray-100">
+                  <p className="text-sm font-medium text-gray-900">{user?.username}</p>
+                  <p className="text-xs text-gray-500 capitalize">{user?.role}</p>
+                </div>
+                
+                <Link
+                  href="/profile"
+                  className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors"
+                  onClick={() => setUserMenuOpen(false)}
+                >
+                  Profil Saya
+                </Link>
+                
+                {user?.role === 'SELLER' && (
+                  <Link
+                    href="/my-kos"
+                    className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors"
+                    onClick={() => setUserMenuOpen(false)}
+                  >
+                    Kos Saya
+                  </Link>
+                )}
+                
+                <Link
+                  href="/bookings"
+                  className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors"
+                  onClick={() => setUserMenuOpen(false)}
+                >
+                  Booking Saya
+                </Link>
+                
+                <Link
+                  href="/favorites"
+                  className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors"
+                  onClick={() => setUserMenuOpen(false)}
+                >
+                  Favorit
+                </Link>
+                
+                <hr className="my-2" />
+                
+                <button
+                  onClick={() => {
+                    logout();
+                    setUserMenuOpen(false);
+                    router.push('/');
+                  }}
+                  className="block w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors"
+                >
+                  Keluar
+                </button>
+              </div>
+            </div>
+          ) : (
+            <div className="flex space-x-2 ml-4">
+              <Link
+                href="/auth/login"
+                className="text-blue-600 hover:text-blue-700 px-4 py-2 border border-blue-600 rounded hover:bg-blue-50 transition-colors"
+              >
+                Masuk
+              </Link>
+              <Link
+                href="/auth/register"
+                className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition-colors"
+              >
+                Daftar
+              </Link>
+            </div>
+          )}
         </nav>
         {/* Mobile nav */}
         <div
@@ -255,7 +359,7 @@ export default function Header() {
           >
             Aduan
           </a>
-          <a
+          <Link
             href="/contact"
             className={`text-blue-400 hover:underline transition-all duration-150 ${
               isActive("/contact") ? "underline font-semibold" : ""
@@ -263,13 +367,118 @@ export default function Header() {
             onClick={() => setOpen(false)}
           >
             Kontak
-          </a>
-          <button
-            className="bg-blue-600 text-white px-4 py-2 rounded"
-            onClick={() => setOpen(false)}
-          >
-            Login
-          </button>
+          </Link>
+          
+          {/* Authentication Section */}
+          {isLoading ? (
+            <div className="bg-gray-200 animate-pulse rounded px-4 py-2 w-20"></div>
+          ) : isAuthenticated ? (
+            <div className="relative" ref={userMenuRef}>
+              <button
+                className="flex items-center space-x-2 bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition-colors"
+                onClick={() => setUserMenuOpen(!userMenuOpen)}
+              >
+                <div className="w-6 h-6 bg-blue-200 rounded-full flex items-center justify-center">
+                  <span className="text-blue-600 text-sm font-semibold">
+                    {user?.username?.charAt(0).toUpperCase()}
+                  </span>
+                </div>
+                <span className="hidden sm:inline">{user?.username}</span>
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                </svg>
+              </button>
+              
+              {/* User Dropdown Menu */}
+              <div
+                className={`absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg py-2 border transition-all duration-200 ${
+                  userMenuOpen ? 'opacity-100 scale-100' : 'opacity-0 scale-95 pointer-events-none'
+                }`}
+              >
+                <div className="px-4 py-2 border-b border-gray-100">
+                  <p className="text-sm font-medium text-gray-900">{user?.username}</p>
+                  <p className="text-xs text-gray-500 capitalize">{user?.role}</p>
+                </div>
+                
+                <Link
+                  href="/profile"
+                  className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors"
+                  onClick={() => {
+                    setUserMenuOpen(false);
+                    setOpen(false);
+                  }}
+                >
+                  Profil Saya
+                </Link>
+                
+                {user?.role === 'SELLER' && (
+                  <Link
+                    href="/my-kos"
+                    className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors"
+                    onClick={() => {
+                      setUserMenuOpen(false);
+                      setOpen(false);
+                    }}
+                  >
+                    Kos Saya
+                  </Link>
+                )}
+                
+                <Link
+                  href="/bookings"
+                  className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors"
+                  onClick={() => {
+                    setUserMenuOpen(false);
+                    setOpen(false);
+                  }}
+                >
+                  Booking Saya
+                </Link>
+                
+                <Link
+                  href="/favorites"
+                  className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors"
+                  onClick={() => {
+                    setUserMenuOpen(false);
+                    setOpen(false);
+                  }}
+                >
+                  Favorit
+                </Link>
+                
+                <hr className="my-2" />
+                
+                <button
+                  onClick={() => {
+                    logout();
+                    setUserMenuOpen(false);
+                    setOpen(false);
+                    router.push('/');
+                  }}
+                  className="block w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors"
+                >
+                  Keluar
+                </button>
+              </div>
+            </div>
+          ) : (
+            <div className="flex space-x-2">
+              <Link
+                href="/auth/login"
+                className="text-blue-600 hover:text-blue-700 px-4 py-2 border border-blue-600 rounded hover:bg-blue-50 transition-colors"
+                onClick={() => setOpen(false)}
+              >
+                Masuk
+              </Link>
+              <Link
+                href="/auth/register"
+                className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition-colors"
+                onClick={() => setOpen(false)}
+              >
+                Daftar
+              </Link>
+            </div>
+          )}
         </div>
       </div>
     </header>

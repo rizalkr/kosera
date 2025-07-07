@@ -8,6 +8,7 @@ import MapSection from '@/components/maps/MapSection';
 import RecommendationCarousel from '@/components/RecommendationCarousel';
 import Footer from '@/components/Footer';
 import { useKosSearch } from '@/hooks/useApi';
+import { useAuthGuard } from '@/hooks/useAuthGuard';
 import { SearchParams, KosData } from '@/lib/api';
 
 export default function HomePage() {
@@ -15,6 +16,7 @@ export default function HomePage() {
   const [isSearching, setIsSearching] = useState(false);
   
   const { data: searchResults, isLoading: isSearchLoading } = useKosSearch(searchFilters);
+  const { checkBookingPermission, checkFavoritePermission, isAuthenticated } = useAuthGuard();
 
   const handleFilter = (filters: SearchParams) => {
     setSearchFilters(filters);
@@ -83,6 +85,27 @@ export default function HomePage() {
           <div className="space-y-6">
             {kosList.map((kos: KosData) => (
               <div key={kos.id} className="bg-[#E1F6F2] border border-blue-100 rounded-xl shadow hover:shadow-lg transition-all duration-200 cursor-pointer relative group">
+                {/* Favorite Button */}
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    if (checkFavoritePermission()) {
+                      // Handle favorite logic here
+                      console.log('Toggle favorite for kos:', kos.id);
+                    }
+                  }}
+                  className="absolute top-3 right-3 p-2 rounded-full bg-white shadow-md hover:shadow-lg transition-all z-10"
+                >
+                  <svg 
+                    className="w-5 h-5 text-gray-400 hover:text-red-500 transition-colors" 
+                    fill="none" 
+                    stroke="currentColor" 
+                    viewBox="0 0 24 24"
+                  >
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+                  </svg>
+                </button>
+                
                 <div className="flex gap-4 p-4">
                   <div className="w-32 h-32 flex-shrink-0 rounded-lg overflow-hidden bg-blue-50 flex items-center justify-center">
                     <img
@@ -132,8 +155,16 @@ export default function HomePage() {
                         Lihat selengkapnya →
                       </button>
                       
-                      <button className="bg-blue-400 text-white px-3 py-1 rounded-md text-sm hover:bg-blue-500 transition-all">
-                        Book
+                      <button 
+                        onClick={() => {
+                          if (checkBookingPermission()) {
+                            // Handle booking logic here
+                            console.log('Booking kos:', kos.id);
+                          }
+                        }}
+                        className="bg-blue-400 text-white px-3 py-1 rounded-md text-sm hover:bg-blue-500 transition-all"
+                      >
+                        {isAuthenticated ? 'Book' : 'Login untuk Book'}
                       </button>
                     </div>
                   </div>
