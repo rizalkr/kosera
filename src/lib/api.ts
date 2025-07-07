@@ -6,29 +6,31 @@ const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000';
 // Types based on backend API responses
 export interface KosData {
   id: number;
+  postId: number;
   name: string;
   address: string;
   city: string;
-  facilities: string[];
+  facilities: string; // API returns comma-separated string
   latitude?: number;
   longitude?: number;
-  post: {
-    id: number;
-    title: string;
-    description: string;
-    price: number;
-    averageRating?: number;
-    reviewCount: number;
-    viewCount: number;
-    photoCount: number;
-    isFeatured: boolean;
-  };
+  title: string;
+  description: string;
+  price: number;
+  averageRating: string; // API returns string like "4.5"
+  reviewCount: number;
+  viewCount: number;
+  favoriteCount: number;
+  photoCount: number;
+  isFeatured: boolean;
+  createdAt: string;
+  updatedAt: string;
   owner: {
     id: number;
     name: string;
     username: string;
     contact: string;
   };
+  qualityScore?: string; // Only in recommendations
 }
 
 export interface SearchParams {
@@ -105,13 +107,31 @@ const createAuthHeaders = (): Record<string, string> => {
 // API functions
 export const kosApi = {
   // Get featured kos
-  getFeatured: async (): Promise<ApiResponse<PaginatedResponse<KosData>>> => {
+  getFeatured: async () => {
     const response = await fetch(`${API_BASE_URL}/api/kos/featured`);
-    return response.json();
+    const result = await response.json();
+    
+    // Transform the featured API response to match our expected format
+    return {
+      ...result,
+      data: {
+        data: result.data || [],
+        pagination: {
+          currentPage: 1,
+          totalPages: 1,
+          totalCount: result.count || 0,
+          limit: result.data?.length || 0,
+          hasNextPage: false,
+          hasPrevPage: false,
+          nextPage: null,
+          prevPage: null,
+        }
+      }
+    };
   },
 
   // Get recommendations
-  getRecommendations: async (params: SearchParams = {}): Promise<ApiResponse<PaginatedResponse<KosData>>> => {
+  getRecommendations: async (params: SearchParams = {}) => {
     const searchParams = new URLSearchParams();
     Object.entries(params).forEach(([key, value]) => {
       if (value !== undefined && value !== null) {
@@ -124,11 +144,29 @@ export const kosApi = {
     });
 
     const response = await fetch(`${API_BASE_URL}/api/kos/recommendations?${searchParams}`);
-    return response.json();
+    const result = await response.json();
+    
+    // Transform the recommendations API response
+    return {
+      ...result,
+      data: {
+        data: result.data?.recommendations || [],
+        pagination: result.data?.pagination || {
+          currentPage: 1,
+          totalPages: 1,
+          totalCount: 0,
+          limit: 10,
+          hasNextPage: false,
+          hasPrevPage: false,
+          nextPage: null,
+          prevPage: null,
+        }
+      }
+    };
   },
 
   // Advanced search
-  search: async (params: SearchParams = {}): Promise<ApiResponse<PaginatedResponse<KosData>>> => {
+  search: async (params: SearchParams = {}) => {
     const searchParams = new URLSearchParams();
     Object.entries(params).forEach(([key, value]) => {
       if (value !== undefined && value !== null) {
@@ -145,7 +183,7 @@ export const kosApi = {
   },
 
   // Get nearby kos
-  getNearby: async (lat: number, lng: number, radius = 5): Promise<ApiResponse<PaginatedResponse<KosData>>> => {
+  getNearby: async (lat: number, lng: number, radius = 5) => {
     const response = await fetch(
       `${API_BASE_URL}/api/kos/nearby?latitude=${lat}&longitude=${lng}&radius=${radius}`
     );
@@ -153,13 +191,13 @@ export const kosApi = {
   },
 
   // Get kos details
-  getDetails: async (id: number): Promise<ApiResponse<{ kos: KosData }>> => {
+  getDetails: async (id: number) => {
     const response = await fetch(`${API_BASE_URL}/api/kos/${id}`);
     return response.json();
   },
 
   // Track view
-  trackView: async (id: number): Promise<ApiResponse<any>> => {
+  trackView: async (id: number) => {
     const response = await fetch(`${API_BASE_URL}/api/kos/${id}/view`, {
       method: 'POST',
       headers: createAuthHeaders(),

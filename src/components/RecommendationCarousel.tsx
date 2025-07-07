@@ -66,13 +66,13 @@ export default function RecommendationCarousel() {
             <FeaturedCard 
               id={kos.id}
               images={['/images/rooms/room1.jpg']} // Placeholder
-              price={`${kos.post.price.toLocaleString()}`}
-              description={kos.post.description}
+              price={`${(kos.price / 1000).toLocaleString()}`} // Convert to K format
+              description={kos.description}
               area={kos.address}
               city={kos.city}
-              rating={kos.post.averageRating}
-              reviewCount={kos.post.reviewCount}
-              facilities={kos.facilities}
+              rating={parseFloat(kos.averageRating || '0')}
+              reviewCount={kos.reviewCount}
+              facilities={kos.facilities.split(', ')}
             />
           </SwiperSlide>
         ))}

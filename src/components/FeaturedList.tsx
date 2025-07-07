@@ -7,6 +7,9 @@ import { KosData } from '@/lib/api';
 export default function FeaturedList() {
   const { data, isLoading, error } = useKosFeatured();
 
+  // Debug logs
+  console.log('FeaturedList Debug:', { data, isLoading, error });
+
   if (isLoading) {
     return (
       <div className="space-y-6">
@@ -57,13 +60,13 @@ export default function FeaturedList() {
           key={kos.id} 
           id={kos.id}
           images={['/images/rooms/room1.jpg']} // Placeholder, nanti bisa diganti dengan foto asli
-          price={`${kos.post.price.toLocaleString()}K`}
-          description={kos.post.description}
+          price={`${(kos.price / 1000).toLocaleString()}`} // Convert to K format
+          description={kos.description}
           area={kos.address}
           city={kos.city}
-          rating={kos.post.averageRating}
-          reviewCount={kos.post.reviewCount}
-          facilities={kos.facilities}
+          rating={parseFloat(kos.averageRating || '0')}
+          reviewCount={kos.reviewCount}
+          facilities={kos.facilities.split(', ')}
         />
       ))}
     </div>

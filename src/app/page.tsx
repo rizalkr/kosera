@@ -42,7 +42,7 @@ export default function HomePage() {
     }
 
     if (isSearching && searchResults) {
-      const kosList = searchResults.data?.data || [];
+      const kosList = searchResults.data?.results || [];
       
       if (kosList.length === 0) {
         return (
@@ -95,32 +95,32 @@ export default function HomePage() {
                   <div className="flex-1 flex flex-col justify-between">
                     <div>
                       <div className="flex items-center justify-between mb-1">
-                        <div className="text-blue-400 font-bold text-lg">Rp {kos.post.price.toLocaleString()}/bulan</div>
-                        {kos.post.averageRating && (
+                        <div className="text-blue-400 font-bold text-lg">Rp {kos.price.toLocaleString()}/bulan</div>
+                        {kos.averageRating && (
                           <div className="flex items-center gap-1">
                             <span className="text-yellow-400">★</span>
-                            <span className="text-sm text-gray-600">{kos.post.averageRating.toFixed(1)} ({kos.post.reviewCount})</span>
+                            <span className="text-sm text-gray-600">{parseFloat(kos.averageRating).toFixed(1)} ({kos.reviewCount})</span>
                           </div>
                         )}
                       </div>
                       
-                      <div className="text-gray-600 font-semibold mb-1">{kos.post.description}</div>
+                      <div className="text-gray-600 font-semibold mb-1">{kos.description}</div>
                       <div className="text-gray-500 mb-2">{kos.address}, {kos.city}</div>
                       
                       {/* Facilities */}
-                      {kos.facilities.length > 0 && (
+                      {kos.facilities && kos.facilities.trim() && (
                         <div className="flex flex-wrap gap-1 mb-2">
-                          {kos.facilities.slice(0, 3).map((facility, index) => (
+                          {kos.facilities.split(',').slice(0, 3).map((facility, index) => (
                             <span 
                               key={index}
                               className="text-xs bg-blue-100 text-blue-600 px-2 py-1 rounded-full"
                             >
-                              {facility}
+                              {facility.trim()}
                             </span>
                           ))}
-                          {kos.facilities.length > 3 && (
+                          {kos.facilities.split(',').length > 3 && (
                             <span className="text-xs text-gray-500">
-                              +{kos.facilities.length - 3} lainnya
+                              +{kos.facilities.split(',').length - 3} lainnya
                             </span>
                           )}
                         </div>
