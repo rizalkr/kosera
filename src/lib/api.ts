@@ -1,0 +1,273 @@
+// API Client utilities for Kosera frontend
+import { z } from 'zod';
+
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000';
+
+// Types based on backend API responses
+export interface KosData {
+  id: number;
+  name: string;
+  address: string;
+  city: string;
+  facilities: string[];
+  latitude?: number;
+  longitude?: number;
+  post: {
+    id: number;
+    title: string;
+    description: string;
+    price: number;
+    averageRating?: number;
+    reviewCount: number;
+    viewCount: number;
+    photoCount: number;
+    isFeatured: boolean;
+  };
+  owner: {
+    id: number;
+    name: string;
+    username: string;
+    contact: string;
+  };
+}
+
+export interface SearchParams {
+  search?: string;
+  city?: string;
+  minPrice?: number;
+  maxPrice?: number;
+  minRating?: number;
+  facilities?: string[];
+  latitude?: number;
+  longitude?: number;
+  radius?: number;
+  sortBy?: 'price' | 'rating' | 'distance' | 'newest';
+  sortOrder?: 'asc' | 'desc';
+  page?: number;
+  limit?: number;
+}
+
+export interface ApiResponse<T> {
+  success: boolean;
+  message: string;
+  data: T;
+  error?: string;
+}
+
+export interface PaginatedResponse<T> {
+  data: T[];
+  pagination: {
+    currentPage: number;
+    totalPages: number;
+    totalCount: number;
+    limit: number;
+    hasNextPage: boolean;
+    hasPrevPage: boolean;
+    nextPage: number | null;
+    prevPage: number | null;
+  };
+}
+
+// Auth utilities
+export const getAuthToken = (): string | null => {
+  if (typeof window !== 'undefined') {
+    return localStorage.getItem('auth_token');
+  }
+  return null;
+};
+
+export const setAuthToken = (token: string): void => {
+  if (typeof window !== 'undefined') {
+    localStorage.setItem('auth_token', token);
+  }
+};
+
+export const removeAuthToken = (): void => {
+  if (typeof window !== 'undefined') {
+    localStorage.removeItem('auth_token');
+  }
+};
+
+// HTTP client with auth headers
+const createAuthHeaders = (): Record<string, string> => {
+  const token = getAuthToken();
+  const headers: Record<string, string> = {
+    'Content-Type': 'application/json',
+  };
+  
+  if (token) {
+    headers.Authorization = `Bearer ${token}`;
+  }
+  
+  return headers;
+};
+
+// API functions
+export const kosApi = {
+  // Get featured kos
+  getFeatured: async (): Promise<ApiResponse<PaginatedResponse<KosData>>> => {
+    const response = await fetch(`${API_BASE_URL}/api/kos/featured`);
+    return response.json();
+  },
+
+  // Get recommendations
+  getRecommendations: async (params: SearchParams = {}): Promise<ApiResponse<PaginatedResponse<KosData>>> => {
+    const searchParams = new URLSearchParams();
+    Object.entries(params).forEach(([key, value]) => {
+      if (value !== undefined && value !== null) {
+        if (Array.isArray(value)) {
+          value.forEach(v => searchParams.append(key, v.toString()));
+        } else {
+          searchParams.append(key, value.toString());
+        }
+      }
+    });
+
+    const response = await fetch(`${API_BASE_URL}/api/kos/recommendations?${searchParams}`);
+    return response.json();
+  },
+
+  // Advanced search
+  search: async (params: SearchParams = {}): Promise<ApiResponse<PaginatedResponse<KosData>>> => {
+    const searchParams = new URLSearchParams();
+    Object.entries(params).forEach(([key, value]) => {
+      if (value !== undefined && value !== null) {
+        if (Array.isArray(value)) {
+          value.forEach(v => searchParams.append(key, v.toString()));
+        } else {
+          searchParams.append(key, value.toString());
+        }
+      }
+    });
+
+    const response = await fetch(`${API_BASE_URL}/api/kos/search?${searchParams}`);
+    return response.json();
+  },
+
+  // Get nearby kos
+  getNearby: async (lat: number, lng: number, radius = 5): Promise<ApiResponse<PaginatedResponse<KosData>>> => {
+    const response = await fetch(
+      `${API_BASE_URL}/api/kos/nearby?latitude=${lat}&longitude=${lng}&radius=${radius}`
+    );
+    return response.json();
+  },
+
+  // Get kos details
+  getDetails: async (id: number): Promise<ApiResponse<{ kos: KosData }>> => {
+    const response = await fetch(`${API_BASE_URL}/api/kos/${id}`);
+    return response.json();
+  },
+
+  // Track view
+  trackView: async (id: number): Promise<ApiResponse<any>> => {
+    const response = await fetch(`${API_BASE_URL}/api/kos/${id}/view`, {
+      method: 'POST',
+      headers: createAuthHeaders(),
+    });
+    return response.json();
+  },
+};
+
+// Auth API
+export const authApi = {
+  login: async (username: string, password: string): Promise<ApiResponse<{ token: string; user: any }>> => {
+    const response = await fetch(`${API_BASE_URL}/api/auth/login`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ username, password }),
+    });
+    return response.json();
+  },
+
+  register: async (userData: {
+    name: string;
+    username: string;
+    password: string;
+    contact: string;
+    role?: 'USER' | 'SELLER';
+  }): Promise<ApiResponse<{ token: string; user: any }>> => {
+    const response = await fetch(`${API_BASE_URL}/api/auth/register`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(userData),
+    });
+    return response.json();
+  },
+
+  verify: async (token: string): Promise<ApiResponse<{ user: any }>> => {
+    const response = await fetch(`${API_BASE_URL}/api/auth/verify`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ token }),
+    });
+    return response.json();
+  },
+};
+
+// Favorites API
+export const favoritesApi = {
+  getFavorites: async (): Promise<ApiResponse<PaginatedResponse<any>>> => {
+    const response = await fetch(`${API_BASE_URL}/api/user/favorites`, {
+      headers: createAuthHeaders(),
+    });
+    return response.json();
+  },
+
+  addFavorite: async (kosId: number): Promise<ApiResponse<any>> => {
+    const response = await fetch(`${API_BASE_URL}/api/user/favorites`, {
+      method: 'POST',
+      headers: createAuthHeaders(),
+      body: JSON.stringify({ kosId }),
+    });
+    return response.json();
+  },
+
+  removeFavorite: async (kosId: number): Promise<ApiResponse<any>> => {
+    const response = await fetch(`${API_BASE_URL}/api/user/favorites`, {
+      method: 'DELETE',
+      headers: createAuthHeaders(),
+      body: JSON.stringify({ kosId }),
+    });
+    return response.json();
+  },
+};
+
+// Bookings API
+export const bookingsApi = {
+  getBookings: async (): Promise<ApiResponse<PaginatedResponse<any>>> => {
+    const response = await fetch(`${API_BASE_URL}/api/bookings`, {
+      headers: createAuthHeaders(),
+    });
+    return response.json();
+  },
+
+  createBooking: async (bookingData: {
+    kosId: number;
+    checkInDate: string;
+    duration: number;
+    notes?: string;
+  }): Promise<ApiResponse<any>> => {
+    const response = await fetch(`${API_BASE_URL}/api/bookings`, {
+      method: 'POST',
+      headers: createAuthHeaders(),
+      body: JSON.stringify(bookingData),
+    });
+    return response.json();
+  },
+
+  updateBooking: async (id: number, status: string, notes?: string): Promise<ApiResponse<any>> => {
+    const response = await fetch(`${API_BASE_URL}/api/bookings/${id}`, {
+      method: 'PUT',
+      headers: createAuthHeaders(),
+      body: JSON.stringify({ status, notes }),
+    });
+    return response.json();
+  },
+};
+
+export default {
+  kos: kosApi,
+  auth: authApi,
+  favorites: favoritesApi,
+  bookings: bookingsApi,
+};

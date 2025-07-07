@@ -2,20 +2,78 @@
 import { Swiper, SwiperSlide } from 'swiper/react';
 import 'swiper/css';
 import FeaturedCard from './FeaturedCard';
-
-const recommendations = [
-  { id: 1, images: ['/images/rooms/room1.jpg', '/images/room2.jpg'], price: '500K', description: 'Double kos...', area: 'Tlogosari', city: 'Semarang' },
-  { id: 2, images: ['/images/room3.jpg', '/images/room1.jpg'], price: '600K', description: 'Single kos...', area: 'Tlogosari', city: 'Semarang' },
-];
+import { useKosRecommendations } from '@/hooks/useApi';
+import { KosData } from '@/lib/api';
 
 export default function RecommendationCarousel() {
+  const { data, isLoading, error } = useKosRecommendations({ limit: 6 });
+
+  if (isLoading) {
+    return (
+      <div>
+        <h2 className="text-2xl font-semibold mb-4 text-black">Rekomendasi</h2>
+        <div className="animate-pulse">
+          <div className="bg-[#E1F6F2] border border-blue-100 rounded-xl p-4">
+            <div className="flex gap-4">
+              <div className="w-32 h-32 bg-blue-200 rounded-lg"></div>
+              <div className="flex-1 space-y-2">
+                <div className="h-6 bg-blue-200 rounded w-24"></div>
+                <div className="h-4 bg-blue-200 rounded w-full"></div>
+                <div className="h-4 bg-blue-200 rounded w-32"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div>
+        <h2 className="text-2xl font-semibold mb-4 text-black">Rekomendasi</h2>
+        <div className="text-center text-red-500 py-4">
+          <p className="text-sm">Gagal memuat rekomendasi</p>
+        </div>
+      </div>
+    );
+  }
+
+  const recommendations = data?.data?.data || [];
+
+  if (recommendations.length === 0) {
+    return (
+      <div>
+        <h2 className="text-2xl font-semibold mb-4 text-black">Rekomendasi</h2>
+        <div className="text-center text-gray-500 py-4">
+          <p className="text-sm">Belum ada rekomendasi tersedia</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div>
       <h2 className="text-2xl font-semibold mb-4 text-black">Rekomendasi</h2>
-      <Swiper spaceBetween={16} slidesPerView={1} loop>
-        {recommendations.map(room => (
-          <SwiperSlide key={room.id}>
-            <FeaturedCard {...room} />
+      <Swiper 
+        spaceBetween={16} 
+        slidesPerView={1} 
+        loop={recommendations.length > 1}
+        autoplay={recommendations.length > 1 ? { delay: 5000 } : false}
+      >
+        {recommendations.map((kos: KosData) => (
+          <SwiperSlide key={kos.id}>
+            <FeaturedCard 
+              id={kos.id}
+              images={['/images/rooms/room1.jpg']} // Placeholder
+              price={`${kos.post.price.toLocaleString()}`}
+              description={kos.post.description}
+              area={kos.address}
+              city={kos.city}
+              rating={kos.post.averageRating}
+              reviewCount={kos.post.reviewCount}
+              facilities={kos.facilities}
+            />
           </SwiperSlide>
         ))}
       </Swiper>

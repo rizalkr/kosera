@@ -1,3 +1,8 @@
+'use client';
+
+import { useState } from 'react';
+import { useTrackView, useAddFavorite, useRemoveFavorite } from '@/hooks/useApi';
+
 interface FeaturedCardProps {
   id: number;
   images: string[];
@@ -5,30 +10,164 @@ interface FeaturedCardProps {
   description: string;
   area: string;
   city: string;
+  rating?: number;
+  reviewCount?: number;
+  facilities?: string[];
+  isFavorite?: boolean;
 }
 
-export default function FeaturedCard({ images, price, description, area, city }: FeaturedCardProps) {
+export default function FeaturedCard({ 
+  id,
+  images, 
+  price, 
+  description, 
+  area, 
+  city,
+  rating,
+  reviewCount = 0,
+  facilities = [],
+  isFavorite = false
+}: FeaturedCardProps) {
+  const [isLiked, setIsLiked] = useState(isFavorite);
+  const trackView = useTrackView();
+  const addFavorite = useAddFavorite();
+  const removeFavorite = useRemoveFavorite();
+
+  const handleCardClick = () => {
+    // Track view when card is clicked
+    trackView.mutate(id);
+    // Navigate to detail page (implement later)
+    console.log('Navigate to kos detail:', id);
+  };
+
+  const handleFavoriteClick = (e: React.MouseEvent) => {
+    e.stopPropagation(); // Prevent card click
+    
+    if (isLiked) {
+      removeFavorite.mutate(id, {
+        onSuccess: () => setIsLiked(false),
+      });
+    } else {
+      addFavorite.mutate(id, {
+        onSuccess: () => setIsLiked(true),
+      });
+    }
+  };
+
+  const renderStars = (rating: number) => {
+    const stars = [];
+    const fullStars = Math.floor(rating);
+    const hasHalfStar = rating % 1 !== 0;
+
+    for (let i = 0; i < fullStars; i++) {
+      stars.push(
+        <span key={i} className="text-yellow-400">★</span>
+      );
+    }
+
+    if (hasHalfStar) {
+      stars.push(
+        <span key="half" className="text-yellow-400">☆</span>
+      );
+    }
+
+    const emptyStars = 5 - stars.length;
+    for (let i = 0; i < emptyStars; i++) {
+      stars.push(
+        <span key={`empty-${i}`} className="text-gray-300">☆</span>
+      );
+    }
+
+    return stars;
+  };
+
   return (
-    <div className="bg-[#E1F6F2] border border-blue-100 rounded-xl shadow hover:shadow-lg transition flex gap-4 p-4">
-      <div className="w-32 h-32 flex-shrink-0 rounded-lg overflow-hidden bg-blue-50 flex items-center justify-center">
-        <img
-          src={images[0]}
-          alt="room"
-          className="object-cover w-full h-full"
-        />
-      </div>
-      <div className="flex-1 flex flex-col justify-between">
-        <div>
-          <div className="text-blue-400 font-bold text-lg mb-1">{price}/month</div>
-          <div className="text-gray-600 font-semibold">{description}</div>
-          <div className="text-gray-500">{area}, {city}</div>
+    <div 
+      className="bg-[#E1F6F2] border border-blue-100 rounded-xl shadow hover:shadow-lg transition-all duration-200 cursor-pointer relative group"
+      onClick={handleCardClick}
+    >
+      {/* Favorite button */}
+      <button
+        onClick={handleFavoriteClick}
+        className="absolute top-4 right-4 z-10 w-8 h-8 rounded-full bg-white/80 flex items-center justify-center hover:bg-white transition-all"
+        disabled={addFavorite.isPending || removeFavorite.isPending}
+      >
+        <span className={`text-lg ${isLiked ? 'text-red-500' : 'text-gray-400'}`}>
+          {isLiked ? '❤️' : '🤍'}
+        </span>
+      </button>
+
+      <div className="flex gap-4 p-4">
+        <div className="w-32 h-32 flex-shrink-0 rounded-lg overflow-hidden bg-blue-50 flex items-center justify-center">
+          <img
+            src={images[0] || '/images/rooms/room1.jpg'}
+            alt="room"
+            className="object-cover w-full h-full"
+            onError={(e) => {
+              const target = e.target as HTMLImageElement;
+              target.src = '/images/rooms/room1.jpg'; // Fallback image
+            }}
+          />
         </div>
-        <a
-          href="#"
-          className="mt-2 inline-block text-blue-400 hover:underline font-medium"
-        >
-          Lihat selengkapnya &gt;
-        </a>
+        
+        <div className="flex-1 flex flex-col justify-between">
+          <div>
+            <div className="flex items-center justify-between mb-1">
+              <div className="text-blue-400 font-bold text-lg">Rp {price}/bulan</div>
+              {rating && (
+                <div className="flex items-center gap-1">
+                  <div className="flex">{renderStars(rating)}</div>
+                  <span className="text-sm text-gray-500">({reviewCount})</span>
+                </div>
+              )}
+            </div>
+            
+            <div className="text-gray-600 font-semibold mb-1">{description}</div>
+            <div className="text-gray-500 mb-2">{area}, {city}</div>
+            
+            {/* Facilities */}
+            {facilities.length > 0 && (
+              <div className="flex flex-wrap gap-1 mb-2">
+                {facilities.slice(0, 3).map((facility, index) => (
+                  <span 
+                    key={index}
+                    className="text-xs bg-blue-100 text-blue-600 px-2 py-1 rounded-full"
+                  >
+                    {facility}
+                  </span>
+                ))}
+                {facilities.length > 3 && (
+                  <span className="text-xs text-gray-500">
+                    +{facilities.length - 3} lainnya
+                  </span>
+                )}
+              </div>
+            )}
+          </div>
+          
+          <div className="flex items-center justify-between">
+            <button
+              className="text-blue-400 hover:underline font-medium text-sm transition-all"
+              onClick={(e) => {
+                e.stopPropagation();
+                handleCardClick();
+              }}
+            >
+              Lihat selengkapnya →
+            </button>
+            
+            <button 
+              className="bg-blue-400 text-white px-3 py-1 rounded-md text-sm hover:bg-blue-500 transition-all"
+              onClick={(e) => {
+                e.stopPropagation();
+                // Handle booking (implement later)
+                console.log('Book kos:', id);
+              }}
+            >
+              Book
+            </button>
+          </div>
+        </div>
       </div>
     </div>
   );
