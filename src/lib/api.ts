@@ -214,7 +214,27 @@ export const authApi = {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ username, password }),
     });
-    return response.json();
+    
+    const result = await response.json();
+    
+    // Transform response to match expected format
+    if (response.ok && result.token) {
+      return {
+        success: true,
+        message: result.message || 'Login successful',
+        data: {
+          token: result.token,
+          user: result.user
+        }
+      };
+    } else {
+      return {
+        success: false,
+        message: result.message || 'Login failed',
+        data: { token: '', user: null },
+        error: result.error || 'Login failed'
+      };
+    }
   },
 
   register: async (userData: {

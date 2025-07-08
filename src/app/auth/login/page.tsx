@@ -24,10 +24,13 @@ export default function LoginPage() {
     setError('');
     
     try {
+      console.log('Attempting login with:', { username: formData.username, password: '***' });
       const response = await authApi.login(formData.username, formData.password);
+      console.log('Login response:', response);
       
-      if (response.success && response.data) {
+      if (response.success && response.data && response.data.token) {
         const { user, token } = response.data;
+        console.log('Login successful, user:', user);
         login(token, {
           userId: user.id,
           username: user.username,
@@ -39,10 +42,12 @@ export default function LoginPage() {
         router.push(from);
         router.refresh();
       } else {
-        setError(response.error || 'Login failed');
+        console.error('Login failed:', response);
+        setError(response.error || response.message || 'Login failed');
       }
     } catch (err: any) {
-      setError(err.message || 'Login failed');
+      console.error('Login error:', err);
+      setError(err.message || 'Network error occurred');
     } finally {
       setIsLoading(false);
     }
@@ -80,7 +85,7 @@ export default function LoginPage() {
         <form onSubmit={handleSubmit} className="space-y-6">
           <div>
             <label htmlFor="username" className="block text-sm font-medium text-gray-700 mb-2">
-              Username atau Email
+              Username
             </label>
             <input
               type="text"
@@ -90,7 +95,7 @@ export default function LoginPage() {
               onChange={handleChange}
               required
               className="w-full text-gray-600 px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors placeholder:text-gray-500"
-              placeholder="Masukkan username atau email"
+              placeholder="Masukkan username"
             />
           </div>
 
