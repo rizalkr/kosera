@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Header Navigation Test</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: Arial, sans-serif;
+        }
+        
+        .header {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            background: #E1F6F2;
+            z-index: 50;
+            padding: 1rem 2rem;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        
+        .dropdown {
+            position: relative;
+            display: inline-block;
+        }
+        
+        .dropdown-menu {
+            position: absolute;
+            right: 0;
+            top: 100%;
+            background: white;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            width: 200px;
+            z-index: 60;
+            opacity: 0;
+            transform: scale(0.95);
+            transition: all 0.2s ease;
+            pointer-events: none;
+        }
+        
+        .dropdown-menu.show {
+            opacity: 1;
+            transform: scale(1);
+            pointer-events: auto;
+        }
+        
+        .dropdown-menu button {
+            width: 100%;
+            padding: 0.75rem 1rem;
+            text-align: left;
+            background: none;
+            border: none;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+        
+        .dropdown-menu button:hover {
+            background-color: #f5f5f5;
+        }
+        
+        .dropdown-toggle {
+            background: #2563eb;
+            color: white;
+            border: none;
+            padding: 0.5rem 1rem;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        
+        .content {
+            margin-top: 80px;
+            padding: 2rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="dropdown">
+            <button class="dropdown-toggle" onclick="toggleDropdown()">
+                User Menu ▼
+            </button>
+            <div id="dropdown-menu" class="dropdown-menu">
+                <div style="padding: 1rem; border-bottom: 1px solid #eee;">
+                    <strong>Test User</strong><br>
+                    <small>SELLER</small>
+                </div>
+                <button onclick="navigate('/profile')">Profile</button>
+                <button onclick="navigate('/seller/kos')">Kos</button>
+                <button onclick="navigate('/favorites')">Favorit</button>
+                <hr style="margin: 0.5rem 0;">
+                <button onclick="logout()" style="color: #dc2626;">Keluar</button>
+            </div>
+        </div>
+    </div>
+    
+    <div class="content">
+        <h1>Header Navigation Test</h1>
+        <p>Click the User Menu button to test dropdown navigation.</p>
+        <div id="log"></div>
+    </div>
+    
+    <script>
+        function toggleDropdown() {
+            const menu = document.getElementById('dropdown-menu');
+            menu.classList.toggle('show');
+        }
+        
+        function navigate(path) {
+            const log = document.getElementById('log');
+            log.innerHTML += `<p>Navigating to: ${path}</p>`;
+            toggleDropdown(); // Close dropdown after navigation
+        }
+        
+        function logout() {
+            const log = document.getElementById('log');
+            log.innerHTML += `<p>Logging out...</p>`;
+            toggleDropdown(); // Close dropdown after logout
+        }
+        
+        // Close dropdown when clicking outside
+        document.addEventListener('click', function(e) {
+            const dropdown = document.querySelector('.dropdown');
+            if (!dropdown.contains(e.target)) {
+                document.getElementById('dropdown-menu').classList.remove('show');
+            }
+        });
+    </script>
+</body>
+</html>

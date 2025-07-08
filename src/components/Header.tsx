@@ -1,12 +1,16 @@
 "use client";
 import { useEffect, useState, useRef } from "react";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
+import Link from "next/link";
+import { useAuth } from "@/contexts/AuthContext";
 
 export default function Header() {
   const [scrolled, setScrolled] = useState(false);
   const [open, setOpen] = useState(false);
   const [servicesOpen, setServicesOpen] = useState(false);
   const pathname = usePathname();
+  const router = useRouter();
+  const { user, isAuthenticated, logout, isLoading } = useAuth();
 
   const servicesRef = useRef<HTMLDivElement>(null);
 
@@ -23,6 +27,61 @@ export default function Header() {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
+  useEffect(() => {
+    function handleScroll() {
+      setScrolled(window.scrollY > 10);
+    }
+    window.addEventListener("scroll", handleScroll);
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
+
+  // Helper functions untuk navigasi
+  const handleNavigation = (path: string) => {
+    router.push(path);
+    setOpen(false);
+  };
+
+  const handleLogout = async () => {
+    try {
+      await logout();
+      setOpen(false);
+      router.push('/auth/login');
+    } catch (error) {
+      console.error('Logout failed:', error);
+    }
+  };
+
+  // Navigation items berdasarkan role
+  const getNavigationItems = () => {
+    if (!user) return [];
+    
+    const items = [];
+
+    switch (user.role) {
+      case 'ADMIN':
+        items.push(
+          { label: 'Dashboard', href: '/admin/dashboard' },
+          { label: 'Profil', href: '/profile' }
+        );
+        break;
+      case 'SELLER':
+        items.push(
+          { label: 'Dashboard', href: '/seller/dashboard' },
+          { label: 'Profil', href: '/profile' }
+        );
+        break;
+      case 'RENTER':
+        items.push(
+          { label: 'Bookings', href: '/bookings' },
+          { label: 'Favorit', href: '/favorites' },
+          { label: 'Profil', href: '/profile' }
+        );
+        break;
+    }
+
+    return items;
+  };
+
   // Helper untuk cek active link
   const isActive = (href: string) => {
     if (href === "/") return pathname === "/";
@@ -35,7 +94,7 @@ export default function Header() {
         scrolled ? "bg-[#E1F6F2] backdrop-blur shadow-sm" : "bg-[#E1F6F2]"
       }`}
     >
-      <div className="max-w-7xl mx-auto flex items-center px-8 py-4 relative">
+      <div className="max-w-7xl mx-auto flex items-center px-8 py-4 relative overflow-visible">
         <div className="text-2xl font-bold text-blue-400">KOSERA.</div>
         {/* Hamburger for mobile */}
         <button
@@ -65,24 +124,24 @@ export default function Header() {
             scrolled
               ? "absolute left-1/2 -translate-x-1/2"
               : "ml-auto"
-          } hidden lg:flex`}
+          } hidden lg:flex overflow-visible`}
         >
-          <a
-            href="/"
+          <button
+            onClick={() => router.push("/")}
             className={`text-[#83B8C6] hover:underline transition-all duration-150 ${
               isActive("/") ? "underline font-semibold" : ""
             }`}
           >
             Home
-          </a>
-          <a
-            href="/list"
+          </button>
+          <button
+            onClick={() => router.push("/list")}
             className={`text-[#83B8C6] hover:underline transition-all duration-150 ${
               isActive("/list") ? "underline font-semibold" : ""
             }`}
           >
             Daftar
-          </a>
+          </button>
           <div className="relative inline-block" ref={servicesRef}>
             <button
               className="hover:underline text-[#83B8C6] flex items-center gap-1"
@@ -114,49 +173,65 @@ export default function Header() {
               `}
               style={{ transformOrigin: "top" }}
             >
-              <a
-                href="/services/angkutBarang"
-                className="px-4 py-2 hover:bg-blue-50 hover:underline transition rounded-t-2xl"
-                onClick={() => setServicesOpen(false)}
+              <button
+                onClick={() => {
+                  router.push("/services/angkutBarang");
+                  setServicesOpen(false);
+                }}
+                className="px-4 py-2 text-left hover:bg-blue-50 hover:underline transition rounded-t-2xl"
               >
                 Angkut Barang
-              </a>
-              <a
-                href="/services/titipBarang"
-                className="px-4 py-2 hover:bg-blue-50 hover:underline transition rounded-b-2xl"
-                onClick={() => setServicesOpen(false)}
+              </button>
+              <button
+                onClick={() => {
+                  router.push("/services/titipBarang");
+                  setServicesOpen(false);
+                }}
+                className="px-4 py-2 text-left hover:bg-blue-50 hover:underline transition rounded-b-2xl"
               >
                 Titip Barang
-              </a>
+              </button>
             </div>
           </div>
-          <a
-            href="/bookings"
-            className={`text-[#83B8C6] hover:underline transition-all duration-150 ${
-              isActive("/bookings") ? "underline font-semibold" : ""
-            }`}
-          >
-            Bookings
-          </a>
-          <a
-            href="/complaint"
-            className={`text-[#83B8C6] hover:underline transition-all duration-150 ${
-              isActive("/complaint") ? "underline font-semibold" : ""
-            }`}
-          >
-            Aduan
-          </a>
-          <a
-            href="/contact"
-            className={`text-[#83B8C6] hover:underline transition-all duration-150 ${
-              isActive("/contact") ? "underline font-semibold" : ""
-            }`}
-          >
-            Kontak
-          </a>
-          <button className="ml-4 bg-[#F3D17C] text-white px-4 py-2 rounded">
-            Login
-          </button>
+          {/* Dynamic navigation based on user role */}
+          {isAuthenticated && getNavigationItems().map((item) => (
+            <button
+              key={item.href}
+              onClick={() => router.push(item.href)}
+              className={`text-[#83B8C6] hover:underline transition-all duration-150 ${
+                isActive(item.href) ? "underline font-semibold" : ""
+              }`}
+            >
+              {item.label}
+            </button>
+          ))}
+          
+          {/* Authentication Section for Desktop */}
+          {isLoading ? (
+            <div className="ml-4 bg-gray-200 animate-pulse rounded px-4 py-2 w-20"></div>
+          ) : isAuthenticated ? (
+            <button
+              onClick={handleLogout}
+              className="ml-4 text-red-600 hover:text-red-700 px-4 py-2 border border-red-600 rounded hover:bg-red-50 transition-colors"
+            >
+              Keluar
+            </button>
+          ) : (
+            <div className="flex space-x-2 ml-4">
+              <Link
+                href="/auth/login"
+                className="text-blue-600 hover:text-blue-700 px-4 py-2 border border-blue-600 rounded hover:bg-blue-50 transition-colors"
+              >
+                Masuk
+              </Link>
+              <Link
+                href="/auth/register"
+                className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition-colors"
+              >
+                Daftar
+              </Link>
+            </div>
+          )}
         </nav>
         {/* Mobile nav */}
         <div
@@ -166,24 +241,28 @@ export default function Header() {
               : "opacity-0 pointer-events-none -translate-y-2"
           }`}
         >
-          <a
-            href="/"
+          <button
+            onClick={() => {
+              router.push("/");
+              setOpen(false);
+            }}
             className={`text-blue-400 hover:underline transition-all duration-150 ${
               isActive("/") ? "underline font-semibold" : ""
             }`}
-            onClick={() => setOpen(false)}
           >
             Home
-          </a>
-          <a
-            href="/list"
+          </button>
+          <button
+            onClick={() => {
+              router.push("/list");
+              setOpen(false);
+            }}
             className={`text-blue-400 hover:underline transition-all duration-150 ${
               isActive("/list") ? "underline font-semibold" : ""
             }`}
-            onClick={() => setOpen(false)}
           >
             Daftar
-          </a>
+          </button>
           {/* Mobile Services with submenu */}
           <div className="w-full flex flex-col items-center">
             <button
@@ -215,61 +294,73 @@ export default function Header() {
               `}
               style={{ transformOrigin: "top" }}
             >
-              <a
-                href="/services/angkutBarang"
-                className="px-4 py-2 text-blue-400 hover:underline transition rounded-t-2xl"
+              <button
                 onClick={() => {
+                  router.push("/services/angkutBarang");
                   setOpen(false);
                   setServicesOpen(false);
                 }}
+                className="px-4 py-2 text-blue-400 hover:underline transition rounded-t-2xl"
               >
                 Angkut Barang
-              </a>
-              <a
-                href="/services/titipBarang"
-                className="px-4 py-2 text-blue-400 hover:underline transition rounded-b-2xl"
+              </button>
+              <button
                 onClick={() => {
+                  router.push("/services/titipBarang");
                   setOpen(false);
                   setServicesOpen(false);
                 }}
+                className="px-4 py-2 text-blue-400 hover:underline transition rounded-b-2xl"
               >
                 Titip Barang
-              </a>
+              </button>
             </div>
           </div>
-          <a
-            href="/bookings"
-            className={`text-blue-400 hover:underline transition-all duration-150 ${
-              isActive("/bookings") ? "underline font-semibold" : ""
-            }`}
-            onClick={() => setOpen(false)}
-          >
-            Bookings
-          </a>
-          <a
-            href="/complaint"
-            className={`text-blue-400 hover:underline transition-all duration-150 ${
-              isActive("/complaint") ? "underline font-semibold" : ""
-            }`}
-            onClick={() => setOpen(false)}
-          >
-            Aduan
-          </a>
-          <a
-            href="/contact"
-            className={`text-blue-400 hover:underline transition-all duration-150 ${
-              isActive("/contact") ? "underline font-semibold" : ""
-            }`}
-            onClick={() => setOpen(false)}
-          >
-            Kontak
-          </a>
-          <button
-            className="bg-blue-600 text-white px-4 py-2 rounded"
-            onClick={() => setOpen(false)}
-          >
-            Login
-          </button>
+        
+          {/* Dynamic navigation based on user role */}
+          {isAuthenticated && getNavigationItems().map((item) => (
+            <button
+              key={item.href}
+              onClick={() => {
+                router.push(item.href);
+                setOpen(false);
+              }}
+              className={`text-blue-400 hover:underline transition-all duration-150 ${
+                isActive(item.href) ? "underline font-semibold" : ""
+              }`}
+            >
+              {item.label}
+            </button>
+          ))}
+          
+          {/* Authentication Section */}
+          {isLoading ? (
+            <div className="bg-gray-200 animate-pulse rounded px-4 py-2 w-20"></div>
+          ) : isAuthenticated ? (
+            <button
+              onClick={handleLogout}
+              className="text-red-600 hover:text-red-700 px-4 py-2 border border-red-600 rounded hover:bg-red-50 transition-colors"
+            >
+              Keluar
+            </button>
+          ) : (
+            <div className="flex space-x-2">
+              <Link
+                href="/auth/login"
+                className="text-blue-600 hover:text-blue-700 px-4 py-2 border border-blue-600 rounded hover:bg-blue-50 transition-colors"
+                onClick={() => setOpen(false)}
+              >
+                Masuk
+              </Link>
+              <Link
+                href="/auth/register"
+                className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition-colors"
+                onClick={() => setOpen(false)}
+              >
+                Daftar
+              </Link>
+            </div>
+          )}
         </div>
       </div>
     </header>
