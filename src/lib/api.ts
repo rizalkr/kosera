@@ -344,9 +344,24 @@ export const bookingsApi = {
   },
 };
 
+// User API
+export const userApi = {
+  // ...existing user API functions
+
+  updatePassword: async (currentPassword: string, newPassword: string): Promise<ApiResponse<any>> => {
+    const response = await fetch(`${API_BASE_URL}/api/user/password`, {
+      method: 'PUT',
+      headers: createAuthHeaders(),
+      body: JSON.stringify({ currentPassword, newPassword }),
+    });
+    return response.json();
+  },
+};
+
 export default {
   kos: kosApi,
   auth: authApi,
   favorites: favoritesApi,
   bookings: bookingsApi,
+  user: userApi,
 };

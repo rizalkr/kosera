@@ -40,10 +40,19 @@ export async function GET(request: NextRequest) {
     const offset = (page - 1) * limit;
     const status = searchParams.get('status');
 
-    // Build where conditions
-    let whereConditions = payload.role === 'ADMIN' 
-      ? undefined 
-      : eq(bookings.userId, payload.userId);
+    // Build where conditions based on user role
+    let whereConditions;
+    
+    if (payload.role === 'ADMIN') {
+      // Admin can see all bookings
+      whereConditions = undefined;
+    } else if (payload.role === 'SELLER') {
+      // Seller can see bookings for their kos (posts they created)
+      whereConditions = eq(posts.userId, payload.userId);
+    } else {
+      // Renter can only see their own bookings
+      whereConditions = eq(bookings.userId, payload.userId);
+    }
 
     if (status) {
       const statusCondition = eq(bookings.status, status);
@@ -75,14 +84,15 @@ export async function GET(request: NextRequest) {
         title: posts.title,
         price: posts.price,
       },
-      ...(payload.role === 'ADMIN' && {
+      // Show user details for admin and seller
+      ...(payload.role === 'ADMIN' || payload.role === 'SELLER') && {
         user: {
           id: users.id,
           name: users.name,
           username: users.username,
           contact: users.contact,
         },
-      }),
+      },
     };
 
     const userBookings = await db
@@ -100,6 +110,8 @@ export async function GET(request: NextRequest) {
     const totalBookings = await db
       .select({ count: count() })
       .from(bookings)
+      .innerJoin(kos, eq(bookings.kosId, kos.id))
+      .innerJoin(posts, eq(kos.postId, posts.id))
       .where(whereConditions);
 
     const totalPages = Math.ceil((totalBookings[0]?.count || 0) / limit);
