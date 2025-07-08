@@ -3,7 +3,7 @@
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import ProtectedRoute from '@/components/ProtectedRoute';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useAuthGuard } from '@/hooks/useAuthGuard';
 
 type BookingItem = {
@@ -37,6 +37,15 @@ const initialBookings: BookingItem[] = [
 export default function BookingsPage() {
   const [bookings, setBookings] = useState(initialBookings);
   const { user } = useAuthGuard();
+
+  // Redirect based on user role
+  useEffect(() => {
+    if (user?.role === 'RENTER') {
+      window.location.href = '/renter/bookings';
+    } else if (user?.role === 'SELLER') {
+      window.location.href = '/seller/kos';
+    }
+  }, [user]);
 
   const total = bookings.reduce((sum, item) => sum + item.price * item.nights, 0);
 
