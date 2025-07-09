@@ -1,17 +1,18 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { withSellerOrAdmin, AuthenticatedRequest } from '@/lib/middleware';
 import { db } from '@/db';
-import { kos, posts } from '@/db/schema';
+import { kos, posts, users } from '@/db/schema';
 import { eq, and } from 'drizzle-orm';
 
 // GET /api/kos/[id] - Get specific kos by ID (public)
-export async function GET(request: NextRequest, { params }: { params: { id: string } }) {
+export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
-    const kosId = parseInt(params.id);
+    const { id } = await params;
+    const kosId = parseInt(id);
 
     if (isNaN(kosId)) {
       return NextResponse.json(
-        { error: 'Invalid kos ID' },
+        { success: false, error: 'Invalid kos ID' },
         { status: 400 }
       );
     }
@@ -24,28 +25,44 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
         address: kos.address,
         city: kos.city,
         facilities: kos.facilities,
-        price: posts.price,
+        latitude: kos.latitude,
+        longitude: kos.longitude,
+        // Post data
         title: posts.title,
         description: posts.description,
-        totalPost: posts.totalPost,
-        totalPenjualan: posts.totalPenjualan,
+        price: posts.price,
+        isFeatured: posts.isFeatured,
+        viewCount: posts.viewCount,
+        favoriteCount: posts.favoriteCount,
+        averageRating: posts.averageRating,
+        reviewCount: posts.reviewCount,
+        photoCount: posts.photoCount,
         createdAt: posts.createdAt,
-        updatedAt: posts.updatedAt
+        updatedAt: posts.updatedAt,
+        // Owner data
+        owner: {
+          id: users.id,
+          name: users.name,
+          username: users.username,
+          contact: users.contact,
+        },
       })
       .from(kos)
       .innerJoin(posts, eq(kos.postId, posts.id))
+      .innerJoin(users, eq(posts.userId, users.id))
       .where(eq(kos.id, kosId))
       .limit(1)
       .execute();
 
     if (result.length === 0) {
       return NextResponse.json(
-        { error: 'Kos not found' },
+        { success: false, error: 'Kos not found' },
         { status: 404 }
       );
     }
 
     return NextResponse.json({
+      success: true,
       message: 'Kos retrieved successfully',
       data: result[0]
     });
