@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import Link from 'next/link';
 import Header from '@/components/Header';
 import FilterBar from '@/components/FilterBar';
 import FeaturedList from '@/components/FeaturedList';
@@ -84,7 +85,7 @@ export default function HomePage() {
           
           <div className="space-y-6">
             {kosList.map((kos: KosData) => (
-              <div key={kos.id} className="bg-[#E1F6F2] border border-blue-100 rounded-xl shadow hover:shadow-lg transition-all duration-200 cursor-pointer relative group">
+              <div key={kos.id} className="bg-[#E1F6F2] border border-blue-100 rounded-xl shadow hover:shadow-lg transition-all duration-200 relative group">
                 {/* Favorite Button */}
                 <button
                   onClick={(e) => {
@@ -94,7 +95,7 @@ export default function HomePage() {
                       console.log('Toggle favorite for kos:', kos.id);
                     }
                   }}
-                  className="absolute top-3 right-3 p-2 rounded-full bg-white shadow-md hover:shadow-lg transition-all z-10"
+                  className="absolute top-3 right-3 p-2 rounded-full bg-white shadow-md hover:shadow-lg transition-all z-20"
                 >
                   <svg 
                     className="w-5 h-5 text-gray-400 hover:text-red-500 transition-colors" 
@@ -117,18 +118,20 @@ export default function HomePage() {
                   
                   <div className="flex-1 flex flex-col justify-between">
                     <div>
-                      <div className="flex items-center justify-between mb-1">
+                      <div className="mb-1">
                         <div className="text-blue-400 font-bold text-lg">Rp {kos.price.toLocaleString()}/bulan</div>
-                        {kos.averageRating && (
-                          <div className="flex items-center gap-1">
-                            <span className="text-yellow-400">★</span>
-                            <span className="text-sm text-gray-600">{parseFloat(kos.averageRating).toFixed(1)} ({kos.reviewCount})</span>
-                          </div>
-                        )}
                       </div>
                       
                       <div className="text-gray-600 font-semibold mb-1">{kos.description}</div>
                       <div className="text-gray-500 mb-2">{kos.address}, {kos.city}</div>
+                      
+                      {/* Rating di tengah */}
+                      {kos.averageRating && (
+                        <div className="flex items-center gap-1 mb-2">
+                          <span className="text-yellow-400">★</span>
+                          <span className="text-sm text-gray-600">{parseFloat(kos.averageRating).toFixed(1)} ({kos.reviewCount})</span>
+                        </div>
+                      )}
                       
                       {/* Facilities */}
                       {kos.facilities && kos.facilities.trim() && (
@@ -151,18 +154,24 @@ export default function HomePage() {
                     </div>
                     
                     <div className="flex items-center justify-between">
-                      <button className="text-blue-400 hover:underline font-medium text-sm transition-all">
+                      <Link 
+                        href={`/kos/${kos.id}/view`} 
+                        className="text-blue-400 hover:underline font-medium text-sm transition-all relative z-10 cursor-pointer"
+                        onClick={(e) => {
+                          console.log('Link clicked:', `/kos/${kos.id}/view`);
+                        }}
+                      >
                         Lihat selengkapnya →
-                      </button>
-                      
+                      </Link>
                       <button 
-                        onClick={() => {
+                        onClick={(e) => {
+                          e.stopPropagation();
                           if (checkBookingPermission()) {
                             // Handle booking logic here
                             console.log('Booking kos:', kos.id);
                           }
                         }}
-                        className="bg-blue-400 text-white px-3 py-1 rounded-md text-sm hover:bg-blue-500 transition-all"
+                        className="bg-blue-400 text-white px-3 py-1 rounded-md text-sm hover:bg-blue-500 transition-all relative z-10"
                       >
                         {isAuthenticated ? 'Book' : 'Login untuk Book'}
                       </button>
