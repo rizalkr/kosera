@@ -3,6 +3,10 @@ import { db } from '@/db';
 import { kos, posts } from '@/db/schema';
 import { eq, sql } from 'drizzle-orm';
 
+// In-memory cache to prevent duplicate view counts (simple rate limiting)
+const viewCache = new Map<string, number>();
+const CACHE_DURATION = 60000; // 1 minute in milliseconds
+
 export async function POST(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
@@ -17,6 +21,37 @@ export async function POST(
         { success: false, error: 'Invalid kos ID' },
         { status: 400 }
       );
+    }
+
+    // Get client IP for rate limiting
+    const clientIP = request.headers.get('x-forwarded-for') || 
+                    request.headers.get('x-real-ip') || 
+                    'unknown';
+    
+    const cacheKey = `${clientIP}-${kosId}`;
+    const now = Date.now();
+    
+    // Check if this IP already viewed this kos recently
+    if (viewCache.has(cacheKey)) {
+      const lastView = viewCache.get(cacheKey)!;
+      if (now - lastView < CACHE_DURATION) {
+        // Return success but don't increment count
+        return NextResponse.json({
+          success: true,
+          message: 'View already counted recently',
+          data: { kosId, cached: true },
+        });
+      }
+    }
+
+    // Update cache
+    viewCache.set(cacheKey, now);
+    
+    // Clean old cache entries (simple cleanup)
+    if (viewCache.size > 1000) {
+      const oldEntries = Array.from(viewCache.entries())
+        .filter(([_, timestamp]) => now - timestamp > CACHE_DURATION);
+      oldEntries.forEach(([key]) => viewCache.delete(key));
     }
 
     // Check if kos exists and get the post ID

@@ -1,7 +1,7 @@
 'use client';
 
 import { useParams } from 'next/navigation';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import Header from '@/components/Header';
@@ -21,17 +21,18 @@ interface Review {
   };
 }
 
+interface ReviewStats {
+  averageRating: number;
+  totalReviews: number;
+  ratingDistribution: { '5': number; '4': number; '3': number; '2': number; '1': number };
+}
+
 export default function KosDetailPage() {
   const params = useParams();
   const kosId = parseInt(params.id as string);
-  const [reviews, setReviews] = useState<Review[]>([]);
-  const [reviewStats, setReviewStats] = useState({
-    averageRating: 0,
-    totalReviews: 0,
-    ratingDistribution: { '5': 0, '4': 0, '3': 0, '2': 0, '1': 0 }
-  });
   const [showBookingModal, setShowBookingModal] = useState(false);
   const [activeImageIndex, setActiveImageIndex] = useState(0);
+  const viewTracked = useRef(false); // Track if view has been counted
 
   const { data: kosData, isLoading, error } = useKosDetails(kosId);
   const { data: favoritesData } = useFavorites();
@@ -40,36 +41,14 @@ export default function KosDetailPage() {
   const removeFavorite = useRemoveFavorite();
   const { checkBookingPermission, checkFavoritePermission, isAuthenticated } = useAuthGuard();
 
-  // Track view when component mounts
+  // Track view when component mounts (only once per session)
   useEffect(() => {
-    if (kosId && !isNaN(kosId)) {
+    if (kosId && !isNaN(kosId) && !viewTracked.current) {
       trackView.mutate(kosId);
+      viewTracked.current = true; // Mark as tracked
     }
-  }, [kosId, trackView]);
-
-  // Fetch reviews
-  useEffect(() => {
-    const fetchReviews = async () => {
-      try {
-        const response = await fetch(`/api/kos/${kosId}/reviews`);
-        if (response.ok) {
-          const data = await response.json();
-          setReviews(data.data.reviews || []);
-          setReviewStats(data.data.stats || {
-            averageRating: 0,
-            totalReviews: 0,
-            ratingDistribution: { '5': 0, '4': 0, '3': 0, '2': 0, '1': 0 }
-          });
-        }
-      } catch (error) {
-        console.error('Error fetching reviews:', error);
-      }
-    };
-
-    if (kosId && !isNaN(kosId)) {
-      fetchReviews();
-    }
-  }, [kosId]); // Removed reviewStats from dependencies to prevent infinite loop
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [kosId]); // Only depend on kosId
 
   // Sample images for now (you can replace with actual kos photos from API)
   const sampleImages = [
@@ -185,11 +164,11 @@ export default function KosDetailPage() {
                 <h1 className="text-3xl font-bold text-gray-800 mb-2">{kos.name}</h1>
                 <p className="text-gray-600 text-lg mb-2">{kos.address}, {kos.city}</p>
                 <div className="flex items-center gap-4 mb-4">
-                  {kos.averageRating && (
+                  {kos.reviews?.statistics?.averageRating > 0 && (
                     <div className="flex items-center gap-1">
-                      {renderStars(Math.round(parseFloat(kos.averageRating)))}
+                      {renderStars(Math.round(parseFloat(kos.reviews.statistics.averageRating)))}
                       <span className="text-gray-600 ml-2">
-                        {parseFloat(kos.averageRating).toFixed(1)} ({kos.reviewCount} ulasan)
+                        {parseFloat(kos.reviews.statistics.averageRating).toFixed(1)} ({kos.reviews.statistics.totalReviews} ulasan)
                       </span>
                     </div>
                   )}
@@ -293,19 +272,19 @@ export default function KosDetailPage() {
                 <section>
                   <div className="flex items-center justify-between mb-4">
                     <h2 className="text-xl font-semibold text-gray-800">
-                      Ulasan ({kos.reviewCount})
+                      Ulasan ({kos.reviews?.statistics?.totalReviews || 0})
                     </h2>
-                    {reviewStats.averageRating > 0 && (
+                    {kos.reviews?.statistics?.averageRating > 0 && (
                       <div className="flex items-center gap-2">
-                        <div className="flex">{renderStars(Math.round(reviewStats.averageRating))}</div>
-                        <span className="text-gray-600">{reviewStats.averageRating.toFixed(1)}</span>
+                        <div className="flex">{renderStars(Math.round(parseFloat(kos.reviews.statistics.averageRating)))}</div>
+                        <span className="text-gray-600">{parseFloat(kos.reviews.statistics.averageRating).toFixed(1)}</span>
                       </div>
                     )}
                   </div>
 
-                  {reviews.length > 0 ? (
+                  {kos.reviews?.data?.length > 0 ? (
                     <div className="space-y-4">
-                      {reviews.slice(0, 5).map((review) => (
+                      {kos.reviews.data.map((review: Review) => (
                         <div key={review.id} className="border-b border-gray-200 pb-4">
                           <div className="flex items-start justify-between mb-2">
                             <div>
@@ -319,7 +298,7 @@ export default function KosDetailPage() {
                           <p className="text-gray-600">{review.comment}</p>
                         </div>
                       ))}
-                      {reviews.length > 5 && (
+                      {kos.reviews.pagination.hasNext && (
                         <button className="text-blue-600 hover:underline font-medium">
                           Lihat semua ulasan →
                         </button>
@@ -379,7 +358,7 @@ export default function KosDetailPage() {
                     </div>
                     <div className="flex justify-between">
                       <span className="text-gray-600">Ulasan:</span>
-                      <span className="font-medium text-gray-500">{kos.reviewCount}</span>
+                      <span className="font-medium text-gray-500">{kos.reviews?.statistics?.totalReviews || 0}</span>
                     </div>
                   </div>
                 </div>
