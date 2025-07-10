@@ -157,17 +157,6 @@ export default function FeaturedCard({
             >
               Lihat selengkapnya →
             </Link>
-            
-            <button 
-              className="bg-blue-400 text-white px-3 py-1 rounded-md text-sm hover:bg-blue-500 transition-all"
-              onClick={(e) => {
-                e.stopPropagation();
-                // Handle booking (implement later)
-                console.log('Book kos:', id);
-              }}
-            >
-              Book
-            </button>
           </div>
         </div>
       </div>

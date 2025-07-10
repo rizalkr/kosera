@@ -1,54 +1,48 @@
 'use client';
 
 import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import ProtectedRoute from '@/components/ProtectedRoute';
 import { useAuthGuard } from '@/hooks/useAuthGuard';
+import { useBookings, useUpdateBooking } from '@/hooks/useApi';
 
 type BookingStatus = 'pending' | 'confirmed' | 'cancelled' | 'completed';
 
 type BookingItem = {
   id: number;
-  kosName: string;
-  address: string;
-  price: number;
-  checkIn: string;
-  checkOut: string;
+  kos: {
+    id: number;
+    name: string;
+    address: string;
+    city: string;
+    facilities: string;
+  };
+  post: {
+    id: number;
+    title: string;
+    price: number;
+  };
+  checkInDate: string;
+  checkOutDate: string;
+  duration: number;
+  totalPrice: number;
   status: BookingStatus;
-  image: string;
-  bookingDate: string;
+  notes?: string;
+  createdAt: string;
+  updatedAt: string;
 };
 
-const mockBookings: BookingItem[] = [
-  {
-    id: 1,
-    kosName: "Kos Putri Mawar",
-    address: "Jl. Mawar No. 12, Semarang",
-    price: 500000,
-    checkIn: "2024-01-15",
-    checkOut: "2024-02-15",
-    status: "confirmed",
-    image: "/images/kos1.jpg",
-    bookingDate: "2024-01-10"
-  },
-  {
-    id: 2,
-    kosName: "Kos Putra Melati",
-    address: "Jl. Melati No. 8, Semarang",
-    price: 450000,
-    checkIn: "2024-02-01",
-    checkOut: "2024-03-01",
-    status: "pending",
-    image: "/images/kos2.jpg",
-    bookingDate: "2024-01-25"
-  }
-];
-
 export default function RenterBookingsPage() {
-  const [bookings, setBookings] = useState<BookingItem[]>(mockBookings);
-  const [selectedStatus, setSelectedStatus] = useState<BookingStatus | 'all'>('all');
+  const router = useRouter();
   const { user } = useAuthGuard();
+  const { data: bookingsData, isLoading, error } = useBookings();
+  const updateBookingMutation = useUpdateBooking();
+  const [selectedStatus, setSelectedStatus] = useState<BookingStatus | 'all'>('all');
+
+  // Extract bookings from API data
+  const bookings: BookingItem[] = (bookingsData?.data as any)?.bookings || [];
 
   const getStatusColor = (status: BookingStatus) => {
     switch (status) {
@@ -86,11 +80,45 @@ export default function RenterBookingsPage() {
 
   const handleCancelBooking = (id: number) => {
     if (confirm('Apakah Anda yakin ingin membatalkan booking ini?')) {
-      setBookings(bookings.map(booking => 
-        booking.id === id ? { ...booking, status: 'cancelled' } : booking
-      ));
+      updateBookingMutation.mutate({ 
+        id, 
+        status: 'cancelled', 
+        notes: 'Booking dibatalkan oleh pengguna' 
+      });
     }
   };
+
+  if (isLoading) {
+    return (
+      <ProtectedRoute requireAuth={true} allowedRoles={['RENTER']}>
+        <div className="min-h-screen bg-[#A9E4DE] pt-20">
+          <Header />
+          <main className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+            <div className="bg-white rounded-2xl shadow-lg p-8">
+              <div className="text-center text-gray-500">Memuat data booking...</div>
+            </div>
+          </main>
+          <Footer />
+        </div>
+      </ProtectedRoute>
+    );
+  }
+
+  if (error) {
+    return (
+      <ProtectedRoute requireAuth={true} allowedRoles={['RENTER']}>
+        <div className="min-h-screen bg-[#A9E4DE] pt-20">
+          <Header />
+          <main className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+            <div className="bg-white rounded-2xl shadow-lg p-8">
+              <div className="text-center text-red-500">Error memuat data: {error.message}</div>
+            </div>
+          </main>
+          <Footer />
+        </div>
+      </ProtectedRoute>
+    );
+  }
 
   return (
     <ProtectedRoute requireAuth={true} allowedRoles={['RENTER']}>
@@ -170,45 +198,49 @@ export default function RenterBookingsPage() {
                   <div key={booking.id} className="bg-gray-50 rounded-lg p-6 hover:shadow-md transition-shadow">
                     <div className="flex flex-col md:flex-row gap-4">
                       <img
-                        src={booking.image}
-                        alt={booking.kosName}
+                        src="/images/profile.jpg"
+                        alt={booking.post.title}
                         className="w-full md:w-48 h-32 object-cover rounded-lg"
                       />
                       <div className="flex-1">
                         <div className="flex items-start justify-between mb-2">
-                          <h3 className="text-xl font-semibold text-gray-800">{booking.kosName}</h3>
+                          <h3 className="text-xl font-semibold text-gray-800">{booking.post.title}</h3>
                           <span className={`px-3 py-1 rounded-full text-xs font-semibold ${getStatusColor(booking.status)}`}>
                             {getStatusText(booking.status)}
                           </span>
                         </div>
-                        <p className="text-gray-600 text-sm mb-2">{booking.address}</p>
+                        <p className="text-gray-600 text-sm mb-2">{booking.kos.address}, {booking.kos.city}</p>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                           <div>
                             <p className="text-sm text-gray-500">Check-in</p>
-                            <p className="font-medium">{new Date(booking.checkIn).toLocaleDateString('id-ID')}</p>
+                            <p className="font-medium text-gray-500">{new Date(booking.checkInDate).toLocaleDateString('id-ID')}</p>
                           </div>
                           <div>
                             <p className="text-sm text-gray-500">Check-out</p>
-                            <p className="font-medium">{new Date(booking.checkOut).toLocaleDateString('id-ID')}</p>
+                            <p className="font-medium text-gray-500">{new Date(booking.checkOutDate).toLocaleDateString('id-ID')}</p>
                           </div>
                         </div>
                         <div className="flex items-center justify-between">
                           <div>
                             <p className="text-sm text-gray-500">Total Harga</p>
                             <p className="text-xl font-bold text-blue-600">
-                              Rp {booking.price.toLocaleString()}
+                              Rp {booking.totalPrice.toLocaleString()}
                             </p>
                           </div>
                           <div className="flex space-x-2">
                             {booking.status === 'pending' && (
                               <button
                                 onClick={() => handleCancelBooking(booking.id)}
-                                className="bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700 transition-colors text-sm"
+                                disabled={updateBookingMutation.isPending}
+                                className="bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700 transition-colors text-sm disabled:opacity-50"
                               >
-                                Batalkan
+                                {updateBookingMutation.isPending ? 'Membatalkan...' : 'Batalkan'}
                               </button>
                             )}
-                            <button className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition-colors text-sm">
+                            <button 
+                              onClick={() => router.push(`/renter/bookings/${booking.id}`)}
+                              className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition-colors text-sm"
+                            >
                               Lihat Detail
                             </button>
                           </div>

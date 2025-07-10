@@ -3,40 +3,38 @@
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import ProtectedRoute from '@/components/ProtectedRoute';
-import { useState, useEffect } from 'react';
+import { useEffect } from 'react';
 import { useAuthGuard } from '@/hooks/useAuthGuard';
+import { useBookings, useUpdateBooking } from '@/hooks/useApi';
 
 type BookingItem = {
   id: number;
-  name: string;
-  address: string;
-  price: number;
-  nights: number;
-  image: string;
+  kos: {
+    id: number;
+    name: string;
+    address: string;
+    city: string;
+    facilities: string;
+  };
+  post: {
+    id: number;
+    title: string;
+    price: number;
+  };
+  checkInDate: string;
+  checkOutDate: string;
+  duration: number;
+  totalPrice: number;
+  status: string;
+  notes?: string;
+  createdAt: string;
+  updatedAt: string;
 };
 
-const initialBookings: BookingItem[] = [
-  {
-    id: 1,
-    name: "Kos Putri Mawar",
-    address: "Jl. Mawar No. 12, Semarang",
-    price: 500000,
-    nights: 1,
-    image: "/images/kos1.jpg",
-  },
-  {
-    id: 2,
-    name: "Kos Putra Melati",
-    address: "Jl. Melati No. 8, Semarang",
-    price: 450000,
-    nights: 1,
-    image: "/images/kos2.jpg",
-  },
-];
-
 export default function BookingsPage() {
-  const [bookings, setBookings] = useState(initialBookings);
   const { user } = useAuthGuard();
+  const { data: bookingsData, isLoading, error } = useBookings();
+  const updateBookingMutation = useUpdateBooking();
 
   // Redirect based on user role
   useEffect(() => {
@@ -47,16 +45,49 @@ export default function BookingsPage() {
     }
   }, [user]);
 
-  const total = bookings.reduce((sum, item) => sum + item.price * item.nights, 0);
+  // Extract bookings from API data  
+  const bookings: BookingItem[] = (bookingsData?.data as any)?.bookings || [];
+  const total = bookings.reduce((sum: number, item: BookingItem) => sum + item.totalPrice, 0);
 
   function handleRemove(id: number) {
-    setBookings(bookings.filter(item => item.id !== id));
+    updateBookingMutation.mutate({ 
+      id, 
+      status: 'cancelled', 
+      notes: 'Booking dibatalkan oleh pengguna' 
+    });
   }
 
   function handleConfirm() {
     alert("Booking berhasil dikonfirmasi!");
     // Tambahkan logic kirim ke backend di sini jika ada
-    setBookings([]);
+  }
+
+  if (isLoading) {
+    return (
+      <ProtectedRoute requireAuth={true} allowedRoles={['RENTER']}>
+        <div className="min-h-screen px-8 py-6 bg-[#A9E4DE] pt-20">
+          <Header />
+          <main className="max-w-3xl mx-auto mt-12 bg-white rounded-xl shadow p-8">
+            <div className="text-center text-gray-500">Memuat data booking...</div>
+          </main>
+          <Footer />
+        </div>
+      </ProtectedRoute>
+    );
+  }
+
+  if (error) {
+    return (
+      <ProtectedRoute requireAuth={true} allowedRoles={['RENTER']}>
+        <div className="min-h-screen px-8 py-6 bg-[#A9E4DE] pt-20">
+          <Header />
+          <main className="max-w-3xl mx-auto mt-12 bg-white rounded-xl shadow p-8">
+            <div className="text-center text-red-500">Error memuat data: {error.message}</div>
+          </main>
+          <Footer />
+        </div>
+      </ProtectedRoute>
+    );
   }
 
   return (
@@ -75,17 +106,27 @@ export default function BookingsPage() {
               <ul className="divide-y">
                 {bookings.map(item => (
                   <li key={item.id} className="flex items-center gap-4 py-4">
-                    <img src={item.image} alt={item.name} className="w-20 h-20 object-cover rounded-lg border" />
+                    <img src="/images/profile.jpg" alt={item.kos.name} className="w-20 h-20 object-cover rounded-lg border" />
                     <div className="flex-1">
-                      <div className="font-semibold text-blue-500">{item.name}</div>
-                      <div className="text-gray-600 text-sm">{item.address}</div>
-                      <div className="text-gray-700 mt-1">Harga: <span className="font-semibold">Rp {item.price.toLocaleString()}</span></div>
+                      <div className="font-semibold text-blue-500">{item.post.title}</div>
+                      <div className="text-gray-600 text-sm">{item.kos.address}, {item.kos.city}</div>
+                      <div className="text-gray-700 mt-1">Harga: <span className="font-semibold text-blue-500">Rp {item.post.price.toLocaleString()}</span></div>
+                      <div className="text-sm text-gray-500 mt-1">
+                        Check-in: {new Date(item.checkInDate).toLocaleDateString('id-ID')} | 
+                        Durasi: {item.duration} bulan | 
+                        Status: <span className={`font-semibold ${item.status === 'confirmed' ? 'text-green-600' : item.status === 'pending' ? 'text-yellow-600' : 'text-red-600'}`}>
+                          {item.status === 'confirmed' ? 'Terkonfirmasi' : 
+                           item.status === 'pending' ? 'Menunggu' : 
+                           item.status === 'cancelled' ? 'Dibatalkan' : 'Selesai'}
+                        </span>
+                      </div>
                     </div>
                     <button
                       onClick={() => handleRemove(item.id)}
-                      className="text-red-500 hover:underline text-sm"
+                      disabled={updateBookingMutation.isPending}
+                      className="text-red-500 hover:underline text-sm disabled:opacity-50"
                     >
-                      Hapus
+                      {updateBookingMutation.isPending ? 'Membatalkan...' : 'Batalkan'}
                     </button>
                   </li>
                 ))}

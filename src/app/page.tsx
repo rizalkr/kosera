@@ -153,7 +153,7 @@ export default function HomePage() {
                       )}
                     </div>
                     
-                    <div className="flex items-center justify-between">
+                    <div className="flex items-center justify-end">
                       <Link 
                         href={`/kos/${kos.id}/view`} 
                         className="text-blue-400 hover:underline font-medium text-sm transition-all relative z-10 cursor-pointer"
@@ -163,18 +163,6 @@ export default function HomePage() {
                       >
                         Lihat selengkapnya →
                       </Link>
-                      <button 
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          if (checkBookingPermission()) {
-                            // Handle booking logic here
-                            console.log('Booking kos:', kos.id);
-                          }
-                        }}
-                        className="bg-blue-400 text-white px-3 py-1 rounded-md text-sm hover:bg-blue-500 transition-all relative z-10"
-                      >
-                        {isAuthenticated ? 'Book' : 'Login untuk Book'}
-                      </button>
                     </div>
                   </div>
                 </div>
