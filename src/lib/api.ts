@@ -285,7 +285,7 @@ export const authApi = {
 
 // Favorites API
 export const favoritesApi = {
-  getFavorites: async (): Promise<ApiResponse<PaginatedResponse<any>>> => {
+  getFavorites: async (): Promise<ApiResponse<{ favorites: any[]; pagination: any }>> => {
     const response = await fetch(`${API_BASE_URL}/api/user/favorites`, {
       headers: createAuthHeaders(),
     });

@@ -1,11 +1,12 @@
 'use client';
 
 import FeaturedCard from './FeaturedCard';
-import { useKosFeatured } from '@/hooks/useApi';
+import { useKosFeatured, useFavorites } from '@/hooks/useApi';
 import { KosData } from '@/lib/api';
 
 export default function FeaturedList() {
   const { data, isLoading, error } = useKosFeatured();
+  const { data: favoritesData } = useFavorites();
 
   // Debug logs
   console.log('FeaturedList Debug:', { data, isLoading, error });
@@ -44,6 +45,11 @@ export default function FeaturedList() {
   }
 
   const kosList = data?.data?.data || [];
+  
+  // Extract favorite kos IDs
+  const favoriteKosIds = new Set(
+    favoritesData?.data?.favorites?.map((fav: any) => fav.kos.id) || []
+  );
 
   if (kosList.length === 0) {
     return (
@@ -67,6 +73,7 @@ export default function FeaturedList() {
           rating={parseFloat(kos.averageRating || '0')}
           reviewCount={kos.reviewCount}
           facilities={kos.facilities.split(', ')}
+          isFavorite={favoriteKosIds.has(kos.id)}
         />
       ))}
     </div>

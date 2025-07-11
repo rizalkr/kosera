@@ -25,7 +25,7 @@ export default function MapSection() {
   }, []);
 
   return (
-    <div className="h-80 rounded-lg overflow-hidden shadow z-[-1]">
+    <div className="relative h-80 rounded-lg overflow-hidden shadow-md">
       {position ? (
         <LeafletMap position={position} />
       ) : (

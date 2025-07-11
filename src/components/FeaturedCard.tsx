@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import Link from 'next/link';
 import { useTrackView, useAddFavorite, useRemoveFavorite } from '@/hooks/useApi';
 import { useProtectedAction } from '@/hooks/useProtectedAction';
 
@@ -30,17 +31,9 @@ export default function FeaturedCard({
   isFavorite = false
 }: FeaturedCardProps) {
   const [isLiked, setIsLiked] = useState(isFavorite);
-  const trackView = useTrackView();
-  const addFavorite = useAddFavorite();
+  const trackView = useTrackView();  const addFavorite = useAddFavorite();
   const removeFavorite = useRemoveFavorite();
   const { executeProtectedAction } = useProtectedAction();
-
-  const handleCardClick = () => {
-    // Track view when card is clicked
-    trackView.mutate(id);
-    // Navigate to detail page (implement later)
-    console.log('Navigate to kos detail:', id);
-  };
 
   const handleFavoriteClick = (e: React.MouseEvent) => {
     e.stopPropagation(); // Prevent card click
@@ -90,7 +83,6 @@ export default function FeaturedCard({
   return (
     <div 
       className="bg-[#E1F6F2] border border-blue-100 rounded-xl shadow hover:shadow-lg transition-all duration-200 cursor-pointer relative group"
-      onClick={handleCardClick}
     >
       {/* Favorite button */}
       <button
@@ -118,18 +110,20 @@ export default function FeaturedCard({
         
         <div className="flex-1 flex flex-col justify-between">
           <div>
-            <div className="flex items-center justify-between mb-1">
+            <div className="mb-1">
               <div className="text-blue-400 font-bold text-lg">Rp {price}/bulan</div>
-              {rating && (
-                <div className="flex items-center gap-1">
-                  <div className="flex">{renderStars(rating)}</div>
-                  <span className="text-sm text-gray-500">({reviewCount})</span>
-                </div>
-              )}
             </div>
             
             <div className="text-gray-600 font-semibold mb-1">{description}</div>
             <div className="text-gray-500 mb-2">{area}, {city}</div>
+            
+            {/* Rating di tengah */}
+            {rating && (
+              <div className="flex items-center gap-1 mb-2">
+                <div className="flex">{renderStars(rating)}</div>
+                <span className="text-sm text-gray-500">({reviewCount})</span>
+              </div>
+            )}
             
             {/* Facilities */}
             {facilities.length > 0 && (
@@ -152,26 +146,17 @@ export default function FeaturedCard({
           </div>
           
           <div className="flex items-center justify-between">
-            <button
-              className="text-blue-400 hover:underline font-medium text-sm transition-all"
+            <Link
+              href={`/kos/${id}/view`}
+              className="text-blue-400 hover:underline font-medium text-sm transition-all relative z-10"
               onClick={(e) => {
                 e.stopPropagation();
-                handleCardClick();
+                trackView.mutate(id);
+                console.log('Navigate to kos detail:', id);
               }}
             >
               Lihat selengkapnya →
-            </button>
-            
-            <button 
-              className="bg-blue-400 text-white px-3 py-1 rounded-md text-sm hover:bg-blue-500 transition-all"
-              onClick={(e) => {
-                e.stopPropagation();
-                // Handle booking (implement later)
-                console.log('Book kos:', id);
-              }}
-            >
-              Book
-            </button>
+            </Link>
           </div>
         </div>
       </div>
