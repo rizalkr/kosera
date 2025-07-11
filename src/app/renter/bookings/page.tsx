@@ -43,6 +43,10 @@ export default function RenterBookingsPage() {
 
   // Extract bookings from API data
   const bookings: BookingItem[] = (bookingsData?.data as any)?.bookings || [];
+  
+  // Debug logging
+  console.log('Bookings Data:', bookingsData);
+  console.log('Extracted Bookings:', bookings);
 
   const getStatusColor = (status: BookingStatus) => {
     switch (status) {
@@ -198,7 +202,7 @@ export default function RenterBookingsPage() {
                   <div key={booking.id} className="bg-gray-50 rounded-lg p-6 hover:shadow-md transition-shadow">
                     <div className="flex flex-col md:flex-row gap-4">
                       <img
-                        src="/images/profile.jpg"
+                        src="/images/rooms/room1.jpg"
                         alt={booking.post.title}
                         className="w-full md:w-48 h-32 object-cover rounded-lg"
                       />

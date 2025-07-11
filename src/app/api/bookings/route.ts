@@ -8,7 +8,9 @@ import { z } from 'zod';
 // Schema for booking creation
 const createBookingSchema = z.object({
   kosId: z.number().positive(),
-  checkInDate: z.string().datetime(),
+  checkInDate: z.string().refine((date) => !isNaN(Date.parse(date)), {
+    message: "Invalid date format"
+  }),
   duration: z.number().positive().max(12), // max 12 months
   notes: z.string().optional(),
 });
