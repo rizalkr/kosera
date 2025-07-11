@@ -6,6 +6,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
+import BookingModal from '@/components/BookingModal';
 import { useKosDetails, useTrackView, useAddFavorite, useRemoveFavorite, useFavorites } from '@/hooks/useApi';
 import { useAuthGuard } from '@/hooks/useAuthGuard';
 
@@ -369,6 +370,13 @@ export default function KosDetailPage() {
       </main>
 
       <Footer />
+
+      {/* Booking Modal */}
+      <BookingModal
+        kos={kos}
+        isOpen={showBookingModal}
+        onClose={() => setShowBookingModal(false)}
+      />
     </div>
   );
 }

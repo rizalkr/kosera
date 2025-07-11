@@ -18,7 +18,7 @@ export default function HomePage() {
   const [isSearching, setIsSearching] = useState(false);
   
   const { data: searchResults, isLoading: isSearchLoading } = useKosSearch(searchFilters);
-  const { checkBookingPermission, checkFavoritePermission, isAuthenticated } = useAuthGuard();
+  const { checkFavoritePermission, isAuthenticated } = useAuthGuard();
   
   // Favorites hooks
   const { data: favoritesData } = useFavorites();
