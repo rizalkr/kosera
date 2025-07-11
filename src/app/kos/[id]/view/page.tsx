@@ -123,12 +123,9 @@ export default function KosDetailPage() {
   };
 
   const handleBookingCreated = () => {
-    // Show success message and navigate to bookings page
-    alert('Booking berhasil dibuat! Status: Pending. Silakan cek halaman booking Anda untuk melihat detail.');
-    // Navigate to bookings page to see the new booking
-    setTimeout(() => {
-      window.location.href = '/renter/bookings';
-    }, 2000);
+    // This callback is now mainly for any additional logic
+    // The redirect is handled by the modal itself
+    console.log('Booking created successfully from detail page');
   };
 
   const renderStars = (rating: number) => {

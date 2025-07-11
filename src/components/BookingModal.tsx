@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { KosData } from '@/lib/api';
 import { useCreateBooking } from '@/hooks/useApi';
 
@@ -26,7 +26,38 @@ export default function BookingModal({ kos, isOpen, onClose, onBookingCreated }:
     contactMethod: 'whatsapp'
   });
   
+  const [shouldRedirectOnReturn, setShouldRedirectOnReturn] = useState(false);
   const createBookingMutation = useCreateBooking();
+
+  // Handle page visibility change for auto-redirect when user returns from WhatsApp
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (!document.hidden && shouldRedirectOnReturn) {
+        setShouldRedirectOnReturn(false);
+        
+        // Small delay to ensure user has settled back
+        setTimeout(() => {
+          const goToBookings = confirm(`🎉 Selamat datang kembali!
+
+Booking Anda sudah berhasil dibuat dengan status PENDING.
+
+Apakah Anda ingin melihat detail booking di dashboard?`);
+          
+          if (goToBookings) {
+            window.location.href = '/renter/bookings';
+          }
+        }, 1000);
+      }
+    };
+
+    if (shouldRedirectOnReturn) {
+      document.addEventListener('visibilitychange', handleVisibilityChange);
+    }
+
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
+  }, [shouldRedirectOnReturn]);
 
   if (!isOpen) return null;
 
@@ -86,25 +117,61 @@ Mohon informasi lebih lanjut untuk proses booking. Booking sudah dibuat di siste
         }
         
         const whatsappUrl = `https://wa.me/${ownerPhone}?text=${encodeURIComponent(message)}`;
+        
+        // Open WhatsApp in new tab/window
         window.open(whatsappUrl, '_blank');
+        
+        // Set flag to redirect when user returns to this tab
+        setShouldRedirectOnReturn(true);
+        
+        // Close modal immediately
+        onClose();
+        
+        // Fallback: Show notification after some time if visibility API doesn't work
+        setTimeout(() => {
+          if (shouldRedirectOnReturn) {
+            setShouldRedirectOnReturn(false);
+            const goToBookings = confirm(`✅ Booking berhasil dibuat dengan status PENDING!
+
+WhatsApp sudah terbuka di tab baru untuk menghubungi pemilik kos.
+
+Apakah Anda ingin melihat booking Anda di dashboard?`);
+            
+            if (goToBookings) {
+              window.location.href = '/renter/bookings';
+            }
+          }
+        }, 5000); // 5 second fallback
+        
+        return; // Early return to avoid executing onClose again
       } else {
         // Phone call
         const ownerPhone = kos.owner?.contact || '081234567890';
         window.open(`tel:${ownerPhone}`, '_self');
         
-        // Also show a notification with booking details
-        alert(`Detail Booking:
+        // Close modal 
+        onClose();
         
-Kos: ${kos.name}
-Tanggal Mulai: ${startDate.toLocaleDateString('id-ID')}
-Durasi: ${bookingDetails.duration} bulan
-Total: Rp ${totalPrice.toLocaleString()}
+        // Show notification with option to go to bookings
+        setTimeout(() => {
+          const goToBookings = confirm(`✅ Booking berhasil dibuat dengan status PENDING!
 
-Booking telah dibuat di sistem dengan status pending.
-Telepon akan tersambung ke pemilik kos.`);
+Panggilan telepon akan tersambung ke pemilik kos.
+
+Detail Booking:
+• Kos: ${kos.name}
+• Tanggal Mulai: ${startDate.toLocaleDateString('id-ID')}
+• Durasi: ${bookingDetails.duration} bulan
+• Total: Rp ${totalPrice.toLocaleString()}
+
+Apakah Anda ingin melihat booking Anda di dashboard?`);
+          
+          if (goToBookings) {
+            window.location.href = '/renter/bookings';
+          }
+        }, 1000);
       }
       
-      onClose();
     } catch (error) {
       console.error('Error creating booking:', error);
       // More detailed error logging
