@@ -17,8 +17,30 @@ type Props = {
 };
 
 export default function RealMap({ position }: Props) {
+  // Validate position: must be array of two finite numbers
+  const isValidPosition =
+    Array.isArray(position) &&
+    position.length === 2 &&
+    typeof position[0] === 'number' &&
+    typeof position[1] === 'number' &&
+    isFinite(position[0]) &&
+    isFinite(position[1]);
+
+  if (!isValidPosition) {
+    return (
+      <div className="flex items-center justify-center h-full w-full text-red-500 bg-gray-50">
+        Lokasi tidak valid
+      </div>
+    );
+  }
+
   return (
-    <MapContainer center={position} zoom={15} className="h-full w-full">
+    <MapContainer 
+      center={position} 
+      zoom={15} 
+      className="h-full w-full"
+      style={{ zIndex: 0 }}
+    >
       <TileLayer
         attribution='&copy; OpenStreetMap contributors'
         url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"

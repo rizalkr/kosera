@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import Link from 'next/link';
 import Header from '@/components/Header';
 import FilterBar from '@/components/FilterBar';
 import FeaturedList from '@/components/FeaturedList';
@@ -9,6 +10,7 @@ import RecommendationCarousel from '@/components/RecommendationCarousel';
 import Footer from '@/components/Footer';
 import { useKosSearch } from '@/hooks/useApi';
 import { useAuthGuard } from '@/hooks/useAuthGuard';
+import { useAddFavorite, useRemoveFavorite, useFavorites } from '@/hooks/useApi';
 import { SearchParams, KosData } from '@/lib/api';
 
 export default function HomePage() {
@@ -17,10 +19,42 @@ export default function HomePage() {
   
   const { data: searchResults, isLoading: isSearchLoading } = useKosSearch(searchFilters);
   const { checkBookingPermission, checkFavoritePermission, isAuthenticated } = useAuthGuard();
+  
+  // Favorites hooks
+  const { data: favoritesData } = useFavorites();
+  const addFavoriteMutation = useAddFavorite();
+  const removeFavoriteMutation = useRemoveFavorite();
+  
+  // Extract favorites list for checking if kos is favorited
+  const favoriteKosIds = new Set(
+    favoritesData?.data?.favorites?.map((fav: any) => fav.kos.id) || []
+  );
 
   const handleFilter = (filters: SearchParams) => {
     setSearchFilters(filters);
     setIsSearching(Object.keys(filters).length > 0);
+  };
+
+  const handleToggleFavorite = (kosId: number) => {
+    if (!checkFavoritePermission()) {
+      return; // Permission check will show appropriate message
+    }
+
+    const isFavorited = favoriteKosIds.has(kosId);
+    
+    if (isFavorited) {
+      removeFavoriteMutation.mutate(kosId, {
+        onError: (error) => {
+          console.error('Failed to remove from favorites:', error);
+        }
+      });
+    } else {
+      addFavoriteMutation.mutate(kosId, {
+        onError: (error) => {
+          console.error('Failed to add to favorites:', error);
+        }
+      });
+    }
   };
 
   const renderContent = () => {
@@ -84,21 +118,23 @@ export default function HomePage() {
           
           <div className="space-y-6">
             {kosList.map((kos: KosData) => (
-              <div key={kos.id} className="bg-[#E1F6F2] border border-blue-100 rounded-xl shadow hover:shadow-lg transition-all duration-200 cursor-pointer relative group">
+              <div key={kos.id} className="bg-[#E1F6F2] border border-blue-100 rounded-xl shadow hover:shadow-lg transition-all duration-200 relative group">
                 {/* Favorite Button */}
                 <button
                   onClick={(e) => {
                     e.stopPropagation();
-                    if (checkFavoritePermission()) {
-                      // Handle favorite logic here
-                      console.log('Toggle favorite for kos:', kos.id);
-                    }
+                    handleToggleFavorite(kos.id);
                   }}
-                  className="absolute top-3 right-3 p-2 rounded-full bg-white shadow-md hover:shadow-lg transition-all z-10"
+                  disabled={addFavoriteMutation.isPending || removeFavoriteMutation.isPending}
+                  className="absolute top-3 right-3 p-2 rounded-full bg-white shadow-md hover:shadow-lg transition-all z-20 disabled:opacity-50"
                 >
                   <svg 
-                    className="w-5 h-5 text-gray-400 hover:text-red-500 transition-colors" 
-                    fill="none" 
+                    className={`w-5 h-5 transition-colors ${
+                      favoriteKosIds.has(kos.id) 
+                        ? 'text-red-500 fill-current' 
+                        : 'text-gray-400 hover:text-red-500'
+                    }`}
+                    fill={favoriteKosIds.has(kos.id) ? "currentColor" : "none"}
                     stroke="currentColor" 
                     viewBox="0 0 24 24"
                   >
@@ -117,18 +153,20 @@ export default function HomePage() {
                   
                   <div className="flex-1 flex flex-col justify-between">
                     <div>
-                      <div className="flex items-center justify-between mb-1">
+                      <div className="mb-1">
                         <div className="text-blue-400 font-bold text-lg">Rp {kos.price.toLocaleString()}/bulan</div>
-                        {kos.averageRating && (
-                          <div className="flex items-center gap-1">
-                            <span className="text-yellow-400">★</span>
-                            <span className="text-sm text-gray-600">{parseFloat(kos.averageRating).toFixed(1)} ({kos.reviewCount})</span>
-                          </div>
-                        )}
                       </div>
                       
                       <div className="text-gray-600 font-semibold mb-1">{kos.description}</div>
                       <div className="text-gray-500 mb-2">{kos.address}, {kos.city}</div>
+                      
+                      {/* Rating di tengah */}
+                      {kos.averageRating && (
+                        <div className="flex items-center gap-1 mb-2">
+                          <span className="text-yellow-400">★</span>
+                          <span className="text-sm text-gray-600">{parseFloat(kos.averageRating).toFixed(1)} ({kos.reviewCount})</span>
+                        </div>
+                      )}
                       
                       {/* Facilities */}
                       {kos.facilities && kos.facilities.trim() && (
@@ -150,22 +188,16 @@ export default function HomePage() {
                       )}
                     </div>
                     
-                    <div className="flex items-center justify-between">
-                      <button className="text-blue-400 hover:underline font-medium text-sm transition-all">
-                        Lihat selengkapnya →
-                      </button>
-                      
-                      <button 
-                        onClick={() => {
-                          if (checkBookingPermission()) {
-                            // Handle booking logic here
-                            console.log('Booking kos:', kos.id);
-                          }
+                    <div className="flex items-center justify-end">
+                      <Link 
+                        href={`/kos/${kos.id}/view`} 
+                        className="text-blue-400 hover:underline font-medium text-sm transition-all relative z-10 cursor-pointer"
+                        onClick={(e) => {
+                          console.log('Link clicked:', `/kos/${kos.id}/view`);
                         }}
-                        className="bg-blue-400 text-white px-3 py-1 rounded-md text-sm hover:bg-blue-500 transition-all"
                       >
-                        {isAuthenticated ? 'Book' : 'Login untuk Book'}
-                      </button>
+                        Lihat selengkapnya →
+                      </Link>
                     </div>
                   </div>
                 </div>
