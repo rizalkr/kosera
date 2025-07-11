@@ -122,6 +122,15 @@ export default function KosDetailPage() {
     }
   };
 
+  const handleBookingCreated = () => {
+    // Show success message and navigate to bookings page
+    alert('Booking berhasil dibuat! Status: Pending. Silakan cek halaman booking Anda untuk melihat detail.');
+    // Navigate to bookings page to see the new booking
+    setTimeout(() => {
+      window.location.href = '/renter/bookings';
+    }, 2000);
+  };
+
   const renderStars = (rating: number) => {
     return Array.from({ length: 5 }, (_, i) => (
       <span
@@ -376,6 +385,7 @@ export default function KosDetailPage() {
         kos={kos}
         isOpen={showBookingModal}
         onClose={() => setShowBookingModal(false)}
+        onBookingCreated={handleBookingCreated}
       />
     </div>
   );

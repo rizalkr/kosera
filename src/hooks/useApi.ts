@@ -132,9 +132,15 @@ export const useCreateBooking = () => {
       duration: number;
       notes?: string;
     }) => bookingsApi.createBooking(bookingData),
-    onSuccess: () => {
+    onSuccess: (data) => {
+      console.log('Booking created successfully, invalidating queries...', data);
       // Invalidate bookings queries
       queryClient.invalidateQueries({ queryKey: ['bookings'] });
+      // Also invalidate any kos-related queries
+      queryClient.invalidateQueries({ queryKey: ['kos'] });
+    },
+    onError: (error) => {
+      console.error('Failed to create booking:', error);
     },
   });
 };

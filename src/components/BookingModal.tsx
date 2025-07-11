@@ -2,11 +2,13 @@
 
 import { useState } from 'react';
 import { KosData } from '@/lib/api';
+import { useCreateBooking } from '@/hooks/useApi';
 
 interface BookingModalProps {
   kos: KosData;
   isOpen: boolean;
   onClose: () => void;
+  onBookingCreated?: () => void;
 }
 
 interface BookingDetails {
@@ -16,17 +18,19 @@ interface BookingDetails {
   contactMethod: 'whatsapp' | 'phone';
 }
 
-export default function BookingModal({ kos, isOpen, onClose }: BookingModalProps) {
+export default function BookingModal({ kos, isOpen, onClose, onBookingCreated }: BookingModalProps) {
   const [bookingDetails, setBookingDetails] = useState<BookingDetails>({
     startDate: '',
     duration: 1,
     notes: '',
     contactMethod: 'whatsapp'
   });
+  
+  const createBookingMutation = useCreateBooking();
 
   if (!isOpen) return null;
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
     // Calculate end date
@@ -37,51 +41,78 @@ export default function BookingModal({ kos, isOpen, onClose }: BookingModalProps
     // Calculate total price
     const totalPrice = kos.price * bookingDetails.duration;
     
-    if (bookingDetails.contactMethod === 'whatsapp') {
-      // Create WhatsApp message
-      const message = `Halo, saya tertarik untuk booking kos:
+    try {
+      // Create booking in database first
+      const bookingData = {
+        kosId: kos.id,
+        checkInDate: bookingDetails.startDate,
+        duration: bookingDetails.duration,
+        notes: bookingDetails.notes || undefined
+      };
+      
+      await createBookingMutation.mutateAsync(bookingData);
+      
+      console.log('Booking created successfully:', bookingData);
+      
+      // Call callback if provided
+      if (onBookingCreated) {
+        onBookingCreated();
+      }
+      
+      if (bookingDetails.contactMethod === 'whatsapp') {
+        // Create WhatsApp message
+        const message = `Halo, saya tertarik untuk booking kos:
 
- *${kos.name}*
- Alamat: ${kos.address}, ${kos.city}
- Harga: Rp ${kos.price.toLocaleString()}/bulan
+*${kos.name}*
+Alamat: ${kos.address}, ${kos.city}
+Harga: Rp ${kos.price.toLocaleString()}/bulan
 
 *Detail Booking:*
- Tanggal Mulai: ${startDate.toLocaleDateString('id-ID')}
- Tanggal Berakhir: ${endDate.toLocaleDateString('id-ID')}
- Durasi: ${bookingDetails.duration} bulan
- Total Biaya: Rp ${totalPrice.toLocaleString()}
+Tanggal Mulai: ${startDate.toLocaleDateString('id-ID')}
+Tanggal Berakhir: ${endDate.toLocaleDateString('id-ID')}
+Durasi: ${bookingDetails.duration} bulan
+Total Biaya: Rp ${totalPrice.toLocaleString()}
 
 ${bookingDetails.notes ? `*Catatan:*\n${bookingDetails.notes}` : ''}
 
-Mohon informasi lebih lanjut untuk proses booking. Terima kasih!`;
+Mohon informasi lebih lanjut untuk proses booking. Booking sudah dibuat di sistem dengan status pending. Terima kasih!`;
 
-      // Format phone number for WhatsApp (ensure it starts with country code)
-      let ownerPhone = kos.owner?.contact || '6281234567890';
-      if (ownerPhone.startsWith('0')) {
-        ownerPhone = '62' + ownerPhone.substring(1);
-      } else if (!ownerPhone.startsWith('62')) {
-        ownerPhone = '62' + ownerPhone;
-      }
-      
-      const whatsappUrl = `https://wa.me/${ownerPhone}?text=${encodeURIComponent(message)}`;
-      window.open(whatsappUrl, '_blank');
-    } else {
-      // Phone call
-      const ownerPhone = kos.owner?.contact || '081234567890';
-      window.open(`tel:${ownerPhone}`, '_self');
-      
-      // Also show a notification with booking details
-      alert(`Detail Booking:
-      
+        // Format phone number for WhatsApp (ensure it starts with country code)
+        let ownerPhone = kos.owner?.contact || '6281234567890';
+        if (ownerPhone.startsWith('0')) {
+          ownerPhone = '62' + ownerPhone.substring(1);
+        } else if (!ownerPhone.startsWith('62')) {
+          ownerPhone = '62' + ownerPhone;
+        }
+        
+        const whatsappUrl = `https://wa.me/${ownerPhone}?text=${encodeURIComponent(message)}`;
+        window.open(whatsappUrl, '_blank');
+      } else {
+        // Phone call
+        const ownerPhone = kos.owner?.contact || '081234567890';
+        window.open(`tel:${ownerPhone}`, '_self');
+        
+        // Also show a notification with booking details
+        alert(`Detail Booking:
+        
 Kos: ${kos.name}
 Tanggal Mulai: ${startDate.toLocaleDateString('id-ID')}
 Durasi: ${bookingDetails.duration} bulan
 Total: Rp ${totalPrice.toLocaleString()}
 
+Booking telah dibuat di sistem dengan status pending.
 Telepon akan tersambung ke pemilik kos.`);
+      }
+      
+      onClose();
+    } catch (error) {
+      console.error('Error creating booking:', error);
+      // More detailed error logging
+      if (error instanceof Error) {
+        console.error('Error message:', error.message);
+      }
+      alert('Gagal membuat booking. Silakan coba lagi. Error: ' + (error instanceof Error ? error.message : 'Unknown error'));
     }
-    
-    onClose();
   };
 
   const minDate = new Date().toISOString().split('T')[0];
@@ -270,19 +301,26 @@ Telepon akan tersambung ke pemilik kos.`);
               <button
                 type="button"
                 onClick={onClose}
-                className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
+                disabled={createBookingMutation.isPending}
+                className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 Batal
               </button>
               <button
                 type="submit"
-                className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium"
-                disabled={!bookingDetails.startDate}
+                className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+                disabled={!bookingDetails.startDate || createBookingMutation.isPending}
               >
-                {bookingDetails.contactMethod === 'whatsapp' 
-                  ? 'Hubungi via WhatsApp' 
-                  : 'Hubungi via Telepon'
-                }
+                {createBookingMutation.isPending ? (
+                  <div className="flex items-center justify-center">
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                    Membuat Booking...
+                  </div>
+                ) : (
+                  bookingDetails.contactMethod === 'whatsapp' 
+                    ? 'Hubungi via WhatsApp' 
+                    : 'Hubungi via Telepon'
+                )}
               </button>
             </div>
           </form>
