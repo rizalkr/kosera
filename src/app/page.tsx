@@ -10,6 +10,7 @@ import RecommendationCarousel from '@/components/RecommendationCarousel';
 import Footer from '@/components/Footer';
 import { useKosSearch } from '@/hooks/useApi';
 import { useAuthGuard } from '@/hooks/useAuthGuard';
+import { useAddFavorite, useRemoveFavorite, useFavorites } from '@/hooks/useApi';
 import { SearchParams, KosData } from '@/lib/api';
 
 export default function HomePage() {
@@ -18,10 +19,42 @@ export default function HomePage() {
   
   const { data: searchResults, isLoading: isSearchLoading } = useKosSearch(searchFilters);
   const { checkBookingPermission, checkFavoritePermission, isAuthenticated } = useAuthGuard();
+  
+  // Favorites hooks
+  const { data: favoritesData } = useFavorites();
+  const addFavoriteMutation = useAddFavorite();
+  const removeFavoriteMutation = useRemoveFavorite();
+  
+  // Extract favorites list for checking if kos is favorited
+  const favoriteKosIds = new Set(
+    favoritesData?.data?.favorites?.map((fav: any) => fav.kos.id) || []
+  );
 
   const handleFilter = (filters: SearchParams) => {
     setSearchFilters(filters);
     setIsSearching(Object.keys(filters).length > 0);
+  };
+
+  const handleToggleFavorite = (kosId: number) => {
+    if (!checkFavoritePermission()) {
+      return; // Permission check will show appropriate message
+    }
+
+    const isFavorited = favoriteKosIds.has(kosId);
+    
+    if (isFavorited) {
+      removeFavoriteMutation.mutate(kosId, {
+        onError: (error) => {
+          console.error('Failed to remove from favorites:', error);
+        }
+      });
+    } else {
+      addFavoriteMutation.mutate(kosId, {
+        onError: (error) => {
+          console.error('Failed to add to favorites:', error);
+        }
+      });
+    }
   };
 
   const renderContent = () => {
@@ -90,16 +123,18 @@ export default function HomePage() {
                 <button
                   onClick={(e) => {
                     e.stopPropagation();
-                    if (checkFavoritePermission()) {
-                      // Handle favorite logic here
-                      console.log('Toggle favorite for kos:', kos.id);
-                    }
+                    handleToggleFavorite(kos.id);
                   }}
-                  className="absolute top-3 right-3 p-2 rounded-full bg-white shadow-md hover:shadow-lg transition-all z-20"
+                  disabled={addFavoriteMutation.isPending || removeFavoriteMutation.isPending}
+                  className="absolute top-3 right-3 p-2 rounded-full bg-white shadow-md hover:shadow-lg transition-all z-20 disabled:opacity-50"
                 >
                   <svg 
-                    className="w-5 h-5 text-gray-400 hover:text-red-500 transition-colors" 
-                    fill="none" 
+                    className={`w-5 h-5 transition-colors ${
+                      favoriteKosIds.has(kos.id) 
+                        ? 'text-red-500 fill-current' 
+                        : 'text-gray-400 hover:text-red-500'
+                    }`}
+                    fill={favoriteKosIds.has(kos.id) ? "currentColor" : "none"}
                     stroke="currentColor" 
                     viewBox="0 0 24 24"
                   >
