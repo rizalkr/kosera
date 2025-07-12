@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { kosApi, authApi, favoritesApi, bookingsApi, SearchParams, KosData } from '@/lib/api';
+import { kosApi, authApi, favoritesApi, bookingsApi, sellerApi, SearchParams, KosData } from '@/lib/api';
 
 // Kos hooks
 export const useKosFeatured = () => {
@@ -155,6 +155,14 @@ export const useUpdateBooking = () => {
       // Invalidate bookings queries
       queryClient.invalidateQueries({ queryKey: ['bookings'] });
     },
+  });
+};
+
+// Seller hooks
+export const useSellerDashboard = () => {
+  return useQuery({
+    queryKey: ['seller', 'dashboard'],
+    queryFn: sellerApi.getDashboard,
   });
 };
 
