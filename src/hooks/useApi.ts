@@ -166,6 +166,13 @@ export const useSellerDashboard = () => {
   });
 };
 
+export const useSellerKosDetail = (kosId: number) => {
+  return useQuery({
+    queryKey: ['seller', 'kos', 'detail', kosId],
+    queryFn: () => sellerApi.getKosDetail(kosId),
+  });
+};
+
 export const useMyKos = () => {
   return useQuery({
     queryKey: ['kos', 'my'],

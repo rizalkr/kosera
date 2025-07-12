@@ -230,7 +230,7 @@ export default function SellerKosPage() {
                       {/* Actions */}
                       <div className="flex space-x-2">
                         <button 
-                          onClick={() => window.location.href = `/kos/${kos.id}`}
+                          onClick={() => window.location.href = `/seller/kos/${kos.id}`}
                           className="flex-1 bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium"
                         >
                           📊 Lihat Detail
@@ -270,7 +270,6 @@ export default function SellerKosPage() {
             )}
           </div>
         </main>
-        <Footer />
       </div>
     </ProtectedRoute>
   );

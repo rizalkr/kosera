@@ -125,7 +125,7 @@ const SellerDashboard = () => {
               <p className="text-xs text-blue-600">Total Booking</p>
             </div>
             <div className="text-center p-3 bg-green-50 rounded-lg">
-              <p className="text-xl font-bold text-green-600">{kosData.viewCount}</p>
+              <p className="text-xl font-bold text-green-600">{kosData.viewCount || 0}</p>
               <p className="text-xs text-green-600">Dilihat</p>
             </div>
             <div className="text-center p-3 bg-yellow-50 rounded-lg">
@@ -179,7 +179,7 @@ const SellerDashboard = () => {
               </p>
               <div className="flex space-x-2">
                 <button
-                  onClick={() => router.push(`/kos/${kosData.id}/view`)}
+                  onClick={() => router.push(`/seller/kos/${kosData.id}`)}
                   className="text-xs bg-blue-100 text-blue-600 px-2 py-1 rounded hover:bg-blue-200 transition-colors"
                 >
                   Lihat

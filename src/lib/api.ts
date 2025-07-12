@@ -404,6 +404,13 @@ export const sellerApi = {
     });
     return response.json();
   },
+
+  getKosDetail: async (kosId: number): Promise<ApiResponse<SellerKosData>> => {
+    const response = await fetch(`${API_BASE_URL}/api/seller/kos/${kosId}`, {
+      headers: createAuthHeaders(),
+    });
+    return response.json();
+  },
 };
 
 export default {
