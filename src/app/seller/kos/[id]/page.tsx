@@ -158,7 +158,7 @@ export default function SellerKosDetailPage() {
                   <div className="flex items-center gap-4 mb-4">
                     <button 
                       onClick={() => router.back()}
-                      className="bg-white bg-opacity-20 hover:bg-opacity-30 text-white p-2 rounded-lg transition-colors"
+                      className="bg-white bg-opacity-20 hover:bg-opacity-30 text-gray-500 p-2 rounded-lg transition-colors"
                     >
                       ← Kembali
                     </button>
@@ -177,7 +177,7 @@ export default function SellerKosDetailPage() {
                     <button 
                       onClick={handleRefresh}
                       disabled={isRefreshing}
-                      className="bg-white bg-opacity-20 hover:bg-opacity-30 text-white px-4 py-2 rounded-lg transition-colors font-medium disabled:opacity-50"
+                      className="bg-white bg-opacity-20 hover:bg-opacity-30 text-gray-700 px-4 py-2 rounded-lg transition-colors font-medium disabled:opacity-50"
                     >
                       {isRefreshing ? 'Memuat...' : '🔄 Refresh'}
                     </button>
