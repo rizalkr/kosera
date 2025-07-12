@@ -166,6 +166,13 @@ export const useSellerDashboard = () => {
   });
 };
 
+export const useMyKos = () => {
+  return useQuery({
+    queryKey: ['kos', 'my'],
+    queryFn: kosApi.getMyKos,
+  });
+};
+
 // Combined hook for homepage data
 export const useHomepageData = () => {
   const featured = useKosFeatured();

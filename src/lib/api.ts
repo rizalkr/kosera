@@ -196,6 +196,14 @@ export const kosApi = {
     return response.json();
   },
 
+  // Get seller's own kos
+  getMyKos: async (): Promise<ApiResponse<any>> => {
+    const response = await fetch(`${API_BASE_URL}/api/kos/my`, {
+      headers: createAuthHeaders(),
+    });
+    return response.json();
+  },
+
   // Track view
   trackView: async (id: number) => {
     const response = await fetch(`${API_BASE_URL}/api/kos/${id}/view`, {
