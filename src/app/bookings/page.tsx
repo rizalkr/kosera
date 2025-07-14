@@ -6,6 +6,7 @@ import ProtectedRoute from '@/components/ProtectedRoute';
 import { useEffect } from 'react';
 import { useAuthGuard } from '@/hooks/useAuthGuard';
 import { useBookings, useUpdateBooking } from '@/hooks/useApi';
+import { showSuccess } from '@/lib/sweetalert';
 
 type BookingItem = {
   id: number;
@@ -58,7 +59,7 @@ export default function BookingsPage() {
   }
 
   function handleConfirm() {
-    alert("Booking berhasil dikonfirmasi!");
+    showSuccess("Booking berhasil dikonfirmasi!");
     // Tambahkan logic kirim ke backend di sini jika ada
   }
 

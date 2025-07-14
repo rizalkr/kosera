@@ -42,6 +42,8 @@ export const kos = pgTable('kos', {
   address: text('address').notNull(),
   city: text('city').notNull(),
   facilities: text('facilities'),
+  totalRooms: integer('total_rooms').notNull().default(1),
+  occupiedRooms: integer('occupied_rooms').default(0),
   // Geospatial coordinates (optional)
   latitude: doublePrecision('latitude'),
   longitude: doublePrecision('longitude'),

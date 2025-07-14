@@ -6,6 +6,7 @@ import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import ProtectedRoute from '@/components/ProtectedRoute';
 import { useAuthGuard } from '@/hooks/useAuthGuard';
+import { showConfirm, showSuccess, showError } from '@/lib/sweetalert';
 
 type BookingStatus = 'pending' | 'confirmed' | 'cancelled' | 'completed';
 
@@ -120,7 +121,8 @@ export default function BookingDetailPage() {
   };
 
   const handleCancelBooking = async () => {
-    if (!confirm('Apakah Anda yakin ingin membatalkan booking ini?')) return;
+    const result = await showConfirm('Apakah Anda yakin ingin membatalkan booking ini?');
+    if (!result.isConfirmed) return;
 
     try {
       const token = localStorage.getItem('auth_token');
@@ -141,12 +143,12 @@ export default function BookingDetailPage() {
       if (data.success) {
         // Refresh booking data
         fetchBookingDetail();
-        alert('Booking berhasil dibatalkan');
+        showSuccess('Booking berhasil dibatalkan');
       } else {
         throw new Error(data.error || 'Failed to cancel booking');
       }
     } catch (err) {
-      alert(err instanceof Error ? err.message : 'Gagal membatalkan booking');
+      showError(err instanceof Error ? err.message : 'Gagal membatalkan booking');
     }
   };
 

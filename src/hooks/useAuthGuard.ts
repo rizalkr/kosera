@@ -2,6 +2,7 @@
 
 import { useAuth } from '@/contexts/AuthContext';
 import { useRouter } from 'next/navigation';
+import { showError } from '@/lib/sweetalert';
 
 export const useAuthGuard = () => {
   const { user, isAuthenticated, isLoading } = useAuth();
@@ -24,7 +25,7 @@ export const useAuthGuard = () => {
     if (!requireAuth(action)) return false;
     
     if (user && !requiredRoles.includes(user.role)) {
-      alert(`Anda tidak memiliki izin untuk ${action}. Role yang diperlukan: ${requiredRoles.join(', ')}`);
+      showError(`Anda tidak memiliki izin untuk ${action}. Role yang diperlukan: ${requiredRoles.join(', ')}`, 'Akses Ditolak');
       return false;
     }
     

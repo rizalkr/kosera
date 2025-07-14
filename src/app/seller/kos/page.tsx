@@ -122,7 +122,7 @@ export default function SellerKosPage() {
                   {isRefreshing ? 'Memuat...' : '🔄 Refresh'}
                 </button>
                 <button 
-                  onClick={() => window.location.href = '/kos/new'}
+                  onClick={() => window.location.href = '/seller/kos/new'}
                   className="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors font-medium"
                 >
                   + Tambah Kos Baru

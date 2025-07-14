@@ -71,7 +71,7 @@ export default function PhotoUploadForm({
       formData.append('isPrimary', isPrimary.toString());
 
       // Get token from localStorage
-      const token = localStorage.getItem('authToken');
+      const token = localStorage.getItem('auth_token');
       
       const response = await fetch(`/api/kos/${kosId}/photos/upload`, {
         method: 'POST',

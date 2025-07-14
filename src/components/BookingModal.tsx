@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { KosData } from '@/lib/api';
 import { useCreateBooking } from '@/hooks/useApi';
+import { showCustomAlert, showError } from '@/lib/sweetalert';
 
 interface BookingModalProps {
   kos: KosData;
@@ -36,14 +37,16 @@ export default function BookingModal({ kos, isOpen, onClose, onBookingCreated }:
         setShouldRedirectOnReturn(false);
         
         // Small delay to ensure user has settled back
-        setTimeout(() => {
-          const goToBookings = confirm(`🎉 Selamat datang kembali!
-
-Booking Anda sudah berhasil dibuat dengan status PENDING.
-
-Apakah Anda ingin melihat detail booking di dashboard?`);
+        setTimeout(async () => {
+          const result = await showCustomAlert(`
+            <div class="text-center">
+              <h3 class="text-lg font-semibold mb-2">🎉 Selamat datang kembali!</h3>
+              <p class="mb-4">Booking Anda sudah berhasil dibuat dengan status PENDING.</p>
+              <p>Apakah Anda ingin melihat detail booking di dashboard?</p>
+            </div>
+          `, '', 'success');
           
-          if (goToBookings) {
+          if (result.isConfirmed) {
             window.location.href = '/renter/bookings';
           }
         }, 1000);
@@ -128,16 +131,18 @@ Mohon informasi lebih lanjut untuk proses booking. Booking sudah dibuat di siste
         onClose();
         
         // Fallback: Show notification after some time if visibility API doesn't work
-        setTimeout(() => {
+        setTimeout(async () => {
           if (shouldRedirectOnReturn) {
             setShouldRedirectOnReturn(false);
-            const goToBookings = confirm(`✅ Booking berhasil dibuat dengan status PENDING!
-
-WhatsApp sudah terbuka di tab baru untuk menghubungi pemilik kos.
-
-Apakah Anda ingin melihat booking Anda di dashboard?`);
+            const result = await showCustomAlert(`
+              <div class="text-center">
+                <h3 class="text-lg font-semibold mb-2">✅ Booking berhasil dibuat dengan status PENDING!</h3>
+                <p class="mb-4">WhatsApp sudah terbuka di tab baru untuk menghubungi pemilik kos.</p>
+                <p>Apakah Anda ingin melihat booking Anda di dashboard?</p>
+              </div>
+            `, '', 'success');
             
-            if (goToBookings) {
+            if (result.isConfirmed) {
               window.location.href = '/renter/bookings';
             }
           }
@@ -153,20 +158,23 @@ Apakah Anda ingin melihat booking Anda di dashboard?`);
         onClose();
         
         // Show notification with option to go to bookings
-        setTimeout(() => {
-          const goToBookings = confirm(`✅ Booking berhasil dibuat dengan status PENDING!
-
-Panggilan telepon akan tersambung ke pemilik kos.
-
-Detail Booking:
-• Kos: ${kos.name}
-• Tanggal Mulai: ${startDate.toLocaleDateString('id-ID')}
-• Durasi: ${bookingDetails.duration} bulan
-• Total: Rp ${totalPrice.toLocaleString()}
-
-Apakah Anda ingin melihat booking Anda di dashboard?`);
+        setTimeout(async () => {
+          const result = await showCustomAlert(`
+            <div class="text-center">
+              <h3 class="text-lg font-semibold mb-2">✅ Booking berhasil dibuat dengan status PENDING!</h3>
+              <p class="mb-2">Panggilan telepon akan tersambung ke pemilik kos.</p>
+              <div class="text-left bg-gray-50 p-3 rounded-lg mb-4">
+                <strong>Detail Booking:</strong><br>
+                • Kos: ${kos.name}<br>
+                • Tanggal Mulai: ${startDate.toLocaleDateString('id-ID')}<br>
+                • Durasi: ${bookingDetails.duration} bulan<br>
+                • Total: Rp ${totalPrice.toLocaleString()}
+              </div>
+              <p>Apakah Anda ingin melihat booking Anda di dashboard?</p>
+            </div>
+          `, '', 'success');
           
-          if (goToBookings) {
+          if (result.isConfirmed) {
             window.location.href = '/renter/bookings';
           }
         }, 1000);
@@ -178,7 +186,7 @@ Apakah Anda ingin melihat booking Anda di dashboard?`);
       if (error instanceof Error) {
         console.error('Error message:', error.message);
       }
-      alert('Gagal membuat booking. Silakan coba lagi. Error: ' + (error instanceof Error ? error.message : 'Unknown error'));
+      showError('Gagal membuat booking. Silakan coba lagi. Error: ' + (error instanceof Error ? error.message : 'Unknown error'));
     }
   };
 

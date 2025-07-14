@@ -7,6 +7,7 @@ import Footer from '@/components/Footer';
 import ProtectedRoute from '@/components/ProtectedRoute';
 import { useAuthGuard } from '@/hooks/useAuthGuard';
 import { useBookings, useUpdateBooking } from '@/hooks/useApi';
+import { showConfirm } from '@/lib/sweetalert';
 
 type BookingStatus = 'pending' | 'confirmed' | 'cancelled' | 'completed';
 
@@ -82,8 +83,9 @@ export default function RenterBookingsPage() {
     ? bookings 
     : bookings.filter(booking => booking.status === selectedStatus);
 
-  const handleCancelBooking = (id: number) => {
-    if (confirm('Apakah Anda yakin ingin membatalkan booking ini?')) {
+  const handleCancelBooking = async (id: number) => {
+    const result = await showConfirm('Apakah Anda yakin ingin membatalkan booking ini?', 'Konfirmasi Pembatalan', 'Ya, Batalkan', 'Tidak');
+    if (result.isConfirmed) {
       updateBookingMutation.mutate({ 
         id, 
         status: 'cancelled', 
