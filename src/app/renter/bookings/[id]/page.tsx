@@ -6,6 +6,7 @@ import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import ProtectedRoute from '@/components/ProtectedRoute';
 import { useAuthGuard } from '@/hooks/useAuthGuard';
+import { useAuthToken } from '@/hooks/useAuthToken';
 import { showConfirm, showSuccess, showError } from '@/lib/sweetalert';
 
 type BookingStatus = 'pending' | 'confirmed' | 'cancelled' | 'completed';
@@ -45,6 +46,7 @@ export default function BookingDetailPage() {
   const params = useParams();
   const router = useRouter();
   const { user } = useAuthGuard();
+  const { getToken } = useAuthToken();
   const [booking, setBooking] = useState<BookingDetail | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -58,7 +60,7 @@ export default function BookingDetailPage() {
   const fetchBookingDetail = async () => {
     try {
       setIsLoading(true);
-      const token = localStorage.getItem('auth_token');
+      const token = getToken();
       
       if (!token) {
         setError('Authentication required');
@@ -125,7 +127,9 @@ export default function BookingDetailPage() {
     if (!result.isConfirmed) return;
 
     try {
-      const token = localStorage.getItem('auth_token');
+      const token = getToken();
+      if (!token) return;
+
       const response = await fetch(`/api/bookings/${bookingId}`, {
         method: 'PUT',
         headers: {
