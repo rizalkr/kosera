@@ -2,12 +2,14 @@
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import { useState } from 'react';
+import { showSuccess } from '@/lib/sweetalert';
 
 export default function ComplaintPage() {
   const [submitted, setSubmitted] = useState(false);
 
   function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
+    showSuccess('Terima kasih, pengaduan Anda telah dikirim!', 'Pengaduan Berhasil Dikirim');
     setSubmitted(true);
     // Di sini bisa tambahkan logic kirim ke backend jika ada
   }

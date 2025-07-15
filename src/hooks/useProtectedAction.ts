@@ -2,6 +2,7 @@
 
 import { useAuth } from '@/contexts/AuthContext';
 import { useRouter } from 'next/navigation';
+import { showToast as showSweetToast } from '@/lib/sweetalert';
 
 export function useProtectedAction() {
   const { isAuthenticated, isLoading } = useAuth();
@@ -27,9 +28,8 @@ export function useProtectedAction() {
 
     if (!isAuthenticated) {
       if (showToast && typeof window !== 'undefined') {
-        // Note: You'll need to install react-hot-toast
-        // For now, we'll use alert
-        alert(message);
+        // Using SweetAlert2 toast instead of native alert
+        showSweetToast(message, 'error');
       }
       
       const currentPath = window.location.pathname;

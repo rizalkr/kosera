@@ -21,6 +21,8 @@ export async function GET(request: NextRequest) {
         address: kos.address,
         city: kos.city,
         facilities: kos.facilities,
+        totalRooms: kos.totalRooms,
+        occupiedRooms: kos.occupiedRooms,
         price: posts.price,
         title: posts.title,
         description: posts.description,
@@ -71,12 +73,12 @@ export async function GET(request: NextRequest) {
 export const POST = withSellerOrAdmin(async (request: AuthenticatedRequest) => {
   try {
     const body = await request.json();
-    const { name, address, city, facilities, title, description, price } = body;
+    const { name, address, city, facilities, title, description, price, totalRooms, occupiedRooms } = body;
 
     // Validate required fields
-    if (!name || !address || !city || !title || !description || !price) {
+    if (!name || !address || !city || !title || !description || !price || !totalRooms) {
       return NextResponse.json(
-        { error: 'Missing required fields: name, address, city, title, description, price' },
+        { error: 'Missing required fields: name, address, city, title, description, price, totalRooms' },
         { status: 400 }
       );
     }
@@ -87,6 +89,30 @@ export const POST = withSellerOrAdmin(async (request: AuthenticatedRequest) => {
         { error: 'Price must be a positive number' },
         { status: 400 }
       );
+    }
+
+    // Validate totalRooms is positive number
+    if (totalRooms <= 0) {
+      return NextResponse.json(
+        { error: 'Total rooms must be a positive number' },
+        { status: 400 }
+      );
+    }
+
+    // Validate occupiedRooms if provided
+    if (occupiedRooms !== undefined && occupiedRooms !== null) {
+      if (occupiedRooms < 0) {
+        return NextResponse.json(
+          { error: 'Occupied rooms cannot be negative' },
+          { status: 400 }
+        );
+      }
+      if (occupiedRooms > totalRooms) {
+        return NextResponse.json(
+          { error: 'Occupied rooms cannot exceed total rooms' },
+          { status: 400 }
+        );
+      }
     }
 
     // Create post first
@@ -110,7 +136,9 @@ export const POST = withSellerOrAdmin(async (request: AuthenticatedRequest) => {
         name,
         address,
         city,
-        facilities: facilities || null
+        facilities: facilities || null,
+        totalRooms: parseInt(totalRooms),
+        occupiedRooms: occupiedRooms !== undefined && occupiedRooms !== null ? parseInt(occupiedRooms) : 0
       })
       .returning();
 
@@ -122,6 +150,8 @@ export const POST = withSellerOrAdmin(async (request: AuthenticatedRequest) => {
       address: newKos.address,
       city: newKos.city,
       facilities: newKos.facilities,
+      totalRooms: newKos.totalRooms,
+      occupiedRooms: newKos.occupiedRooms,
       price: newPost.price,
       title: newPost.title,
       description: newPost.description,

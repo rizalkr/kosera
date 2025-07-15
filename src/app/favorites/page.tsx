@@ -5,6 +5,7 @@ import Footer from '@/components/Footer';
 import ProtectedRoute from '@/components/ProtectedRoute';
 import { useAuthGuard } from '@/hooks/useAuthGuard';
 import { useFavorites, useRemoveFavorite } from '@/hooks/useApi';
+import { showConfirm } from '@/lib/sweetalert';
 import Link from 'next/link';
 
 export default function FavoritesPage() {
@@ -12,8 +13,9 @@ export default function FavoritesPage() {
   const { data: favoritesData, isLoading, error } = useFavorites();
   const removeFavoriteMutation = useRemoveFavorite();
 
-  const handleRemoveFavorite = (kosId: number) => {
-    if (confirm('Apakah Anda yakin ingin menghapus dari favorit?')) {
+  const handleRemoveFavorite = async (kosId: number) => {
+    const result = await showConfirm('Apakah Anda yakin ingin menghapus dari favorit?', 'Konfirmasi Hapus', 'Ya, Hapus', 'Batal');
+    if (result.isConfirmed) {
       removeFavoriteMutation.mutate(kosId);
     }
   };

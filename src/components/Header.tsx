@@ -142,7 +142,7 @@ export default function Header() {
           >
             Daftar
           </button>
-          <div className="relative inline-block" ref={servicesRef}>
+          <div className="mt-2 relative inline-block" ref={servicesRef}>
             <button
               className="hover:underline text-[#83B8C6] flex items-center gap-1"
               onClick={() => setServicesOpen((v) => !v)}

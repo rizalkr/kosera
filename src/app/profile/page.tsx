@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import LoginRequired from '@/components/LoginRequired';
 import UpdatePasswordModal from '@/components/UpdatePasswordModal';
+import { showSuccess } from '@/lib/sweetalert';
 
 export default function ProfilePage() {
   const { user, logout } = useAuth();
@@ -64,7 +65,7 @@ export default function ProfilePage() {
           onClose={() => setIsModalOpen(false)}
           onSuccess={() => {
             // Optionally, show a success message
-            alert('Kata sandi berhasil diperbarui!');
+            showSuccess('Kata sandi berhasil diperbarui!');
           }}
         />
       )}

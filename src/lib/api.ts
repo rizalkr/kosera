@@ -196,6 +196,14 @@ export const kosApi = {
     return response.json();
   },
 
+  // Get seller's own kos
+  getMyKos: async (): Promise<ApiResponse<any>> => {
+    const response = await fetch(`${API_BASE_URL}/api/kos/my`, {
+      headers: createAuthHeaders(),
+    });
+    return response.json();
+  },
+
   // Track view
   trackView: async (id: number) => {
     const response = await fetch(`${API_BASE_URL}/api/kos/${id}/view`, {
@@ -358,10 +366,58 @@ export const userApi = {
   },
 };
 
+// Seller API types
+export interface SellerKosStats {
+  totalBookings: number;
+  pendingBookings: number;
+  occupiedRooms: number;
+  vacantRooms: number;
+  totalRooms: number;
+  totalRevenue: number;
+  totalRoomsRentedOut: number;
+}
+
+export interface SellerKosData extends KosData {
+  statistics: SellerKosStats;
+}
+
+export interface SellerDashboardData {
+  kos: SellerKosData[];
+  overallStats: {
+    totalKos: number;
+    totalBookings: number;
+    totalPendingBookings: number;
+    totalOccupiedRooms: number;
+    totalVacantRooms: number;
+    totalRooms: number;
+    totalRevenue: number;
+    totalViews: number;
+    totalFavorites: number;
+  };
+}
+
+// Seller API
+export const sellerApi = {
+  getDashboard: async (): Promise<ApiResponse<SellerDashboardData>> => {
+    const response = await fetch(`${API_BASE_URL}/api/seller/dashboard`, {
+      headers: createAuthHeaders(),
+    });
+    return response.json();
+  },
+
+  getKosDetail: async (kosId: number): Promise<ApiResponse<SellerKosData>> => {
+    const response = await fetch(`${API_BASE_URL}/api/seller/kos/${kosId}`, {
+      headers: createAuthHeaders(),
+    });
+    return response.json();
+  },
+};
+
 export default {
   kos: kosApi,
   auth: authApi,
   favorites: favoritesApi,
   bookings: bookingsApi,
   user: userApi,
+  seller: sellerApi,
 };
