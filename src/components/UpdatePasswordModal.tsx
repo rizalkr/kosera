@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { userApi } from '@/lib/api';
+import { showSuccess, showError } from '@/lib/sweetalert';
 
 interface UpdatePasswordModalProps {
   onClose: () => void;
@@ -18,7 +19,7 @@ export default function UpdatePasswordModal({ onClose, onSuccess }: UpdatePasswo
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (newPassword !== confirmPassword) {
-      setError('Kata sandi baru tidak cocok.');
+      showError('Kata sandi baru tidak cocok.', 'Validasi Gagal');
       return;
     }
     setIsLoading(true);
@@ -27,13 +28,14 @@ export default function UpdatePasswordModal({ onClose, onSuccess }: UpdatePasswo
     try {
       const response = await userApi.updatePassword(currentPassword, newPassword);
       if (response.success) {
+        await showSuccess('Kata sandi berhasil diperbarui!', 'Berhasil');
         onSuccess();
         onClose();
       } else {
-        setError(response.message || 'Gagal memperbarui kata sandi.');
+        showError(response.message || 'Gagal memperbarui kata sandi.', 'Gagal Memperbarui');
       }
     } catch (err: any) {
-      setError(err.message || 'Terjadi kesalahan jaringan.');
+      showError(err.message || 'Terjadi kesalahan jaringan.', 'Kesalahan Jaringan');
     } finally {
       setIsLoading(false);
     }
