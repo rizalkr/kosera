@@ -182,7 +182,7 @@ export default function SellerKosDetailPage() {
                       {isRefreshing ? 'Memuat...' : '🔄 Refresh'}
                     </button>
                     <button 
-                      onClick={() => router.push(`/kos/${kosData.id}/edit`)}
+                      onClick={() => router.push(`/seller/kos/${kosData.id}/edit`)}
                       className="bg-white text-blue-600 px-6 py-2 rounded-lg hover:bg-gray-100 transition-colors font-medium"
                     >
                       ✏️ Edit Kos
@@ -357,7 +357,7 @@ export default function SellerKosDetailPage() {
                         <span>Lihat Sebagai Pengunjung</span>
                       </button>
                       <button 
-                        onClick={() => router.push(`/kos/${kosData.id}/edit`)}
+                        onClick={() => router.push(`/seller/kos/${kosData.id}/edit`)}
                         className="flex items-center justify-center space-x-2 bg-blue-600 hover:bg-blue-700 text-white p-4 rounded-lg transition-colors"
                       >
                         <span>✏️</span>
@@ -425,7 +425,7 @@ export default function SellerKosDetailPage() {
                     </p>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-w-2xl mx-auto">
                       <button 
-                        onClick={() => router.push(`/kos/${kosData.id}/edit`)}
+                        onClick={() => router.push(`/seller/kos/${kosData.id}/edit`)}
                         className="bg-blue-50 hover:bg-blue-100 text-blue-600 p-6 rounded-lg transition-colors"
                       >
                         <div className="text-2xl mb-2">✏️</div>

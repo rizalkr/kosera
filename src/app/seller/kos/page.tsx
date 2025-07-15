@@ -1,7 +1,6 @@
 'use client';
 
 import Header from '@/components/Header';
-import Footer from '@/components/Footer';
 import ProtectedRoute from '@/components/ProtectedRoute';
 import { useAuthGuard } from '@/hooks/useAuthGuard';
 import { useMyKos } from '@/hooks/useApi';
@@ -59,7 +58,6 @@ export default function SellerKosPage() {
               </div>
             </div>
           </main>
-          <Footer />
         </div>
       </ProtectedRoute>
     );
@@ -88,7 +86,6 @@ export default function SellerKosPage() {
               </div>
             </div>
           </main>
-          <Footer />
         </div>
       </ProtectedRoute>
     );
@@ -236,7 +233,7 @@ export default function SellerKosPage() {
                           📊 Lihat Detail
                         </button>
                         <button 
-                          onClick={() => window.location.href = `/kos/${kos.id}/edit`}
+                          onClick={() => window.location.href = `/seller/kos/${kos.id}/edit`}
                           className="flex-1 bg-gray-200 text-gray-700 py-2 px-4 rounded-lg hover:bg-gray-300 transition-colors text-sm font-medium"
                         >
                           ✏️ Edit
