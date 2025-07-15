@@ -15,7 +15,7 @@ export default function SellerKosPhotosPage() {
   const params = useParams();
   const router = useRouter();
   const { user } = useAuthGuard();
-  const { getToken } = useAuthToken();
+  const { getToken, hasValidToken } = useAuthToken();
   const kosId = params.id as string;
   
   const { data: kosResponse, isLoading, error, refetch } = useKosDetails(parseInt(kosId));

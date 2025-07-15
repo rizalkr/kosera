@@ -1,58 +1,52 @@
-import { useState, useEffect } from 'react';
-import { showError } from '@/lib/sweetalert';
+import { useAuth } from '@/contexts/AuthContext';
 
 export const useAuthToken = () => {
-  const [token, setToken] = useState<string | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-
-  useEffect(() => {
-    // Get token from localStorage on mount
-    const storedToken = localStorage.getItem('auth_token');
-    setToken(storedToken);
-    setIsLoading(false);
-
-    // Listen for storage changes (e.g., login/logout in another tab)
-    const handleStorageChange = (e: StorageEvent) => {
-      if (e.key === 'auth_token') {
-        setToken(e.newValue);
-      }
-    };
-
-    window.addEventListener('storage', handleStorageChange);
-    
-    return () => {
-      window.removeEventListener('storage', handleStorageChange);
-    };
-  }, []);
+  const { token, isAuthenticated, isLoading } = useAuth();
 
   const getToken = (): string | null => {
-    if (!token) {
-      showError('Sesi login telah berakhir, silakan login kembali');
-      return null;
+    // Primary: Use token from AuthContext state
+    if (token) {
+      return token;
     }
-    return token;
+    
+    // Fallback: Get from localStorage if context hasn't loaded yet
+    if (typeof window !== 'undefined') {
+      const storedToken = localStorage.getItem('auth_token');
+      return storedToken;
+    }
+    
+    return null;
   };
 
   const setAuthToken = (newToken: string | null) => {
+    // This will be handled by AuthContext methods
     if (newToken) {
       localStorage.setItem('auth_token', newToken);
     } else {
       localStorage.removeItem('auth_token');
     }
-    setToken(newToken);
+    // Note: We don't have direct setToken here, this should be handled by AuthContext
   };
 
   const clearToken = () => {
     localStorage.removeItem('auth_token');
-    setToken(null);
+    localStorage.removeItem('user_data');
+    // Note: We don't have direct setToken here, this should be handled by AuthContext
+  };
+
+  const hasValidToken = (): boolean => {
+    const currentToken = getToken();
+    return !!currentToken && !isLoading;
   };
 
   return {
-    token,
+    token: getToken(), // Always return the most current token
     isLoading,
     getToken,
     setAuthToken,
     clearToken,
-    hasToken: !!token
+    hasToken: !!getToken(),
+    hasValidToken,
+    isAuthenticated: isAuthenticated && !!getToken()
   };
 };

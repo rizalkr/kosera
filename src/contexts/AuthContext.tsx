@@ -30,6 +30,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [isLoading, setIsLoading] = useState(true);
   const [token, setToken] = useState<string | null>(null);
 
+  // Initialize token from localStorage on mount
+  useEffect(() => {
+    const storedToken = localStorage.getItem('auth_token');
+    if (storedToken) {
+      setToken(storedToken);
+    }
+  }, []);
+
   const login = (authToken: string, userData: JWTPayload) => {
     localStorage.setItem('auth_token', authToken);
     localStorage.setItem('user_data', JSON.stringify(userData));
@@ -50,25 +58,35 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const checkAuth = async () => {
     try {
-      const storedToken = localStorage.getItem('auth_token');
+      // First, get token from state or localStorage
+      const currentToken = token || localStorage.getItem('auth_token');
       const userDataStr = localStorage.getItem('user_data');
 
-      if (storedToken && userDataStr) {
+      if (currentToken && userDataStr) {
+        // Make sure state is synchronized
+        if (!token) {
+          setToken(currentToken);
+        }
+
         // Verify token with server
         const response = await fetch('/api/auth/verify', {
           headers: {
-            'Authorization': `Bearer ${storedToken}`
+            'Authorization': `Bearer ${currentToken}`
           }
         });
 
         if (response.ok) {
           const userData = JSON.parse(userDataStr);
           setUser(userData);
-          setToken(storedToken);
+          setToken(currentToken);
         } else {
           // Token is invalid, clear localStorage
           logout();
         }
+      } else {
+        // No token or user data, make sure state is clean
+        setUser(null);
+        setToken(null);
       }
     } catch (error) {
       console.error('Auth check failed:', error);

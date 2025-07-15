@@ -21,7 +21,7 @@ export default function PhotoUploadForm({
   const [dragActive, setDragActive] = useState(false);
   
   const { user, isAuthenticated } = useAuthGuard();
-  const { getToken } = useAuthToken();
+  const { getToken, hasValidToken, isLoading } = useAuthToken();
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files.length > 0) {
@@ -55,9 +55,26 @@ export default function PhotoUploadForm({
       return;
     }
 
-    if (!isAuthenticated) {
+    // Check authentication with more robust validation
+    if (!isAuthenticated || !hasValidToken()) {
       onUploadError?.('Login terlebih dahulu untuk upload foto');
       return;
+    }
+
+    // Validate file types and sizes
+    const maxSize = 5 * 1024 * 1024; // 5MB
+    const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
+    
+    for (let i = 0; i < files.length; i++) {
+      const file = files[i];
+      if (!allowedTypes.includes(file.type)) {
+        onUploadError?.(`File ${file.name} bukan format gambar yang didukung`);
+        return;
+      }
+      if (file.size > maxSize) {
+        onUploadError?.(`File ${file.name} terlalu besar (max 5MB)`);
+        return;
+      }
     }
 
     setIsUploading(true);
@@ -72,7 +89,7 @@ export default function PhotoUploadForm({
       
       formData.append('isPrimary', isPrimary.toString());
 
-      // Get token using hook
+      // Get token using hook with validation
       const token = getToken();
       if (!token) {
         onUploadError?.('Sesi login telah berakhir, silakan login kembali');

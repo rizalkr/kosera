@@ -22,9 +22,15 @@ interface KosFormData {
 }
 
 // Helper function to create kos
-const createKos = async (formData: KosFormData, getToken: () => string | null) => {
+const createKos = async (formData: KosFormData, getToken: () => string | null, hasValidToken: () => boolean) => {
+  if (!hasValidToken()) {
+    throw new Error('Authentication required');
+  }
+  
   const token = getToken();
-  if (!token) throw new Error('Authentication required');
+  if (!token) {
+    throw new Error('No valid token available');
+  }
   
   const response = await fetch('/api/kos', {
     method: 'POST',
@@ -56,8 +62,8 @@ const createKos = async (formData: KosFormData, getToken: () => string | null) =
 
 export default function NewKosPage() {
   const router = useRouter();
-  const { user } = useAuthGuard();
-  const { getToken } = useAuthToken();
+  const { user, isAuthenticated } = useAuthGuard();
+  const { getToken, hasValidToken } = useAuthToken();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
   
@@ -142,7 +148,7 @@ export default function NewKosPage() {
       const response = await createKos({
         ...formData,
         price: Number(formData.price),
-      }, getToken);
+      }, getToken, hasValidToken);
 
       if (response.data) {
         // Close loading and show success

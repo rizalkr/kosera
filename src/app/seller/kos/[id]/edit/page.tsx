@@ -23,9 +23,15 @@ interface EditKosFormData {
 }
 
 // Helper function to get kos details
-const getKosDetails = async (kosId: number, getToken: () => string | null) => {
+const getKosDetails = async (kosId: number, getToken: () => string | null, hasValidToken: () => boolean) => {
+  if (!hasValidToken()) {
+    throw new Error('Authentication required');
+  }
+  
   const token = getToken();
-  if (!token) throw new Error('Authentication required');
+  if (!token) {
+    throw new Error('No valid token available');
+  }
   
   const response = await fetch(`/api/seller/kos/${kosId}`, {
     method: 'GET',
@@ -45,9 +51,15 @@ const getKosDetails = async (kosId: number, getToken: () => string | null) => {
 };
 
 // Helper function to update kos
-const updateKos = async (kosId: number, formData: EditKosFormData, getToken: () => string | null) => {
+const updateKos = async (kosId: number, formData: EditKosFormData, getToken: () => string | null, hasValidToken: () => boolean) => {
+  if (!hasValidToken()) {
+    throw new Error('Authentication required');
+  }
+  
   const token = getToken();
-  if (!token) throw new Error('Authentication required');
+  if (!token) {
+    throw new Error('No valid token available');
+  }
   
   const response = await fetch(`/api/kos/${kosId}`, {
     method: 'PUT',
@@ -82,8 +94,8 @@ const updateKos = async (kosId: number, formData: EditKosFormData, getToken: () 
 export default function EditKosPage() {
   const router = useRouter();
   const params = useParams();
-  const { user } = useAuthGuard();
-  const { getToken } = useAuthToken();
+  const { user, isAuthenticated } = useAuthGuard();
+  const { getToken, hasValidToken } = useAuthToken();
   const kosId = parseInt(params.id as string);
   
   const [isLoading, setIsLoading] = useState(true);
@@ -109,7 +121,7 @@ export default function EditKosPage() {
     const loadKosData = async () => {
       try {
         setIsLoading(true);
-        const response = await getKosDetails(kosId, getToken);
+        const response = await getKosDetails(kosId, getToken, hasValidToken);
         
         if (response.data) {
           const kosData = response.data;
@@ -220,7 +232,7 @@ export default function EditKosPage() {
     showLoading('Menyimpan perubahan...');
 
     try {
-      const response = await updateKos(kosId, formData, getToken);
+      const response = await updateKos(kosId, formData, getToken, hasValidToken);
 
       if (response.data) {
         // Close loading and show success
