@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuthGuard } from '@/hooks/useAuthGuard';
+import { useAuthToken } from '@/hooks/useAuthToken';
 import ProtectedRoute from '@/components/ProtectedRoute';
 import { showSuccess, showError, showLoading } from '@/lib/sweetalert';
 
@@ -21,14 +22,15 @@ interface KosFormData {
 }
 
 // Helper function to create kos
-const createKos = async (formData: KosFormData) => {
-  const token = localStorage.getItem('auth_token');
+const createKos = async (formData: KosFormData, getToken: () => string | null) => {
+  const token = getToken();
+  if (!token) throw new Error('Authentication required');
   
   const response = await fetch('/api/kos', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      Authorization: `Bearer ${token}`,
     },
     body: JSON.stringify({
       title: formData.title,
@@ -55,6 +57,7 @@ const createKos = async (formData: KosFormData) => {
 export default function NewKosPage() {
   const router = useRouter();
   const { user } = useAuthGuard();
+  const { getToken } = useAuthToken();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
   
@@ -139,7 +142,7 @@ export default function NewKosPage() {
       const response = await createKos({
         ...formData,
         price: Number(formData.price),
-      });
+      }, getToken);
 
       if (response.data) {
         // Close loading and show success

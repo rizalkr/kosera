@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { useAuthGuard } from '@/hooks/useAuthGuard';
+import { useAuthToken } from '@/hooks/useAuthToken';
 
 interface PhotoUploadFormProps {
   kosId: number;
@@ -20,6 +21,7 @@ export default function PhotoUploadForm({
   const [dragActive, setDragActive] = useState(false);
   
   const { user, isAuthenticated } = useAuthGuard();
+  const { getToken } = useAuthToken();
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files.length > 0) {
@@ -70,8 +72,12 @@ export default function PhotoUploadForm({
       
       formData.append('isPrimary', isPrimary.toString());
 
-      // Get token from localStorage
-      const token = localStorage.getItem('auth_token');
+      // Get token using hook
+      const token = getToken();
+      if (!token) {
+        onUploadError?.('Sesi login telah berakhir, silakan login kembali');
+        return;
+      }
       
       const response = await fetch(`/api/kos/${kosId}/photos/upload`, {
         method: 'POST',

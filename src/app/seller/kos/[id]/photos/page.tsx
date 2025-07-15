@@ -1,17 +1,21 @@
 'use client';
 
 import { useParams, useRouter } from 'next/navigation';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import ProtectedRoute from '@/components/ProtectedRoute';
 import { useAuthGuard } from '@/hooks/useAuthGuard';
+import { useAuthToken } from '@/hooks/useAuthToken';
 import { useKosDetails } from '@/hooks/useApi';
+import { showSuccess, showError, showConfirm, showLoading, showToast } from '@/lib/sweetalert';
+import Swal from 'sweetalert2';
 
 export default function SellerKosPhotosPage() {
   const params = useParams();
   const router = useRouter();
   const { user } = useAuthGuard();
+  const { getToken } = useAuthToken();
   const kosId = params.id as string;
   
   const { data: kosResponse, isLoading, error, refetch } = useKosDetails(parseInt(kosId));
@@ -19,22 +23,258 @@ export default function SellerKosPhotosPage() {
   
   const [isUploading, setIsUploading] = useState(false);
   const [selectedFiles, setSelectedFiles] = useState<FileList | null>(null);
+  const [photos, setPhotos] = useState<any[]>([]);
+  const [loadingPhotos, setLoadingPhotos] = useState(true);
+  const [dragActive, setDragActive] = useState(false);
+
+  // Fetch photos
+  const fetchPhotos = async () => {
+    try {
+      const token = getToken();
+      if (!token) return;
+
+      const response = await fetch(`/api/kos/${kosId}/photos`, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+      });
+      
+      const data = await response.json();
+      if (data.success) {
+        setPhotos(data.data.photos || []);
+      } else {
+        console.error('Failed to fetch photos:', data.error);
+      }
+    } catch (error) {
+      console.error('Error fetching photos:', error);
+    } finally {
+      setLoadingPhotos(false);
+    }
+  };
+
+  useEffect(() => {
+    if (kosId) {
+      fetchPhotos();
+    }
+  }, [kosId]);
 
   const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
-    setSelectedFiles(event.target.files);
+    const files = event.target.files;
+    validateAndSetFiles(files);
+  };
+
+  const validateAndSetFiles = (files: FileList | null) => {
+    if (files) {
+      // Validate file count
+      if (files.length > 10) {
+        showError('Maksimal 10 foto dapat diupload sekaligus');
+        return;
+      }
+
+      // Validate each file
+      let hasError = false;
+      Array.from(files).forEach(file => {
+        // Check file type
+        const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
+        if (!allowedTypes.includes(file.type)) {
+          showError(`File ${file.name} bukan format gambar yang didukung`);
+          hasError = true;
+          return;
+        }
+
+        // Check file size (5MB)
+        const maxSize = 5 * 1024 * 1024;
+        if (file.size > maxSize) {
+          showError(`File ${file.name} terlalu besar. Maksimal 5MB per foto`);
+          hasError = true;
+          return;
+        }
+      });
+
+      if (!hasError) {
+        setSelectedFiles(files);
+      }
+    }
+  };
+
+  // Drag and drop handlers
+  const handleDragEnter = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setDragActive(true);
+  };
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+  };
+
+  const handleDragLeave = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setDragActive(false);
+  };
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setDragActive(false);
+    
+    const files = e.dataTransfer.files;
+    validateAndSetFiles(files);
   };
 
   const handleUpload = async () => {
     if (!selectedFiles || selectedFiles.length === 0) return;
     
+    showLoading('Mengupload foto...');
     setIsUploading(true);
-    // TODO: Implement photo upload logic
-    setTimeout(() => {
+    
+    try {
+      const token = getToken();
+      if (!token) {
+        Swal.close();
+        setIsUploading(false);
+        return;
+      }
+      
+      const formData = new FormData();
+      
+      Array.from(selectedFiles).forEach(file => {
+        formData.append('photos', file);
+      });
+
+      // Set first photo as primary if no photos exist yet
+      const isFirstUpload = photos.length === 0;
+      if (isFirstUpload) {
+        formData.append('isPrimary', 'true');
+      }
+
+      const response = await fetch(`/api/kos/${kosId}/photos/upload`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+        body: formData,
+      });
+
+      const data = await response.json();
+      
+      if (data.success) {
+        Swal.close();
+        showSuccess(data.message || 'Foto berhasil diupload');
+        setSelectedFiles(null);
+        // Reset file input
+        const fileInput = document.getElementById('photo-upload') as HTMLInputElement;
+        if (fileInput) fileInput.value = '';
+        // Refresh photos
+        await fetchPhotos();
+        // Refresh kos data to update photo count
+        refetch();
+      } else {
+        Swal.close();
+        showError(data.error || 'Gagal mengupload foto');
+      }
+    } catch (error) {
+      console.error('Upload error:', error);
+      Swal.close();
+      showError('Terjadi kesalahan saat mengupload foto');
+    } finally {
       setIsUploading(false);
-      setSelectedFiles(null);
-      // Refresh data setelah upload
-      refetch();
-    }, 2000);
+    }
+  };
+
+  const handleDeletePhoto = async (photoId: number, photoUrl: string) => {
+    const result = await showConfirm(
+      'Foto yang dihapus tidak dapat dikembalikan',
+      'Hapus foto ini?',
+      'Ya, Hapus',
+      'Batal'
+    );
+
+    if (result.isConfirmed) {
+      showLoading('Menghapus foto...');
+      
+      try {
+        const token = getToken();
+        if (!token) {
+          Swal.close();
+          return;
+        }
+
+        const response = await fetch(`/api/kos/${kosId}/photos`, {
+          method: 'DELETE',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ photoId }),
+        });
+
+        const data = await response.json();
+        
+        if (data.success) {
+          Swal.close();
+          showToast('Foto berhasil dihapus', 'success');
+          // Refresh photos
+          await fetchPhotos();
+          // Refresh kos data to update photo count
+          refetch();
+        } else {
+          Swal.close();
+          showError(data.error || 'Gagal menghapus foto');
+        }
+      } catch (error) {
+        console.error('Delete error:', error);
+        Swal.close();
+        showError('Terjadi kesalahan saat menghapus foto');
+      }
+    }
+  };
+
+  const handleSetPrimary = async (photoId: number) => {
+    const result = await showConfirm(
+      'Foto ini akan menjadi foto utama yang ditampilkan pertama kali',
+      'Jadikan foto utama?',
+      'Ya, Jadikan Utama',
+      'Batal'
+    );
+
+    if (result.isConfirmed) {
+      showLoading('Mengatur foto utama...');
+      
+      try {
+        const token = getToken();
+        if (!token) {
+          Swal.close();
+          return;
+        }
+        
+        const response = await fetch(`/api/kos/${kosId}/photos/${photoId}/primary`, {
+          method: 'PUT',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json',
+          },
+        });
+
+        const data = await response.json();
+        
+        if (data.success) {
+          Swal.close();
+          showToast('Foto utama berhasil diatur', 'success');
+          // Refresh photos
+          await fetchPhotos();
+        } else {
+          Swal.close();
+          showError(data.error || 'Gagal mengatur foto utama');
+        }
+      } catch (error) {
+        console.error('Set primary error:', error);
+        Swal.close();
+        showError('Terjadi kesalahan saat mengatur foto utama');
+      }
+    }
   };
 
   // Loading state
@@ -126,7 +366,17 @@ export default function SellerKosPhotosPage() {
             <div className="bg-blue-50 rounded-xl p-6 mb-8 border border-blue-200">
               <h3 className="text-lg font-semibold text-blue-900 mb-4">📸 Upload Foto Baru</h3>
               <div className="space-y-4">
-                <div className="border-2 border-dashed border-blue-300 rounded-lg p-6 text-center">
+                <div 
+                  className={`border-2 border-dashed rounded-lg p-6 text-center transition-colors ${
+                    dragActive 
+                      ? 'border-blue-500 bg-blue-50' 
+                      : 'border-blue-300 hover:border-blue-400 hover:bg-blue-25'
+                  }`}
+                  onDragEnter={handleDragEnter}
+                  onDragOver={handleDragOver}
+                  onDragLeave={handleDragLeave}
+                  onDrop={handleDrop}
+                >
                   <input
                     type="file"
                     multiple
@@ -154,9 +404,20 @@ export default function SellerKosPhotosPage() {
                     <div className="text-sm text-gray-600">
                       {selectedFiles.length} foto dipilih:
                     </div>
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4 max-h-60 overflow-y-auto">
                       {Array.from(selectedFiles).map((file, index) => (
                         <div key={index} className="bg-white rounded-lg p-3 border border-gray-200">
+                          <div className="relative mb-2">
+                            <img 
+                              src={URL.createObjectURL(file)}
+                              alt={file.name}
+                              className="w-full h-16 object-cover rounded"
+                              onLoad={(e) => {
+                                // Clean up object URL after image loads
+                                URL.revokeObjectURL(e.currentTarget.src);
+                              }}
+                            />
+                          </div>
                           <div className="text-xs text-gray-600 truncate">{file.name}</div>
                           <div className="text-xs text-gray-500">{(file.size / 1024 / 1024).toFixed(2)} MB</div>
                         </div>
@@ -165,7 +426,7 @@ export default function SellerKosPhotosPage() {
                     <button
                       onClick={handleUpload}
                       disabled={isUploading}
-                      className="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+                      className="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed w-full"
                     >
                       {isUploading ? 'Mengupload...' : 'Upload Foto'}
                     </button>
@@ -176,60 +437,70 @@ export default function SellerKosPhotosPage() {
 
             {/* Current Photos */}
             <div className="mb-8">
-              <h3 className="text-lg font-semibold text-gray-900 mb-4">Foto Saat Ini</h3>
+              <h3 className="text-lg font-semibold text-gray-900 mb-4">
+                Foto Saat Ini ({photos.length} foto)
+              </h3>
               
-              {/* Demo photos - in real implementation, this would come from API */}
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {[
-                  '/images/rooms/room1.jpg',
-                  '/images/rooms/room2.jpg', 
-                  '/images/rooms/room3.jpg',
-                  '/images/profile.jpg'
-                ].map((photo, index) => (
-                  <div key={index} className="bg-gray-50 rounded-xl overflow-hidden border border-gray-200">
-                    <div className="relative">
-                      <img
-                        src={photo}
-                        alt={`Foto kos ${index + 1}`}
-                        className="w-full h-48 object-cover"
-                        onError={(e) => {
-                          e.currentTarget.src = "/images/profile.jpg";
-                        }}
-                      />
-                      <div className="absolute top-3 right-3">
-                        <button className="bg-red-500 hover:bg-red-600 text-white p-2 rounded-full transition-colors">
-                          🗑️
-                        </button>
-                      </div>
-                      {index === 0 && (
-                        <div className="absolute top-3 left-3">
-                          <span className="bg-blue-600 text-white px-2 py-1 rounded text-xs font-semibold">
-                            Foto Utama
-                          </span>
-                        </div>
-                      )}
-                    </div>
-                    <div className="p-4">
-                      <div className="flex justify-between items-center">
-                        <span className="text-sm text-gray-600">Foto {index + 1}</span>
-                        <div className="flex space-x-2">
-                          {index !== 0 && (
-                            <button className="text-xs bg-blue-100 text-blue-600 px-3 py-1 rounded hover:bg-blue-200 transition-colors">
-                              Jadikan Utama
-                            </button>
-                          )}
-                          <button className="text-xs bg-gray-100 text-gray-600 px-3 py-1 rounded hover:bg-gray-200 transition-colors">
-                            Edit
+              {loadingPhotos ? (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {[...Array(3)].map((_, i) => (
+                    <div key={i} className="bg-gray-200 rounded-xl h-64 animate-pulse"></div>
+                  ))}
+                </div>
+              ) : photos.length > 0 ? (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {photos.map((photo, index) => (
+                    <div key={photo.id} className="bg-gray-50 rounded-xl overflow-hidden border border-gray-200">
+                      <div className="relative">
+                        <img
+                          src={photo.url}
+                          alt={photo.caption || `Foto kos ${index + 1}`}
+                          className="w-full h-48 object-cover"
+                          onError={(e) => {
+                            e.currentTarget.src = "/images/profile.jpg";
+                          }}
+                        />
+                        <div className="absolute top-3 right-3">
+                          <button 
+                            onClick={() => handleDeletePhoto(photo.id, photo.url)}
+                            className="bg-red-500 hover:bg-red-600 text-white p-2 rounded-full transition-colors"
+                            title="Hapus foto"
+                          >
+                            🗑️
                           </button>
                         </div>
+                        {photo.isPrimary && (
+                          <div className="absolute top-3 left-3">
+                            <span className="bg-blue-600 text-white px-2 py-1 rounded text-xs font-semibold">
+                              Foto Utama
+                            </span>
+                          </div>
+                        )}
+                      </div>
+                      <div className="p-4">
+                        <div className="flex justify-between items-center">
+                          <span className="text-sm text-gray-600">
+                            {photo.caption || `Foto ${index + 1}`}
+                          </span>
+                          <div className="flex space-x-2">
+                            {!photo.isPrimary && (
+                              <button 
+                                onClick={() => handleSetPrimary(photo.id)}
+                                className="text-xs bg-blue-100 text-blue-600 px-3 py-1 rounded hover:bg-blue-200 transition-colors"
+                              >
+                                Jadikan Utama
+                              </button>
+                            )}
+                          </div>
+                        </div>
+                        <div className="text-xs text-gray-400 mt-1">
+                          Upload: {new Date(photo.createdAt).toLocaleDateString('id-ID')}
+                        </div>
                       </div>
                     </div>
-                  </div>
-                ))}
-              </div>
-
-              {/* Empty state if no photos */}
-              {false && (
+                  ))}
+                </div>
+              ) : (
                 <div className="text-center py-12 bg-gray-50 rounded-xl border border-gray-200">
                   <div className="text-gray-300 text-6xl mb-4">📷</div>
                   <h3 className="text-xl font-semibold text-gray-600 mb-2">Belum Ada Foto</h3>

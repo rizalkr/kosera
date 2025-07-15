@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import { useAuthGuard } from '@/hooks/useAuthGuard';
+import { useAuthToken } from '@/hooks/useAuthToken';
 import ProtectedRoute from '@/components/ProtectedRoute';
 import Header from '@/components/Header';
 import { showSuccess, showError, showLoading, showConfirm } from '@/lib/sweetalert';
@@ -22,14 +23,15 @@ interface EditKosFormData {
 }
 
 // Helper function to get kos details
-const getKosDetails = async (kosId: number) => {
-  const token = localStorage.getItem('auth_token');
+const getKosDetails = async (kosId: number, getToken: () => string | null) => {
+  const token = getToken();
+  if (!token) throw new Error('Authentication required');
   
   const response = await fetch(`/api/seller/kos/${kosId}`, {
     method: 'GET',
     headers: {
       'Content-Type': 'application/json',
-      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      Authorization: `Bearer ${token}`,
     },
   });
 
@@ -43,14 +45,15 @@ const getKosDetails = async (kosId: number) => {
 };
 
 // Helper function to update kos
-const updateKos = async (kosId: number, formData: EditKosFormData) => {
-  const token = localStorage.getItem('auth_token');
+const updateKos = async (kosId: number, formData: EditKosFormData, getToken: () => string | null) => {
+  const token = getToken();
+  if (!token) throw new Error('Authentication required');
   
   const response = await fetch(`/api/kos/${kosId}`, {
     method: 'PUT',
     headers: {
       'Content-Type': 'application/json',
-      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      Authorization: `Bearer ${token}`,
     },
     body: JSON.stringify({
       title: formData.title,
@@ -80,6 +83,7 @@ export default function EditKosPage() {
   const router = useRouter();
   const params = useParams();
   const { user } = useAuthGuard();
+  const { getToken } = useAuthToken();
   const kosId = parseInt(params.id as string);
   
   const [isLoading, setIsLoading] = useState(true);
@@ -105,7 +109,7 @@ export default function EditKosPage() {
     const loadKosData = async () => {
       try {
         setIsLoading(true);
-        const response = await getKosDetails(kosId);
+        const response = await getKosDetails(kosId, getToken);
         
         if (response.data) {
           const kosData = response.data;
@@ -216,7 +220,7 @@ export default function EditKosPage() {
     showLoading('Menyimpan perubahan...');
 
     try {
-      const response = await updateKos(kosId, formData);
+      const response = await updateKos(kosId, formData, getToken);
 
       if (response.data) {
         // Close loading and show success
