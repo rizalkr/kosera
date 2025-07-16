@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useAuth } from '@/contexts/AuthContext';
 import { authApi } from '@/lib/api';
+import { showError, showSuccess } from '@/lib/sweetalert';
 
 export default function RegisterPage() {
   const [formData, setFormData] = useState({
@@ -18,7 +19,6 @@ export default function RegisterPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState('');
   
   const router = useRouter();
   const { login } = useAuth();
@@ -26,18 +26,17 @@ export default function RegisterPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
-    setError('');
     
     // Validate passwords match
     if (formData.password !== formData.confirmPassword) {
-      setError('Password dan konfirmasi password tidak sama');
+      await showError('Password Tidak Sama', 'Password dan konfirmasi password tidak sama');
       setIsLoading(false);
       return;
     }
 
     // Validate password length
     if (formData.password.length < 6) {
-      setError('Password minimal 6 karakter');
+      await showError('Password Terlalu Pendek', 'Password minimal 6 karakter');
       setIsLoading(false);
       return;
     }
@@ -59,13 +58,16 @@ export default function RegisterPage() {
           role: user.role
         });
         
+        // Show success message
+        await showSuccess('Registrasi Berhasil!', `Selamat datang di Kosera, ${user.username}!`);
+        
         // Redirect to homepage
         router.push('/');
       } else {
-        setError(response.error || 'Registrasi gagal');
+        await showError('Registrasi Gagal', response.error || 'Terjadi kesalahan saat mendaftar');
       }
     } catch (err: any) {
-      setError(err.message || 'Registrasi gagal');
+      await showError('Error', err.message || 'Terjadi kesalahan jaringan');
     } finally {
       setIsLoading(false);
     }
@@ -86,18 +88,6 @@ export default function RegisterPage() {
           <h1 className="text-3xl font-bold text-blue-600 mb-2">Daftar ke Kosera</h1>
           <p className="text-gray-600">Buat akun baru dan mulai mencari kos</p>
         </div>
-
-        {/* Error Message */}
-        {error && (
-          <div className="bg-red-50 border border-red-200 text-red-600 px-4 py-3 rounded-lg mb-6">
-            <div className="flex items-center">
-              <svg className="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20">
-                <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
-              </svg>
-              {error || 'Terjadi kesalahan saat mendaftar'}
-            </div>
-          </div>
-        )}
 
         {/* Register Form */}
         <form onSubmit={handleSubmit} className="space-y-4">

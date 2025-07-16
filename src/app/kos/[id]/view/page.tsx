@@ -286,13 +286,7 @@ export default function KosDetailPage() {
                 </div>
               ))}
             </div>
-            
-            {/* Photo status indicator */}
-            {kosPhotos.length > 0 && (
-              <div className="mt-2 text-sm text-gray-500 text-center">
-                Menampilkan foto dari database ({kosPhotos.length} foto) - Klik untuk memperbesar
-              </div>
-            )}
+
           </div>
 
           {/* Content */}

@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useAuth } from '@/contexts/AuthContext';
 import { authApi } from '@/lib/api';
+import { showError, showSuccess } from '@/lib/sweetalert';
 
 export default function LoginPage() {
   const [formData, setFormData] = useState({
@@ -13,7 +14,6 @@ export default function LoginPage() {
   });
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState('');
   
   const router = useRouter();
   const { login } = useAuth();
@@ -21,7 +21,6 @@ export default function LoginPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
-    setError('');
     
     try {
       console.log('Attempting login with:', { username: formData.username, password: '***' });
@@ -37,17 +36,20 @@ export default function LoginPage() {
           role: user.role
         });
         
+        // Show success message
+        await showSuccess('Login berhasil!', `Selamat datang kembali, ${user.username}!`);
+        
         // Redirect to homepage or previous page
         const from = new URLSearchParams(window.location.search).get('from') || '/';
         router.push(from);
         router.refresh();
       } else {
         console.error('Login failed:', response);
-        setError(response.error || response.message || 'Login failed');
+        await showError('Login Gagal', response.error || response.message || 'Username atau password salah');
       }
     } catch (err: any) {
       console.error('Login error:', err);
-      setError(err.message || 'Network error occurred');
+      await showError('Error', err.message || 'Terjadi kesalahan jaringan');
     } finally {
       setIsLoading(false);
     }
@@ -68,18 +70,6 @@ export default function LoginPage() {
           <h1 className="text-3xl font-bold text-blue-600 mb-2">Masuk ke Kosera</h1>
           <p className="text-gray-600">Temukan kos impian Anda</p>
         </div>
-
-        {/* Error Message */}
-        {error && (
-          <div className="bg-red-50 border border-red-200 text-red-600 px-4 py-3 rounded-lg mb-6">
-            <div className="flex items-center">
-              <svg className="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20">
-                <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
-              </svg>
-              {error}
-            </div>
-          </div>
-        )}
 
         {/* Login Form */}
         <form onSubmit={handleSubmit} className="space-y-6">
