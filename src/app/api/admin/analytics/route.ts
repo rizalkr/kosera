@@ -27,10 +27,10 @@ export const GET = withAuth(async (request: AuthenticatedRequest) => {
       db
         .select({
           totalKos: count(),
-          totalViews: sql<number>`sum(${posts.viewCount})`,
-          totalFavorites: sql<number>`sum(${posts.favoriteCount})`,
-          averageRating: sql<number>`avg(${posts.averageRating})`,
-          totalReviews: sql<number>`sum(${posts.reviewCount})`,
+          totalViews: sql<number>`COALESCE(sum(${posts.viewCount}), 0)`,
+          totalFavorites: sql<number>`COALESCE(sum(${posts.favoriteCount}), 0)`,
+          averageRating: sql<number>`COALESCE(avg(${posts.averageRating}), 0)`,
+          totalReviews: sql<number>`COALESCE(sum(${posts.reviewCount}), 0)`,
         })
         .from(kos)
         .innerJoin(posts, eq(kos.postId, posts.id)),
@@ -99,8 +99,8 @@ export const GET = withAuth(async (request: AuthenticatedRequest) => {
       db
         .select({
           totalFeatured: count(),
-          averageFeaturedViews: sql<number>`avg(${posts.viewCount})`,
-          averageFeaturedRating: sql<number>`avg(${posts.averageRating})`,
+          averageFeaturedViews: sql<number>`COALESCE(avg(${posts.viewCount}), 0)`,
+          averageFeaturedRating: sql<number>`COALESCE(avg(${posts.averageRating}), 0)`,
         })
         .from(posts)
         .innerJoin(kos, eq(posts.id, kos.postId))
