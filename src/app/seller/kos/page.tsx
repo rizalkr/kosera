@@ -2,6 +2,7 @@
 
 import Header from '@/components/Header';
 import ProtectedRoute from '@/components/ProtectedRoute';
+import KosImage from '@/components/KosImage';
 import { useAuthGuard } from '@/hooks/useAuthGuard';
 import { useMyKos } from '@/hooks/useApi';
 import { useState } from 'react';
@@ -179,14 +180,13 @@ export default function SellerKosPage() {
                     <div key={kos.id} className="bg-gray-50 rounded-xl p-6 hover:shadow-md transition-shadow border">
                       {/* Kos Image */}
                       <div className="mb-4 relative">
-                        <img
-                          src={kos.image || "/images/rooms/room1.jpg"}
-                          alt={`Kos ${kos.name}`}
-                          className="w-full h-48 object-cover rounded-lg"
-                          onError={(e) => {
-                            e.currentTarget.src = "/images/profile.jpg";
-                          }}
-                        />
+                        <div className="w-full h-48 rounded-lg overflow-hidden relative">
+                          <KosImage
+                            kosId={kos.id}
+                            kosName={kos.name}
+                            className="w-full h-full object-cover"
+                          />
+                        </div>
                         <div className="absolute top-3 right-3">
                           <span className={`px-3 py-1 rounded-full text-xs font-semibold ${status.color}`}>
                             {status.label}

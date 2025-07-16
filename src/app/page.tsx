@@ -8,9 +8,11 @@ import FeaturedList from '@/components/FeaturedList';
 import MapSection from '@/components/maps/MapSection';
 import RecommendationCarousel from '@/components/RecommendationCarousel';
 import Footer from '@/components/Footer';
+import KosImage from '@/components/KosImage';
 import { useKosSearch } from '@/hooks/useApi';
 import { useAuthGuard } from '@/hooks/useAuthGuard';
 import { useAddFavorite, useRemoveFavorite, useFavorites } from '@/hooks/useApi';
+import { useKosImage } from '@/hooks/useKosImage';
 import { SearchParams, KosData } from '@/lib/api';
 
 export default function HomePage() {
@@ -143,10 +145,10 @@ export default function HomePage() {
                 </button>
                 
                 <div className="flex gap-4 p-4">
-                  <div className="w-32 h-32 flex-shrink-0 rounded-lg overflow-hidden bg-blue-50 flex items-center justify-center">
-                    <img
-                      src="/images/rooms/room1.jpg"
-                      alt="room"
+                  <div className="w-32 h-32 flex-shrink-0 rounded-lg overflow-hidden bg-blue-50 flex items-center justify-center relative">
+                    <KosImage 
+                      kosId={kos.id}
+                      kosName={kos.name}
                       className="object-cover w-full h-full"
                     />
                   </div>

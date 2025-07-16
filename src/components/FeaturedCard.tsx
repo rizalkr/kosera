@@ -4,6 +4,7 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { useTrackView, useAddFavorite, useRemoveFavorite } from '@/hooks/useApi';
 import { useProtectedAction } from '@/hooks/useProtectedAction';
+import { useKosImage } from '@/hooks/useKosImage';
 
 interface FeaturedCardProps {
   id: number;
@@ -31,9 +32,11 @@ export default function FeaturedCard({
   isFavorite = false
 }: FeaturedCardProps) {
   const [isLiked, setIsLiked] = useState(isFavorite);
-  const trackView = useTrackView();  const addFavorite = useAddFavorite();
+  const trackView = useTrackView();
+  const addFavorite = useAddFavorite();
   const removeFavorite = useRemoveFavorite();
   const { executeProtectedAction } = useProtectedAction();
+  const { imageUrl, hasPhotos } = useKosImage(id);
 
   const handleFavoriteClick = (e: React.MouseEvent) => {
     e.stopPropagation(); // Prevent card click
@@ -96,16 +99,21 @@ export default function FeaturedCard({
       </button>
 
       <div className="flex gap-4 p-4">
-        <div className="w-32 h-32 flex-shrink-0 rounded-lg overflow-hidden bg-blue-50 flex items-center justify-center">
+        <div className="w-32 h-32 flex-shrink-0 rounded-lg overflow-hidden bg-blue-50 flex items-center justify-center relative">
           <img
-            src={images[0] || '/images/rooms/room1.jpg'}
-            alt="room"
+            src={imageUrl}
+            alt={description}
             className="object-cover w-full h-full"
             onError={(e) => {
               const target = e.target as HTMLImageElement;
               target.src = '/images/rooms/room1.jpg'; // Fallback image
             }}
           />
+          {!hasPhotos && (
+            <div className="absolute bottom-1 left-1 bg-black bg-opacity-60 text-white text-xs px-1 py-0.5 rounded">
+              Sample
+            </div>
+          )}
         </div>
         
         <div className="flex-1 flex flex-col justify-between">

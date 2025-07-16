@@ -65,14 +65,14 @@ export default function RecommendationCarousel() {
           <SwiperSlide key={kos.id}>
             <FeaturedCard 
               id={kos.id}
-              images={['/images/rooms/room1.jpg']} // Placeholder
-              price={`${(kos.price / 1000).toLocaleString()}`} // Convert to K format
+              images={[]} // Not needed anymore, using database photos via hook
+              price={kos.price.toLocaleString()}
               description={kos.description}
               area={kos.address}
               city={kos.city}
               rating={parseFloat(kos.averageRating || '0')}
               reviewCount={kos.reviewCount}
-              facilities={kos.facilities.split(', ')}
+              facilities={kos.facilities ? kos.facilities.split(', ') : []}
             />
           </SwiperSlide>
         ))}

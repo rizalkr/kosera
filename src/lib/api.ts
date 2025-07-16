@@ -212,6 +212,12 @@ export const kosApi = {
     });
     return response.json();
   },
+
+  // Get kos photos
+  getPhotos: async (id: number) => {
+    const response = await fetch(`${API_BASE_URL}/api/kos/${id}/photos`);
+    return response.json();
+  },
 };
 
 // Auth API

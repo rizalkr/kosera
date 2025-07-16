@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import ProtectedRoute from '@/components/ProtectedRoute';
+import KosImage from '@/components/KosImage';
 import { useAuthGuard } from '@/hooks/useAuthGuard';
 import { useBookings, useUpdateBooking } from '@/hooks/useApi';
 import { showConfirm } from '@/lib/sweetalert';
@@ -203,11 +204,13 @@ export default function RenterBookingsPage() {
                 {filteredBookings.map((booking) => (
                   <div key={booking.id} className="bg-gray-50 rounded-lg p-6 hover:shadow-md transition-shadow">
                     <div className="flex flex-col md:flex-row gap-4">
-                      <img
-                        src="/images/rooms/room1.jpg"
-                        alt={booking.post.title}
-                        className="w-full md:w-48 h-32 object-cover rounded-lg"
-                      />
+                      <div className="w-full md:w-48 h-32 rounded-lg overflow-hidden relative">
+                        <KosImage
+                          kosId={booking.kos.id}
+                          kosName={booking.post.title}
+                          className="w-full h-full object-cover"
+                        />
+                      </div>
                       <div className="flex-1">
                         <div className="flex items-start justify-between mb-2">
                           <h3 className="text-xl font-semibold text-gray-800">{booking.post.title}</h3>

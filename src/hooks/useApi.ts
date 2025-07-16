@@ -39,6 +39,14 @@ export const useKosDetails = (id: number) => {
   });
 };
 
+export const useKosPhotos = (id: number) => {
+  return useQuery({
+    queryKey: ['kos', 'photos', id],
+    queryFn: () => kosApi.getPhotos(id),
+    enabled: !!id, // Only run when we have a valid ID
+  });
+};
+
 // View tracking mutation
 export const useTrackView = () => {
   return useMutation({
