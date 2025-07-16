@@ -19,6 +19,7 @@ export default function RegisterPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [validationErrors, setValidationErrors] = useState<Record<string, string>>({});
   
   const router = useRouter();
   const { login } = useAuth();
@@ -27,28 +28,49 @@ export default function RegisterPage() {
     e.preventDefault();
     setIsLoading(true);
     
-    // Validate passwords match
-    if (formData.password !== formData.confirmPassword) {
-      await showError('Password Tidak Sama', 'Password dan konfirmasi password tidak sama');
-      setIsLoading(false);
-      return;
-    }
-
-    // Validate password length
-    if (formData.password.length < 6) {
-      await showError('Password Terlalu Pendek', 'Password minimal 6 karakter');
-      setIsLoading(false);
-      return;
-    }
-
     try {
+      // Validate passwords match
+      if (formData.password !== formData.confirmPassword) {
+        await showError('Password Tidak Sama', 'Password dan konfirmasi password tidak sama');
+        return;
+      }
+
+      // Validate password length
+      if (formData.password.length < 6) {
+        await showError('Password Terlalu Pendek', 'Password minimal 6 karakter');
+        return;
+      }
+
+      // Validate username format (alphanumeric and underscore only)
+      const usernameRegex = /^[a-zA-Z0-9_]+$/;
+      if (!usernameRegex.test(formData.username)) {
+        await showError('Username Tidak Valid', 'Username hanya boleh berisi huruf, angka, dan underscore');
+        return;
+      }
+
+      // Validate contact format (email or phone)
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      const phoneRegex = /^(\+62|62|0)[0-9]{9,13}$/;
+      if (!emailRegex.test(formData.contact) && !phoneRegex.test(formData.contact.replace(/[\s-]/g, ''))) {
+        await showError('Kontak Tidak Valid', 'Masukkan email yang valid atau nomor HP Indonesia (contoh: 08123456789)');
+        return;
+      }
+
+      console.log('Attempting registration with:', { 
+        ...formData, 
+        password: '***',
+        confirmPassword: '***'
+      });
+
       const response = await authApi.register({
-        name: formData.name,
-        username: formData.username,
-        contact: formData.contact,
+        name: formData.name.trim(),
+        username: formData.username.trim().toLowerCase(),
+        contact: formData.contact.trim(),
         password: formData.password,
         role: formData.role,
       });
+      
+      console.log('Registration response:', response);
       
       if (response.success && response.data) {
         const { user, token } = response.data;
@@ -64,9 +86,13 @@ export default function RegisterPage() {
         // Redirect to homepage
         router.push('/');
       } else {
-        await showError('Registrasi Gagal', response.error || 'Terjadi kesalahan saat mendaftar');
+        await showError(
+          'Registrasi Gagal', 
+          response.message || response.error || 'Terjadi kesalahan saat mendaftar'
+        );
       }
     } catch (err: any) {
+      console.error('Registration error:', err);
       await showError('Error', err.message || 'Terjadi kesalahan jaringan');
     } finally {
       setIsLoading(false);
@@ -74,9 +100,65 @@ export default function RegisterPage() {
   };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+    const { name, value } = e.target;
     setFormData(prev => ({
       ...prev,
-      [e.target.name]: e.target.value
+      [name]: value
+    }));
+
+    // Clear validation error when user starts typing
+    if (validationErrors[name]) {
+      setValidationErrors(prev => ({
+        ...prev,
+        [name]: ''
+      }));
+    }
+
+    // Real-time validation
+    validateField(name, value);
+  };
+
+  const validateField = (fieldName: string, value: string) => {
+    const errors: Record<string, string> = {};
+
+    switch (fieldName) {
+      case 'username':
+        const usernameRegex = /^[a-zA-Z0-9_]+$/;
+        if (value && !usernameRegex.test(value)) {
+          errors.username = 'Hanya boleh huruf, angka, dan underscore';
+        } else if (value && value.length < 3) {
+          errors.username = 'Username minimal 3 karakter';
+        }
+        break;
+      
+      case 'contact':
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        const phoneRegex = /^(\+62|62|0)[0-9]{9,13}$/;
+        if (value && !emailRegex.test(value) && !phoneRegex.test(value.replace(/[\s-]/g, ''))) {
+          errors.contact = 'Format email atau nomor HP tidak valid';
+        }
+        break;
+      
+      case 'password':
+        if (value && value.length < 6) {
+          errors.password = 'Password minimal 6 karakter';
+        }
+        // Also validate confirm password if it exists
+        if (formData.confirmPassword && value !== formData.confirmPassword) {
+          errors.confirmPassword = 'Password tidak sama';
+        }
+        break;
+      
+      case 'confirmPassword':
+        if (value && value !== formData.password) {
+          errors.confirmPassword = 'Password tidak sama';
+        }
+        break;
+    }
+
+    setValidationErrors(prev => ({
+      ...prev,
+      ...errors
     }));
   };
 
@@ -120,9 +202,14 @@ export default function RegisterPage() {
               value={formData.username}
               onChange={handleChange}
               required
-              className="text-gray-500 w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors"
-              placeholder="Pilih username"
+              className={`text-gray-500 w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors ${
+                validationErrors.username ? 'border-red-300 bg-red-50' : 'border-gray-300'
+              }`}
+              placeholder="Pilih username (min. 3 karakter)"
             />
+            {validationErrors.username && (
+              <p className="mt-1 text-sm text-red-600">{validationErrors.username}</p>
+            )}
           </div>
 
           {/* Contact */}
@@ -137,9 +224,14 @@ export default function RegisterPage() {
               value={formData.contact}
               onChange={handleChange}
               required
-              className="text-gray-500 w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors"
+              className={`text-gray-500 w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors ${
+                validationErrors.contact ? 'border-red-300 bg-red-50' : 'border-gray-300'
+              }`}
               placeholder="08123456789 atau email@example.com"
             />
+            {validationErrors.contact && (
+              <p className="mt-1 text-sm text-red-600">{validationErrors.contact}</p>
+            )}
           </div>
 
           {/* Role */}
@@ -173,7 +265,9 @@ export default function RegisterPage() {
                 onChange={handleChange}
                 required
                 minLength={6}
-                className="text-gray-500 w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors pr-10"
+                className={`text-gray-500 w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors pr-10 ${
+                  validationErrors.password ? 'border-red-300 bg-red-50' : 'border-gray-300'
+                }`}
                 placeholder="Minimal 6 karakter"
               />
               <button
@@ -193,6 +287,9 @@ export default function RegisterPage() {
                 )}
               </button>
             </div>
+            {validationErrors.password && (
+              <p className="mt-1 text-sm text-red-600">{validationErrors.password}</p>
+            )}
           </div>
 
           {/* Confirm Password */}
@@ -208,7 +305,9 @@ export default function RegisterPage() {
                 value={formData.confirmPassword}
                 onChange={handleChange}
                 required
-                className="text-gray-500 w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors pr-10"
+                className={`text-gray-500 w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors pr-10 ${
+                  validationErrors.confirmPassword ? 'border-red-300 bg-red-50' : 'border-gray-300'
+                }`}
                 placeholder="Ulangi password"
               />
               <button
@@ -228,6 +327,9 @@ export default function RegisterPage() {
                 )}
               </button>
             </div>
+            {validationErrors.confirmPassword && (
+              <p className="mt-1 text-sm text-red-600">{validationErrors.confirmPassword}</p>
+            )}
           </div>
 
           <button
