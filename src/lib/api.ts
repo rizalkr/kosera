@@ -258,16 +258,11 @@ export const authApi = {
     contact: string;
     role?: 'ADMIN' | 'SELLER' | 'RENTER';
   }): Promise<ApiResponse<{ token: string; user: any }>> => {
-    // Map RENTER to USER for API compatibility
-    const apiUserData = {
-      ...userData,
-      role: userData.role === 'RENTER' ? 'USER' : userData.role
-    };
-    
+    // Send data directly without role mapping
     const response = await fetch(`${API_BASE_URL}/api/auth/register`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(apiUserData),
+      body: JSON.stringify(userData),
     });
     return response.json();
   },

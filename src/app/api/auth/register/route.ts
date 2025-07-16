@@ -8,10 +8,22 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     const { name, username, contact, password, role = 'RENTER' } = body;
 
+    console.log('Registration attempt:', { name, username, contact, role, passwordLength: password?.length });
+
     // Validate required fields
     if (!name || !username || !contact || !password) {
       return NextResponse.json(
         { error: 'Name, username, contact, and password are required' },
+        { status: 400 }
+      );
+    }
+
+    // Validate role
+    const validRoles = ['ADMIN', 'SELLER', 'RENTER'];
+    if (!validRoles.includes(role)) {
+      console.error('Invalid role provided:', role);
+      return NextResponse.json(
+        { error: `Invalid role. Must be one of: ${validRoles.join(', ')}` },
         { status: 400 }
       );
     }
