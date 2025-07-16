@@ -7,6 +7,7 @@ import Image from 'next/image';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import BookingModal from '@/components/BookingModal';
+import ImageModal from '@/components/ImageModal';
 import { useKosDetails, useTrackView, useAddFavorite, useRemoveFavorite, useFavorites, useKosPhotos } from '@/hooks/useApi';
 import { useAuthGuard } from '@/hooks/useAuthGuard';
 
@@ -34,6 +35,7 @@ export default function KosDetailPage() {
   const params = useParams();
   const kosId = parseInt(params.id as string);
   const [showBookingModal, setShowBookingModal] = useState(false);
+  const [showImageModal, setShowImageModal] = useState(false);
   const [activeImageIndex, setActiveImageIndex] = useState(0);
   const viewTracked = useRef(false); // Track if view has been counted
 
@@ -145,6 +147,15 @@ export default function KosDetailPage() {
     console.log('Booking created successfully from detail page');
   };
 
+  const handleImageClick = (index: number) => {
+    setActiveImageIndex(index);
+    setShowImageModal(true);
+  };
+
+  const handleImageModalChange = (index: number) => {
+    setActiveImageIndex(index);
+  };
+
   const renderStars = (rating: number) => {
     return Array.from({ length: 5 }, (_, i) => (
       <span
@@ -241,8 +252,8 @@ export default function KosDetailPage() {
                   width={400}
                   height={256}
                   style={{ width: '100%', height: 'auto' }}
-                  className="object-cover rounded-lg cursor-pointer"
-                  onClick={() => setActiveImageIndex(0)}
+                  className="object-cover rounded-lg cursor-pointer hover:opacity-90 transition-opacity"
+                  onClick={() => handleImageClick(activeImageIndex)}
                   onError={(e) => {
                     // Fallback to sample image if photo fails to load
                     const target = e.target as HTMLImageElement;
@@ -258,8 +269,8 @@ export default function KosDetailPage() {
                     width={200}
                     height={128}
                     style={{ width: '100%', height: '100%' }}
-                    className="object-cover rounded-lg cursor-pointer"
-                    onClick={() => setActiveImageIndex(index + 1)}
+                    className="object-cover rounded-lg cursor-pointer hover:opacity-90 transition-opacity"
+                    onClick={() => handleImageClick(index + 1)}
                     onError={(e) => {
                       // Fallback to sample image if photo fails to load
                       const target = e.target as HTMLImageElement;
@@ -267,8 +278,8 @@ export default function KosDetailPage() {
                     }}
                   />
                   {index === 2 && displayImages.length > 4 && (
-                    <div className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center rounded-lg cursor-pointer"
-                         onClick={() => setActiveImageIndex(index + 1)}>
+                    <div className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center rounded-lg cursor-pointer hover:bg-opacity-60 transition-all"
+                         onClick={() => handleImageClick(index + 1)}>
                       <span className="text-white font-semibold text-xs">+{displayImages.length - 4} foto</span>
                     </div>
                   )}
@@ -279,7 +290,7 @@ export default function KosDetailPage() {
             {/* Photo status indicator */}
             {kosPhotos.length > 0 && (
               <div className="mt-2 text-sm text-gray-500 text-center">
-                Menampilkan foto dari database ({kosPhotos.length} foto)
+                Menampilkan foto dari database ({kosPhotos.length} foto) - Klik untuk memperbesar
               </div>
             )}
           </div>
@@ -418,6 +429,16 @@ export default function KosDetailPage() {
         isOpen={showBookingModal}
         onClose={() => setShowBookingModal(false)}
         onBookingCreated={handleBookingCreated}
+      />
+
+      {/* Image Modal */}
+      <ImageModal
+        isOpen={showImageModal}
+        onClose={() => setShowImageModal(false)}
+        images={displayImages}
+        currentIndex={activeImageIndex}
+        onImageChange={handleImageModalChange}
+        kosName={kos.name}
       />
     </div>
   );
