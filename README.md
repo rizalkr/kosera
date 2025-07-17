@@ -10,10 +10,12 @@
 
 ## 📚 Documentation
 
-- **[📖 API Documentation](./blob/backend/docs/api-documentation.md)** - Complete API reference with examples
-- **[🗄️ Database Schema](./blob/backend/docs/database-design.md)** - Database design and relationships
-- **[🧪 Testing Guide](./blob/backend/docs/testing-guide.md)** - Comprehensive testing documentation
-- **[🚀 Deployment Guide](./blob/backend/docs/deployment-guide.md)** - Production deployment instructions
+- **[📖 API Documentation](./blob/docs/api/api-documentation.md)** - Complete API reference with examples
+- **[🗄️ Database Schema](./blob/docs/api/database-design.md)** - Database design and relationships
+- **[🧪 Testing Guide](./blob/docs/testing/testing-guide.md)** - Comprehensive testing documentation
+- **[🚀 Deployment Guide](./blob/docs/deployment/deployment-guide.md)** - Production deployment instructions
+- **[🏗️ Implementation Guide](./blob/docs/implementation/)** - Feature implementation documentation
+- **[📋 Documentation Index](./blob/docs/README.md)** - Complete documentation overview
 
 ## 🔗 Quick API Reference
 
@@ -319,10 +321,12 @@ npm start
 ## 📞 Support
 
 ### Getting Help
-- 📖 [API Documentation](./blob/backend/docs/api-documentation.md)
-- 🗄️ [Database Schema](./blob/backend/docs/database-design.md)
-- 🧪 [Testing Guide](./blob/backend/docs/testing-guide.md)
-- 🚀 [Deployment Guide](./blob/backend/docs/deployment-guide.md)
+- 📖 [API Documentation](./blob/docs/api/api-documentation.md)
+- 🗄️ [Database Schema](./blob/docs/api/database-design.md)
+- 🧪 [Testing Guide](./blob/docs/testing/testing-guide.md)
+- 🚀 [Deployment Guide](./blob/docs/deployment/deployment-guide.md)
+- 🏗️ [Implementation Guides](./blob/docs/implementation/)
+- 📋 [All Documentation](./blob/docs/README.md)
 
 ### Issue Reporting
 - Use GitHub Issues for bug reports
