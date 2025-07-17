@@ -285,14 +285,13 @@ export default function Header() {
             </button>
             <div
               className={`
-                flex flex-col w-full items-center mt-1
-                transition-all duration-300 origin-top rounded-2xl
+                flex flex-col w-full items-center overflow-hidden
+                transition-all duration-300 ease-in-out
                 ${servicesOpen
-                  ? "opacity-100 scale-y-100 pointer-events-auto"
-                  : "opacity-0 scale-y-95 pointer-events-none"
+                  ? "max-h-24 opacity-100"
+                  : "max-h-0 opacity-0"
                 }
               `}
-              style={{ transformOrigin: "top" }}
             >
               <button
                 onClick={() => {
@@ -300,7 +299,7 @@ export default function Header() {
                   setOpen(false);
                   setServicesOpen(false);
                 }}
-                className="px-4 py-2 text-blue-400 hover:underline transition rounded-t-2xl"
+                className="px-4 py-2 text-blue-400 hover:underline transition w-full text-center"
               >
                 Angkut Barang
               </button>
@@ -310,7 +309,7 @@ export default function Header() {
                   setOpen(false);
                   setServicesOpen(false);
                 }}
-                className="px-4 py-2 text-blue-400 hover:underline transition rounded-b-2xl"
+                className="px-4 py-2 text-blue-400 hover:underline transition w-full text-center"
               >
                 Titip Barang
               </button>

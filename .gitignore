@@ -32,6 +32,16 @@ yarn-error.log*
 
 # env files (can opt-in for committing if needed)
 .env*
+!.env.docker
+!.env.example
+
+# Docker
+.docker-data/
+
+# SSL certificates (if using)
+docker/nginx/ssl/*.crt
+docker/nginx/ssl/*.key
+docker/nginx/ssl/*.pem
 
 # vercel
 .vercel
