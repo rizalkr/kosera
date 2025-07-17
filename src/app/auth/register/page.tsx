@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useAuth } from '@/contexts/AuthContext';
 import { authApi } from '@/lib/api';
+import { showError, showSuccess } from '@/lib/sweetalert';
 
 export default function RegisterPage() {
   const [formData, setFormData] = useState({
@@ -18,7 +19,7 @@ export default function RegisterPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState('');
+  const [validationErrors, setValidationErrors] = useState<Record<string, string>>({});
   
   const router = useRouter();
   const { login } = useAuth();
@@ -26,30 +27,50 @@ export default function RegisterPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
-    setError('');
     
-    // Validate passwords match
-    if (formData.password !== formData.confirmPassword) {
-      setError('Password dan konfirmasi password tidak sama');
-      setIsLoading(false);
-      return;
-    }
-
-    // Validate password length
-    if (formData.password.length < 6) {
-      setError('Password minimal 6 karakter');
-      setIsLoading(false);
-      return;
-    }
-
     try {
+      // Validate passwords match
+      if (formData.password !== formData.confirmPassword) {
+        await showError('Password Tidak Sama', 'Password dan konfirmasi password tidak sama');
+        return;
+      }
+
+      // Validate password length
+      if (formData.password.length < 6) {
+        await showError('Password Terlalu Pendek', 'Password minimal 6 karakter');
+        return;
+      }
+
+      // Validate username format (alphanumeric and underscore only)
+      const usernameRegex = /^[a-zA-Z0-9_]+$/;
+      if (!usernameRegex.test(formData.username)) {
+        await showError('Username Tidak Valid', 'Username hanya boleh berisi huruf, angka, dan underscore');
+        return;
+      }
+
+      // Validate contact format (email or phone)
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      const phoneRegex = /^(\+62|62|0)[0-9]{9,13}$/;
+      if (!emailRegex.test(formData.contact) && !phoneRegex.test(formData.contact.replace(/[\s-]/g, ''))) {
+        await showError('Kontak Tidak Valid', 'Masukkan email yang valid atau nomor HP Indonesia (contoh: 08123456789)');
+        return;
+      }
+
+      console.log('Attempting registration with:', { 
+        ...formData, 
+        password: '***',
+        confirmPassword: '***'
+      });
+
       const response = await authApi.register({
-        name: formData.name,
-        username: formData.username,
-        contact: formData.contact,
+        name: formData.name.trim(),
+        username: formData.username.trim().toLowerCase(),
+        contact: formData.contact.trim(),
         password: formData.password,
         role: formData.role,
       });
+      
+      console.log('Registration response:', response);
       
       if (response.success && response.data) {
         const { user, token } = response.data;
@@ -59,22 +80,85 @@ export default function RegisterPage() {
           role: user.role
         });
         
+        // Show success message
+        await showSuccess('Registrasi Berhasil!', `Selamat datang di Kosera, ${user.username}!`);
+        
         // Redirect to homepage
         router.push('/');
       } else {
-        setError(response.error || 'Registrasi gagal');
+        await showError(
+          'Registrasi Gagal', 
+          response.message || response.error || 'Terjadi kesalahan saat mendaftar'
+        );
       }
     } catch (err: any) {
-      setError(err.message || 'Registrasi gagal');
+      console.error('Registration error:', err);
+      await showError('Error', err.message || 'Terjadi kesalahan jaringan');
     } finally {
       setIsLoading(false);
     }
   };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+    const { name, value } = e.target;
     setFormData(prev => ({
       ...prev,
-      [e.target.name]: e.target.value
+      [name]: value
+    }));
+
+    // Clear validation error when user starts typing
+    if (validationErrors[name]) {
+      setValidationErrors(prev => ({
+        ...prev,
+        [name]: ''
+      }));
+    }
+
+    // Real-time validation
+    validateField(name, value);
+  };
+
+  const validateField = (fieldName: string, value: string) => {
+    const errors: Record<string, string> = {};
+
+    switch (fieldName) {
+      case 'username':
+        const usernameRegex = /^[a-zA-Z0-9_]+$/;
+        if (value && !usernameRegex.test(value)) {
+          errors.username = 'Hanya boleh huruf, angka, dan underscore';
+        } else if (value && value.length < 3) {
+          errors.username = 'Username minimal 3 karakter';
+        }
+        break;
+      
+      case 'contact':
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        const phoneRegex = /^(\+62|62|0)[0-9]{9,13}$/;
+        if (value && !emailRegex.test(value) && !phoneRegex.test(value.replace(/[\s-]/g, ''))) {
+          errors.contact = 'Format email atau nomor HP tidak valid';
+        }
+        break;
+      
+      case 'password':
+        if (value && value.length < 6) {
+          errors.password = 'Password minimal 6 karakter';
+        }
+        // Also validate confirm password if it exists
+        if (formData.confirmPassword && value !== formData.confirmPassword) {
+          errors.confirmPassword = 'Password tidak sama';
+        }
+        break;
+      
+      case 'confirmPassword':
+        if (value && value !== formData.password) {
+          errors.confirmPassword = 'Password tidak sama';
+        }
+        break;
+    }
+
+    setValidationErrors(prev => ({
+      ...prev,
+      ...errors
     }));
   };
 
@@ -86,18 +170,6 @@ export default function RegisterPage() {
           <h1 className="text-3xl font-bold text-blue-600 mb-2">Daftar ke Kosera</h1>
           <p className="text-gray-600">Buat akun baru dan mulai mencari kos</p>
         </div>
-
-        {/* Error Message */}
-        {error && (
-          <div className="bg-red-50 border border-red-200 text-red-600 px-4 py-3 rounded-lg mb-6">
-            <div className="flex items-center">
-              <svg className="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20">
-                <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
-              </svg>
-              {error || 'Terjadi kesalahan saat mendaftar'}
-            </div>
-          </div>
-        )}
 
         {/* Register Form */}
         <form onSubmit={handleSubmit} className="space-y-4">
@@ -113,7 +185,7 @@ export default function RegisterPage() {
               value={formData.name}
               onChange={handleChange}
               required
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors"
+              className="text-gray-500 w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors"
               placeholder="Masukkan nama lengkap"
             />
           </div>
@@ -130,9 +202,14 @@ export default function RegisterPage() {
               value={formData.username}
               onChange={handleChange}
               required
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors"
-              placeholder="Pilih username"
+              className={`text-gray-500 w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors ${
+                validationErrors.username ? 'border-red-300 bg-red-50' : 'border-gray-300'
+              }`}
+              placeholder="Pilih username (min. 3 karakter)"
             />
+            {validationErrors.username && (
+              <p className="mt-1 text-sm text-red-600">{validationErrors.username}</p>
+            )}
           </div>
 
           {/* Contact */}
@@ -147,9 +224,14 @@ export default function RegisterPage() {
               value={formData.contact}
               onChange={handleChange}
               required
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors"
+              className={`text-gray-500 w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors ${
+                validationErrors.contact ? 'border-red-300 bg-red-50' : 'border-gray-300'
+              }`}
               placeholder="08123456789 atau email@example.com"
             />
+            {validationErrors.contact && (
+              <p className="mt-1 text-sm text-red-600">{validationErrors.contact}</p>
+            )}
           </div>
 
           {/* Role */}
@@ -162,7 +244,7 @@ export default function RegisterPage() {
               name="role"
               value={formData.role}
               onChange={handleChange}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors"
+              className="text-gray-500 w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors"
             >
               <option value="RENTER">Pencari Kos</option>
               <option value="SELLER">Pemilik Kos</option>
@@ -183,7 +265,9 @@ export default function RegisterPage() {
                 onChange={handleChange}
                 required
                 minLength={6}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors pr-10"
+                className={`text-gray-500 w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors pr-10 ${
+                  validationErrors.password ? 'border-red-300 bg-red-50' : 'border-gray-300'
+                }`}
                 placeholder="Minimal 6 karakter"
               />
               <button
@@ -203,6 +287,9 @@ export default function RegisterPage() {
                 )}
               </button>
             </div>
+            {validationErrors.password && (
+              <p className="mt-1 text-sm text-red-600">{validationErrors.password}</p>
+            )}
           </div>
 
           {/* Confirm Password */}
@@ -218,7 +305,9 @@ export default function RegisterPage() {
                 value={formData.confirmPassword}
                 onChange={handleChange}
                 required
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors pr-10"
+                className={`text-gray-500 w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors pr-10 ${
+                  validationErrors.confirmPassword ? 'border-red-300 bg-red-50' : 'border-gray-300'
+                }`}
                 placeholder="Ulangi password"
               />
               <button
@@ -238,6 +327,9 @@ export default function RegisterPage() {
                 )}
               </button>
             </div>
+            {validationErrors.confirmPassword && (
+              <p className="mt-1 text-sm text-red-600">{validationErrors.confirmPassword}</p>
+            )}
           </div>
 
           <button

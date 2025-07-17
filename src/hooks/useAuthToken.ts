@@ -1,9 +1,10 @@
 import { useAuth } from '@/contexts/AuthContext';
+import { useCallback, useMemo } from 'react';
 
 export const useAuthToken = () => {
   const { token, isAuthenticated, isLoading } = useAuth();
 
-  const getToken = (): string | null => {
+  const getToken = useCallback((): string | null => {
     // Primary: Use token from AuthContext state
     if (token) {
       return token;
@@ -16,9 +17,9 @@ export const useAuthToken = () => {
     }
     
     return null;
-  };
+  }, [token]);
 
-  const setAuthToken = (newToken: string | null) => {
+  const setAuthToken = useCallback((newToken: string | null) => {
     // This will be handled by AuthContext methods
     if (newToken) {
       localStorage.setItem('auth_token', newToken);
@@ -26,27 +27,32 @@ export const useAuthToken = () => {
       localStorage.removeItem('auth_token');
     }
     // Note: We don't have direct setToken here, this should be handled by AuthContext
-  };
+  }, []);
 
-  const clearToken = () => {
+  const clearToken = useCallback(() => {
     localStorage.removeItem('auth_token');
     localStorage.removeItem('user_data');
     // Note: We don't have direct setToken here, this should be handled by AuthContext
-  };
+  }, []);
 
-  const hasValidToken = (): boolean => {
+  const hasValidToken = useCallback((): boolean => {
     const currentToken = getToken();
     return !!currentToken && !isLoading;
-  };
+  }, [getToken, isLoading]);
+
+  const currentToken = useMemo(() => getToken(), [getToken]);
+  const hasToken = useMemo(() => !!currentToken, [currentToken]);
+  const isValidAuthenticated = useMemo(() => !!currentToken && !isLoading, [currentToken, isLoading]);
 
   return {
-    token: getToken(), // Always return the most current token
+    token: currentToken, // Always return the most current token
     isLoading,
     getToken,
     setAuthToken,
     clearToken,
-    hasToken: !!getToken(),
+    hasToken,
     hasValidToken,
-    isAuthenticated: isAuthenticated && !!getToken()
+    isAuthenticated: isAuthenticated && hasToken,
+    isValidAuthenticated // Added stable boolean flag for useEffect dependencies
   };
 };

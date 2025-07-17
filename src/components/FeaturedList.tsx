@@ -65,14 +65,14 @@ export default function FeaturedList() {
         <FeaturedCard 
           key={kos.id} 
           id={kos.id}
-          images={['/images/rooms/room1.jpg']} // Placeholder, nanti bisa diganti dengan foto asli
-          price={`${(kos.price / 1000).toLocaleString()}`} // Convert to K format
+          images={[]} // Not needed anymore, using database photos via hook
+          price={kos.price.toLocaleString()}
           description={kos.description}
           area={kos.address}
           city={kos.city}
           rating={parseFloat(kos.averageRating || '0')}
           reviewCount={kos.reviewCount}
-          facilities={kos.facilities.split(', ')}
+          facilities={kos.facilities ? kos.facilities.split(', ') : []}
           isFavorite={favoriteKosIds.has(kos.id)}
         />
       ))}

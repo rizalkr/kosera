@@ -5,72 +5,25 @@ import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import ProtectedRoute from '@/components/ProtectedRoute';
 import { useAuthGuard } from '@/hooks/useAuthGuard';
-
-type UserStats = {
-  totalUsers: number;
-  activeUsers: number;
-  totalKos: number;
-  totalBookings: number;
-  totalRevenue: number;
-};
-
-type RecentActivity = {
-  id: number;
-  type: 'user_register' | 'kos_added' | 'booking_made' | 'payment_received';
-  message: string;
-  time: string;
-  user: string;
-};
-
-const mockStats: UserStats = {
-  totalUsers: 1547,
-  activeUsers: 892,
-  totalKos: 234,
-  totalBookings: 1893,
-  totalRevenue: 45678900
-};
-
-const mockActivities: RecentActivity[] = [
-  {
-    id: 1,
-    type: 'user_register',
-    message: 'Pengguna baru mendaftar',
-    time: '2 menit yang lalu',
-    user: 'john_doe'
-  },
-  {
-    id: 2,
-    type: 'kos_added',
-    message: 'Kos baru ditambahkan',
-    time: '15 menit yang lalu',
-    user: 'seller_abc'
-  },
-  {
-    id: 3,
-    type: 'booking_made',
-    message: 'Booking baru dibuat',
-    time: '1 jam yang lalu',
-    user: 'jane_smith'
-  },
-  {
-    id: 4,
-    type: 'payment_received',
-    message: 'Pembayaran diterima',
-    time: '2 jam yang lalu',
-    user: 'renter_xyz'
-  }
-];
+import { useAdminDashboard } from '@/hooks/useAdminDashboard';
 
 export default function AdminDashboard() {
-  const [stats] = useState<UserStats>(mockStats);
-  const [activities] = useState<RecentActivity[]>(mockActivities);
   const { user } = useAuthGuard();
+  const { 
+    stats, 
+    recentActivities, 
+    loading, 
+    error, 
+    refreshData,
+    analytics 
+  } = useAdminDashboard();
 
-  const getActivityIcon = (type: RecentActivity['type']) => {
+  const getActivityIcon = (type: string) => {
     switch (type) {
       case 'user_register':
         return '👤';
       case 'kos_added':
+      case 'kos_updated':
         return '🏠';
       case 'booking_made':
         return '📅';
@@ -81,11 +34,12 @@ export default function AdminDashboard() {
     }
   };
 
-  const getActivityColor = (type: RecentActivity['type']) => {
+  const getActivityColor = (type: string) => {
     switch (type) {
       case 'user_register':
         return 'bg-green-100 text-green-700';
       case 'kos_added':
+      case 'kos_updated':
         return 'bg-blue-100 text-blue-700';
       case 'booking_made':
         return 'bg-purple-100 text-purple-700';
@@ -96,14 +50,68 @@ export default function AdminDashboard() {
     }
   };
 
+  if (loading) {
+    return (
+      <ProtectedRoute requireAuth={true} allowedRoles={['ADMIN']}>
+        <div className="min-h-screen bg-[#A9E4DE] pt-20">
+          <Header />
+          <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+            <div className="flex items-center justify-center min-h-[400px]">
+              <div className="text-center">
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+                <p className="text-gray-600">Memuat data dashboard...</p>
+              </div>
+            </div>
+          </main>
+          <Footer />
+        </div>
+      </ProtectedRoute>
+    );
+  }
+
+  if (error) {
+    return (
+      <ProtectedRoute requireAuth={true} allowedRoles={['ADMIN']}>
+        <div className="min-h-screen bg-[#A9E4DE] pt-20">
+          <Header />
+          <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+            <div className="flex items-center justify-center min-h-[400px]">
+              <div className="text-center">
+                <div className="text-red-500 text-xl mb-4">❌</div>
+                <p className="text-red-600 mb-4">{error}</p>
+                <button
+                  onClick={refreshData}
+                  className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                >
+                  Coba Lagi
+                </button>
+              </div>
+            </div>
+          </main>
+          <Footer />
+        </div>
+      </ProtectedRoute>
+    );
+  }
+
   return (
     <ProtectedRoute requireAuth={true} allowedRoles={['ADMIN']}>
       <div className="min-h-screen bg-[#A9E4DE] pt-20">
         <Header />
         <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          <div className="mb-8">
-            <h1 className="text-3xl font-bold text-blue-600 mb-2">Admin Dashboard</h1>
-            <p className="text-gray-600">Kelola platform Kosera</p>
+          <div className="mb-8 flex justify-between items-center">
+            <div>
+              <h1 className="text-3xl font-bold text-blue-600 mb-2">Admin Dashboard</h1>
+              <p className="text-gray-600">Kelola platform Kosera</p>
+            </div>
+            <button
+              onClick={refreshData}
+              className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-2"
+              disabled={loading}
+            >
+              <span>🔄</span>
+              {loading ? 'Loading...' : 'Refresh Data'}
+            </button>
           </div>
 
           <div className="mb-6 text-sm text-gray-600 bg-white rounded-lg p-4">
@@ -116,7 +124,9 @@ export default function AdminDashboard() {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm text-gray-500 mb-1">Total Users</p>
-                  <p className="text-2xl font-bold text-blue-600">{stats.totalUsers.toLocaleString()}</p>
+                  <p className="text-2xl font-bold text-blue-600">
+                    {stats?.totalUsers?.toLocaleString() || '0'}
+                  </p>
                 </div>
                 <div className="text-3xl">👥</div>
               </div>
@@ -126,7 +136,9 @@ export default function AdminDashboard() {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm text-gray-500 mb-1">Active Users</p>
-                  <p className="text-2xl font-bold text-green-600">{stats.activeUsers.toLocaleString()}</p>
+                  <p className="text-2xl font-bold text-green-600">
+                    {stats?.activeUsers?.toLocaleString() || '0'}
+                  </p>
                 </div>
                 <div className="text-3xl">📊</div>
               </div>
@@ -136,7 +148,9 @@ export default function AdminDashboard() {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm text-gray-500 mb-1">Total Kos</p>
-                  <p className="text-2xl font-bold text-purple-600">{stats.totalKos.toLocaleString()}</p>
+                  <p className="text-2xl font-bold text-purple-600">
+                    {stats?.totalKos?.toLocaleString() || '0'}
+                  </p>
                 </div>
                 <div className="text-3xl">🏠</div>
               </div>
@@ -146,7 +160,9 @@ export default function AdminDashboard() {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm text-gray-500 mb-1">Total Bookings</p>
-                  <p className="text-2xl font-bold text-orange-600">{stats.totalBookings.toLocaleString()}</p>
+                  <p className="text-2xl font-bold text-orange-600">
+                    {stats?.totalBookings?.toLocaleString() || '0'}
+                  </p>
                 </div>
                 <div className="text-3xl">📅</div>
               </div>
@@ -158,18 +174,25 @@ export default function AdminDashboard() {
             <div className="bg-white rounded-lg shadow-lg p-6">
               <h2 className="text-xl font-semibold text-gray-800 mb-4">Aktivitas Terbaru</h2>
               <div className="space-y-4">
-                {activities.map((activity) => (
-                  <div key={activity.id} className="flex items-center space-x-4 p-3 bg-gray-50 rounded-lg">
-                    <div className="text-2xl">{getActivityIcon(activity.type)}</div>
-                    <div className="flex-1">
-                      <p className="text-sm text-gray-800">{activity.message}</p>
-                      <p className="text-xs text-gray-500">oleh {activity.user}</p>
+                {recentActivities.length > 0 ? (
+                  recentActivities.map((activity) => (
+                    <div key={activity.id} className="flex items-center space-x-4 p-3 bg-gray-50 rounded-lg">
+                      <div className="text-2xl">{getActivityIcon(activity.type)}</div>
+                      <div className="flex-1">
+                        <p className="text-sm text-gray-800">{activity.message}</p>
+                        <p className="text-xs text-gray-500">oleh {activity.user}</p>
+                      </div>
+                      <div className="text-right">
+                        <p className="text-xs text-gray-500">{activity.time}</p>
+                      </div>
                     </div>
-                    <div className="text-right">
-                      <p className="text-xs text-gray-500">{activity.time}</p>
-                    </div>
+                  ))
+                ) : (
+                  <div className="text-center text-gray-500 py-8">
+                    <div className="text-4xl mb-2">📋</div>
+                    <p>Belum ada aktivitas terbaru</p>
                   </div>
-                ))}
+                )}
               </div>
             </div>
 
@@ -178,12 +201,25 @@ export default function AdminDashboard() {
               <h2 className="text-xl font-semibold text-gray-800 mb-4">Ringkasan Pendapatan</h2>
               <div className="text-center">
                 <div className="text-4xl font-bold text-blue-600 mb-2">
-                  Rp {stats.totalRevenue.toLocaleString()}
+                  Rp {stats?.totalRevenue?.toLocaleString() || '0'}
                 </div>
-                <p className="text-sm text-gray-500 mb-4">Total pendapatan bulan ini</p>
-                <div className="bg-green-100 text-green-700 px-4 py-2 rounded-lg inline-block">
-                  ↗ +12.5% dari bulan lalu
-                </div>
+                <p className="text-sm text-gray-500 mb-4">Total pendapatan dari booking terkonfirmasi</p>
+                {analytics?.overview && (
+                  <div className="grid grid-cols-2 gap-4 mt-4">
+                    <div className="bg-blue-50 p-3 rounded-lg">
+                      <div className="text-lg font-semibold text-blue-600">
+                        {analytics.overview.totalViews?.toLocaleString() || '0'}
+                      </div>
+                      <div className="text-xs text-blue-500">Total Views</div>
+                    </div>
+                    <div className="bg-green-50 p-3 rounded-lg">
+                      <div className="text-lg font-semibold text-green-600">
+                        {stats?.averageRating ? Number(stats.averageRating).toFixed(1) : '0.0'}⭐
+                      </div>
+                      <div className="text-xs text-green-500">Rata-rata Rating</div>
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
           </div>

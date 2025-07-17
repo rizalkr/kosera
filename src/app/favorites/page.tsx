@@ -3,6 +3,7 @@
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import ProtectedRoute from '@/components/ProtectedRoute';
+import KosImage from '@/components/KosImage';
 import { useAuthGuard } from '@/hooks/useAuthGuard';
 import { useFavorites, useRemoveFavorite } from '@/hooks/useApi';
 import { showConfirm } from '@/lib/sweetalert';
@@ -114,11 +115,13 @@ export default function FavoritesPage() {
                 {favorites.map((favorite: any) => (
                   <div key={favorite.id} className="bg-gray-50 rounded-lg p-6 hover:shadow-md transition-shadow">
                     <div className="flex flex-col md:flex-row gap-4">
-                      <img
-                        src="/images/rooms/room1.jpg"
-                        alt={favorite.kos.name}
-                        className="w-full md:w-48 h-32 object-cover rounded-lg"
-                      />
+                      <div className="w-full md:w-48 h-32 rounded-lg overflow-hidden relative">
+                        <KosImage
+                          kosId={favorite.kos.id}
+                          kosName={favorite.kos.name}
+                          className="w-full h-full object-cover"
+                        />
+                      </div>
                       <div className="flex-1">
                         <div className="flex items-start justify-between mb-2">
                           <h3 className="text-xl font-semibold text-gray-800">{favorite.kos.name}</h3>

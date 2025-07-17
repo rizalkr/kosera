@@ -7,7 +7,8 @@ import Image from 'next/image';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import BookingModal from '@/components/BookingModal';
-import { useKosDetails, useTrackView, useAddFavorite, useRemoveFavorite, useFavorites } from '@/hooks/useApi';
+import ImageModal from '@/components/ImageModal';
+import { useKosDetails, useTrackView, useAddFavorite, useRemoveFavorite, useFavorites, useKosPhotos } from '@/hooks/useApi';
 import { useAuthGuard } from '@/hooks/useAuthGuard';
 
 interface Review {
@@ -22,20 +23,24 @@ interface Review {
   };
 }
 
-interface ReviewStats {
-  averageRating: number;
-  totalReviews: number;
-  ratingDistribution: { '5': number; '4': number; '3': number; '2': number; '1': number };
+interface KosPhoto {
+  id: number;
+  url: string;
+  caption?: string;
+  isPrimary: boolean;
+  createdAt: string;
 }
 
 export default function KosDetailPage() {
   const params = useParams();
   const kosId = parseInt(params.id as string);
   const [showBookingModal, setShowBookingModal] = useState(false);
+  const [showImageModal, setShowImageModal] = useState(false);
   const [activeImageIndex, setActiveImageIndex] = useState(0);
   const viewTracked = useRef(false); // Track if view has been counted
 
   const { data: kosData, isLoading, error } = useKosDetails(kosId);
+  const { data: photosData } = useKosPhotos(kosId);
   const { data: favoritesData } = useFavorites();
   const trackView = useTrackView();
   const addFavorite = useAddFavorite();
@@ -51,13 +56,27 @@ export default function KosDetailPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [kosId]); // Only depend on kosId
 
-  // Sample images for now (you can replace with actual kos photos from API)
-  const sampleImages = [
-    '/images/rooms/room1.jpg',
-    '/images/rooms/room2.jpg',
-    '/images/rooms/room3.jpg',
-    '/images/rooms/room4.jpg',
-  ];
+  // Get photos from database or use fallback
+  const kosPhotos: KosPhoto[] = photosData?.success ? photosData.data.photos : [];
+  
+  // Sort photos to put primary photo first
+  const sortedPhotos = kosPhotos.length > 0 
+    ? [...kosPhotos].sort((a: KosPhoto, b: KosPhoto) => {
+        if (a.isPrimary && !b.isPrimary) return -1;
+        if (!a.isPrimary && b.isPrimary) return 1;
+        return new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
+      })
+    : [];
+  
+  // Use photos from database if available, otherwise fallback to sample images
+  const displayImages = sortedPhotos.length > 0 
+    ? sortedPhotos.map((photo: KosPhoto) => photo.url)
+    : [
+        '/images/rooms/room1.jpg',
+        '/images/rooms/room2.jpg', 
+        '/images/rooms/room3.jpg',
+        '/images/rooms/room4.jpg',
+      ];
 
   if (isLoading) {
     return (
@@ -104,7 +123,7 @@ export default function KosDetailPage() {
   }
 
   const kos = kosData.data;
-  const isFavorited = (favoritesData?.success && favoritesData?.data?.favorites?.some((fav: any) => fav.kos.id === kosId)) || false;
+  const isFavorited = (favoritesData?.success && favoritesData?.data?.favorites?.some((fav: { kos: { id: number } }) => fav.kos.id === kosId)) || false;
 
   const handleFavoriteToggle = () => {
     if (checkFavoritePermission()) {
@@ -126,6 +145,15 @@ export default function KosDetailPage() {
     // This callback is now mainly for any additional logic
     // The redirect is handled by the modal itself
     console.log('Booking created successfully from detail page');
+  };
+
+  const handleImageClick = (index: number) => {
+    setActiveImageIndex(index);
+    setShowImageModal(true);
+  };
+
+  const handleImageModalChange = (index: number) => {
+    setActiveImageIndex(index);
   };
 
   const renderStars = (rating: number) => {
@@ -219,16 +247,21 @@ export default function KosDetailPage() {
             <div className="grid grid-cols-4 gap-3 h-64">
               <div className="col-span-2 row-span-2">
                 <Image
-                  src={sampleImages[activeImageIndex]}
+                  src={displayImages[activeImageIndex]}
                   alt={kos.name}
                   width={400}
                   height={256}
                   style={{ width: '100%', height: 'auto' }}
-                  className="object-cover rounded-lg cursor-pointer"
-                  onClick={() => setActiveImageIndex(0)}
+                  className="object-cover rounded-lg cursor-pointer hover:opacity-90 transition-opacity"
+                  onClick={() => handleImageClick(activeImageIndex)}
+                  onError={(e) => {
+                    // Fallback to sample image if photo fails to load
+                    const target = e.target as HTMLImageElement;
+                    target.src = '/images/rooms/room1.jpg';
+                  }}
                 />
               </div>
-              {sampleImages.slice(1, 4).map((image, index) => (
+              {displayImages.slice(1, 4).map((image: string, index: number) => (
                 <div key={index} className="relative h-32">
                   <Image
                     src={image}
@@ -236,17 +269,24 @@ export default function KosDetailPage() {
                     width={200}
                     height={128}
                     style={{ width: '100%', height: '100%' }}
-                    className="object-cover rounded-lg cursor-pointer"
-                    onClick={() => setActiveImageIndex(index + 1)}
+                    className="object-cover rounded-lg cursor-pointer hover:opacity-90 transition-opacity"
+                    onClick={() => handleImageClick(index + 1)}
+                    onError={(e) => {
+                      // Fallback to sample image if photo fails to load
+                      const target = e.target as HTMLImageElement;
+                      target.src = `/images/rooms/room${(index % 4) + 1}.jpg`;
+                    }}
                   />
-                  {index === 2 && sampleImages.length > 4 && (
-                    <div className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center rounded-lg">
-                      <span className="text-white font-semibold text-xs">+{sampleImages.length - 4} foto</span>
+                  {index === 2 && displayImages.length > 4 && (
+                    <div className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center rounded-lg cursor-pointer hover:bg-opacity-60 transition-all"
+                         onClick={() => handleImageClick(index + 1)}>
+                      <span className="text-white font-semibold text-xs">+{displayImages.length - 4} foto</span>
                     </div>
                   )}
                 </div>
               ))}
             </div>
+
           </div>
 
           {/* Content */}
@@ -383,6 +423,16 @@ export default function KosDetailPage() {
         isOpen={showBookingModal}
         onClose={() => setShowBookingModal(false)}
         onBookingCreated={handleBookingCreated}
+      />
+
+      {/* Image Modal */}
+      <ImageModal
+        isOpen={showImageModal}
+        onClose={() => setShowImageModal(false)}
+        images={displayImages}
+        currentIndex={activeImageIndex}
+        onImageChange={handleImageModalChange}
+        kosName={kos.name}
       />
     </div>
   );
