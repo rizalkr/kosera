@@ -228,7 +228,10 @@ export default function AdminDashboard() {
           <div className="mt-8 bg-white rounded-lg shadow-lg p-6">
             <h2 className="text-xl font-semibold text-gray-800 mb-4">Aksi Cepat</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-              <button className="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors text-center">
+              <button 
+                onClick={() => window.location.href = '/admin/users'}
+                className="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors text-center"
+              >
                 <div className="text-2xl mb-2">👤</div>
                 <div className="text-sm">Kelola Users</div>
               </button>
