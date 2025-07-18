@@ -12,6 +12,11 @@ export const users = pgTable('users', {
   role: userRoleEnum('role').default('RENTER').notNull(),
   password: text('password').notNull(),
   createdAt: timestamp('created_at').defaultNow().notNull(),
+  // Soft delete fields
+  deletedAt: timestamp('deleted_at'),
+  deletedBy: integer('deleted_by'),
+  // Admin tracking fields (who created this user)
+  createdBy: integer('created_by'),
 });
 
 // Post table
