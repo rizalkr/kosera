@@ -37,6 +37,9 @@ export const posts = pgTable('posts', {
   photoCount: integer('photo_count').default(0).notNull(),
   createdAt: timestamp('created_at').defaultNow().notNull(),
   updatedAt: timestamp('updated_at').defaultNow().notNull(),
+  // Soft delete fields
+  deletedAt: timestamp('deleted_at'),
+  deletedBy: integer('deleted_by'),
 });
 
 // Kos table
@@ -52,6 +55,9 @@ export const kos = pgTable('kos', {
   // Geospatial coordinates (optional)
   latitude: doublePrecision('latitude'),
   longitude: doublePrecision('longitude'),
+  // Soft delete fields for kos
+  deletedAt: timestamp('deleted_at'),
+  deletedBy: integer('deleted_by'),
 });
 
 // Reviews table

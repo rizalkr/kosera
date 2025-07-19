@@ -230,32 +230,125 @@ async function seed() {
     await db.insert(kosPhotos).values(photosToInsert);
     console.log(`📸 Created ${photosToInsert.length} sample photos`);
 
-    // Insert sample bookings
+    // Insert sample bookings with varied scenarios
     const bookingsToInsert = [];
-    for (let i = 0; i < 50; i++) { // Create 50 bookings
+    const totalBookings = 120; // Increased from 50 to 120 for more variety
+    
+    // Define booking statuses with realistic distribution
+    const statusDistribution = [
+      { status: 'pending', weight: 0.15 },      // 15% pending (18 bookings)
+      { status: 'confirmed', weight: 0.40 },    // 40% confirmed (48 bookings)
+      { status: 'completed', weight: 0.35 },    // 35% completed (42 bookings)
+      { status: 'cancelled', weight: 0.10 }     // 10% cancelled (12 bookings)
+    ];
+    
+    // Expanded notes for different scenarios
+    const notesByStatus = {
+      pending: [
+        'Menunggu konfirmasi dari pemilik kos',
+        'Booking untuk semester depan, mohon kamar yang menghadap timur',
+        'Masih menunggu kepastian jadwal kuliah',
+        'Booking untuk anak yang akan mulai kuliah',
+        'Sedang menunggu proses verifikasi dokumen'
+      ],
+      confirmed: [
+        'Booking sudah dikonfirmasi, siap check-in',
+        'Pembayaran DP sudah lunas, menunggu tanggal masuk',
+        'Kamar sudah disiapkan untuk penghuni baru',
+        'Sudah koordinasi dengan pemilik untuk jadwal masuk',
+        'Booking untuk tahun ajaran baru sudah fix'
+      ],
+      completed: [
+        'Masa sewa sudah selesai, terima kasih',
+        'Penghuni sudah pindah, kamar dalam kondisi baik',
+        'Kontrak sewa sudah berakhir dengan baik',
+        'Sewa selesai, deposit sudah dikembalikan',
+        'Masa tinggal sudah selesai, sangat puas dengan pelayanan'
+      ],
+      cancelled: [
+        'Dibatalkan karena perubahan rencana kuliah',
+        'Cancelled - mendapat kos yang lebih dekat kampus',
+        'Dibatalkan karena alasan keluarga',
+        'Batal karena tidak cocok dengan fasilitas',
+        'Cancelled - ada perubahan jadwal masuk kuliah'
+      ]
+    };
+    
+    // Create bookings with realistic time distributions
+    for (let i = 0; i < totalBookings; i++) {
       const renterIndex = Math.floor(Math.random() * renterUsers.length);
       const kosIndex = Math.floor(Math.random() * allKos.length);
       
-      const checkInDate = new Date();
-      checkInDate.setDate(checkInDate.getDate() + Math.floor(Math.random() * 60) + 1); // 1-60 days from now
+      // Determine status based on weighted distribution
+      let status = 'pending';
+      let cumulativeWeight = 0;
+      const random = Math.random();
       
-      const duration = Math.floor(Math.random() * 11) + 1; // 1-12 months
-      const checkOutDate = new Date(checkInDate);
-      checkOutDate.setMonth(checkOutDate.getMonth() + duration);
+      for (const { status: s, weight } of statusDistribution) {
+        cumulativeWeight += weight;
+        if (random <= cumulativeWeight) {
+          status = s;
+          break;
+        }
+      }
+      
+      // Create realistic dates based on status
+      let checkInDate: Date;
+      let checkOutDate: Date | null = null;
+      let duration: number;
+      
+      const now = new Date();
+      
+      if (status === 'completed') {
+        // Completed bookings: past dates
+        const daysAgo = Math.floor(Math.random() * 365) + 30; // 30-395 days ago
+        checkInDate = new Date(now);
+        checkInDate.setDate(checkInDate.getDate() - daysAgo);
+        
+        duration = Math.floor(Math.random() * 11) + 1; // 1-12 months
+        checkOutDate = new Date(checkInDate);
+        checkOutDate.setMonth(checkOutDate.getMonth() + duration);
+        
+        // Ensure checkout is in the past
+        if (checkOutDate > now) {
+          checkOutDate = new Date(now);
+          checkOutDate.setDate(checkOutDate.getDate() - Math.floor(Math.random() * 30));
+        }
+      } else if (status === 'cancelled') {
+        // Cancelled bookings: mix of past and future dates
+        const daysDiff = Math.floor(Math.random() * 180) - 90; // -90 to +90 days
+        checkInDate = new Date(now);
+        checkInDate.setDate(checkInDate.getDate() + daysDiff);
+        
+        duration = Math.floor(Math.random() * 11) + 1;
+        checkOutDate = new Date(checkInDate);
+        checkOutDate.setMonth(checkOutDate.getMonth() + duration);
+      } else if (status === 'confirmed') {
+        // Confirmed bookings: mostly future dates, some current
+        const daysFromNow = Math.floor(Math.random() * 120) + 1; // 1-120 days from now
+        checkInDate = new Date(now);
+        checkInDate.setDate(checkInDate.getDate() + daysFromNow);
+        
+        duration = Math.floor(Math.random() * 11) + 1;
+        checkOutDate = new Date(checkInDate);
+        checkOutDate.setMonth(checkOutDate.getMonth() + duration);
+      } else { // pending
+        // Pending bookings: future dates
+        const daysFromNow = Math.floor(Math.random() * 60) + 7; // 7-67 days from now
+        checkInDate = new Date(now);
+        checkInDate.setDate(checkInDate.getDate() + daysFromNow);
+        
+        duration = Math.floor(Math.random() * 11) + 1;
+        checkOutDate = new Date(checkInDate);
+        checkOutDate.setMonth(checkOutDate.getMonth() + duration);
+      }
       
       const kosPrice = allPosts[kosIndex].price;
       const totalPrice = kosPrice * duration;
       
-      const statuses = ['pending', 'confirmed', 'cancelled'];
-      const status = statuses[Math.floor(Math.random() * statuses.length)];
-      
-      const notes = [
-        'Untuk semester depan, mohon kamar yang menghadap timur',
-        'Booking untuk tahun ajaran baru',
-        'Mohon kamar di lantai atas',
-        'Prefer kamar yang tenang',
-        'Booking untuk anak kuliah'
-      ];
+      // Select appropriate notes for status
+      const statusNotes = notesByStatus[status as keyof typeof notesByStatus];
+      const selectedNote = statusNotes[Math.floor(Math.random() * statusNotes.length)];
       
       bookingsToInsert.push({
         kosId: allKos[kosIndex].id,
@@ -265,12 +358,23 @@ async function seed() {
         duration: duration,
         totalPrice: totalPrice,
         status: status,
-        notes: notes[Math.floor(Math.random() * notes.length)],
+        notes: selectedNote,
       });
     }
 
     await db.insert(bookings).values(bookingsToInsert);
-    console.log(`📋 Created ${bookingsToInsert.length} sample bookings`);
+    
+    // Count bookings by status for summary
+    const statusCounts = bookingsToInsert.reduce((acc, booking) => {
+      acc[booking.status] = (acc[booking.status] || 0) + 1;
+      return acc;
+    }, {} as Record<string, number>);
+    
+    console.log(`📋 Created ${bookingsToInsert.length} sample bookings:`);
+    console.log(`   - Pending: ${statusCounts.pending || 0}`);
+    console.log(`   - Confirmed: ${statusCounts.confirmed || 0}`);
+    console.log(`   - Completed: ${statusCounts.completed || 0}`);
+    console.log(`   - Cancelled: ${statusCounts.cancelled || 0}`);
 
     console.log('✅ Database seeding completed successfully!');
     console.log(`📊 Summary:
@@ -280,7 +384,7 @@ async function seed() {
     - Reviews: ${reviewsToInsert.length}
     - Favorites: ${favoritesToInsert.length}
     - Photos: ${photosToInsert.length}
-    - Bookings: ${bookingsToInsert.length}`);
+    - Bookings: ${bookingsToInsert.length} (${statusCounts.pending || 0} pending, ${statusCounts.confirmed || 0} confirmed, ${statusCounts.completed || 0} completed, ${statusCounts.cancelled || 0} cancelled)`);
 
   } catch (error) {
     console.error('❌ Error seeding database:', error);

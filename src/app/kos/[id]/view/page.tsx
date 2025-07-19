@@ -8,8 +8,10 @@ import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import BookingModal from '@/components/BookingModal';
 import ImageModal from '@/components/ImageModal';
+import SafeImage from '@/components/SafeImage';
 import { useKosDetails, useTrackView, useAddFavorite, useRemoveFavorite, useFavorites, useKosPhotos } from '@/hooks/useApi';
 import { useAuthGuard } from '@/hooks/useAuthGuard';
+import { useKosImages, useImageWithFallback } from '@/hooks/useImageWithFallback';
 
 interface Review {
   id: number;
@@ -68,15 +70,8 @@ export default function KosDetailPage() {
       })
     : [];
   
-  // Use photos from database if available, otherwise fallback to sample images
-  const displayImages = sortedPhotos.length > 0 
-    ? sortedPhotos.map((photo: KosPhoto) => photo.url)
-    : [
-        '/images/rooms/room1.jpg',
-        '/images/rooms/room2.jpg', 
-        '/images/rooms/room3.jpg',
-        '/images/rooms/room4.jpg',
-      ];
+  // Use custom hook for safe image handling
+  const { images: displayImages, hasValidPhotos } = useKosImages(sortedPhotos);
 
   if (isLoading) {
     return (
@@ -246,7 +241,7 @@ export default function KosDetailPage() {
           <div className="px-8 pb-6 mb-20">
             <div className="grid grid-cols-4 gap-3 h-64">
               <div className="col-span-2 row-span-2">
-                <Image
+                <SafeImage
                   src={displayImages[activeImageIndex]}
                   alt={kos.name}
                   width={400}
@@ -254,16 +249,12 @@ export default function KosDetailPage() {
                   style={{ width: '100%', height: 'auto' }}
                   className="object-cover rounded-lg cursor-pointer hover:opacity-90 transition-opacity"
                   onClick={() => handleImageClick(activeImageIndex)}
-                  onError={(e) => {
-                    // Fallback to sample image if photo fails to load
-                    const target = e.target as HTMLImageElement;
-                    target.src = '/images/rooms/room1.jpg';
-                  }}
+                  fallbackSrc="/images/rooms/room1.jpg"
                 />
               </div>
               {displayImages.slice(1, 4).map((image: string, index: number) => (
                 <div key={index} className="relative h-32">
-                  <Image
+                  <SafeImage
                     src={image}
                     alt={`${kos.name} - ${index + 2}`}
                     width={200}
@@ -271,11 +262,7 @@ export default function KosDetailPage() {
                     style={{ width: '100%', height: '100%' }}
                     className="object-cover rounded-lg cursor-pointer hover:opacity-90 transition-opacity"
                     onClick={() => handleImageClick(index + 1)}
-                    onError={(e) => {
-                      // Fallback to sample image if photo fails to load
-                      const target = e.target as HTMLImageElement;
-                      target.src = `/images/rooms/room${(index % 4) + 1}.jpg`;
-                    }}
+                    fallbackSrc={`/images/rooms/room${(index % 4) + 1}.jpg`}
                   />
                   {index === 2 && displayImages.length > 4 && (
                     <div className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center rounded-lg cursor-pointer hover:bg-opacity-60 transition-all"

@@ -1,6 +1,7 @@
 'use client';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { SearchParams } from '@/lib/api';
+import { useFiltersDebounce } from '@/hooks/useDebounce';
 
 interface FilterBarProps {
   onFilter?: (filters: SearchParams) => void;
@@ -14,6 +15,26 @@ export default function FilterBar({ onFilter, initialFilters = {} }: FilterBarPr
   const [maxPrice, setMaxPrice] = useState(initialFilters.maxPrice?.toString() || '');
   const [selectedFacilities, setSelectedFacilities] = useState<string[]>(initialFilters.facilities || []);
   const [isAdvancedOpen, setIsAdvancedOpen] = useState(false);
+
+  // Create filters object for debouncing
+  const filters = {
+    search: searchText.trim() || undefined,
+    city: city || undefined,
+    minPrice: minPrice ? parseInt(minPrice) : undefined,
+    maxPrice: maxPrice ? parseInt(maxPrice) : undefined,
+    facilities: selectedFacilities.length > 0 ? selectedFacilities : undefined,
+  };
+
+  // Use debounced filters with 400ms delay
+  const { debouncedFilters, isFiltering } = useFiltersDebounce(filters, 400);
+
+  // Auto-apply filters when debounced values change
+  useEffect(() => {
+    const cleanFilters = Object.fromEntries(
+      Object.entries(debouncedFilters).filter(([_, value]) => value !== undefined)
+    );
+    onFilter?.(cleanFilters);
+  }, [debouncedFilters, onFilter]);
 
   const facilities = [
     'Kamar mandi dalam',
@@ -45,7 +66,9 @@ export default function FilterBar({ onFilter, initialFilters = {} }: FilterBarPr
     );
   };
 
+  // Legacy search function - now only used for Enter key press
   const handleSearch = () => {
+    // Immediately apply current filters without waiting for debounce
     const filters: SearchParams = {
       search: searchText.trim() || undefined,
       city: city || undefined,
@@ -76,7 +99,7 @@ export default function FilterBar({ onFilter, initialFilters = {} }: FilterBarPr
       {/* Basic Search */}
       <div className="flex items-center gap-4 flex-wrap">
         {/* Search Text */}
-        <div className="flex items-center border bg-white text-blue-300 rounded-lg px-3 py-2 flex-1 min-w-[200px]">
+        <div className="flex items-center border bg-white text-blue-300 rounded-lg px-3 py-2 flex-1 min-w-[200px] relative">
           <svg className="w-5 h-5 text-gray-400 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
           </svg>
@@ -88,6 +111,11 @@ export default function FilterBar({ onFilter, initialFilters = {} }: FilterBarPr
             className="outline-none flex-1"
             onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
           />
+          {isFiltering && (
+            <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
+              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-500"></div>
+            </div>
+          )}
         </div>
 
         {/* City Select */}
@@ -117,15 +145,20 @@ export default function FilterBar({ onFilter, initialFilters = {} }: FilterBarPr
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 100 4m0-4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 100 4m0-4v2m0-6V4" />
           </svg>
           Filter Lanjutan
+          {isFiltering && (
+            <div className="flex items-center ml-1">
+              <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-blue-500"></div>
+            </div>
+          )}
         </button>
 
-        {/* Search Button */}
-        <button 
-          onClick={handleSearch} 
-          className="bg-[#F3D17C] hover:bg-[#F3D17C]/90  font-medium px-6 py-2 rounded-lg transition-colors"
-        >
-          Cari
-        </button>
+        {/* Filter Status */}
+        {isFiltering && (
+          <div className="flex items-center gap-2 text-blue-500 text-sm">
+            <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-blue-500"></div>
+            <span>Memfilter...</span>
+          </div>
+        )}
       </div>
 
       {/* Advanced Filters */}
@@ -182,12 +215,12 @@ export default function FilterBar({ onFilter, initialFilters = {} }: FilterBarPr
             >
               Reset
             </button>
-            <button
-              onClick={handleSearch}
-              className="bg-blue-500 hover:bg-blue-600 text-white px-6 py-2 rounded-lg transition-colors"
-            >
-              Terapkan Filter
-            </button>
+            {isFiltering && (
+              <div className="flex items-center gap-2 text-blue-500">
+                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-500"></div>
+                <span className="text-sm">Menerapkan filter...</span>
+              </div>
+            )}
           </div>
         </div>
       )}

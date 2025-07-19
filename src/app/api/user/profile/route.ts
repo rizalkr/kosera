@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
 import { withAnyRole, AuthenticatedRequest } from '@/lib/middleware';
 
 async function getProfileHandler(request: AuthenticatedRequest) {

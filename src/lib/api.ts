@@ -414,6 +414,32 @@ export const sellerApi = {
   },
 };
 
+// Admin API
+export const adminApi = {
+  getAllKos: async (params: any = {}): Promise<ApiResponse<any>> => {
+    const searchParams = new URLSearchParams();
+    Object.entries(params).forEach(([key, value]) => {
+      if (value !== undefined && value !== null) {
+        searchParams.append(key, value.toString());
+      }
+    });
+
+    const response = await fetch(`${API_BASE_URL}/api/admin/kos?${searchParams}`, {
+      headers: createAuthHeaders(),
+    });
+    return response.json();
+  },
+
+  toggleFeatured: async (kosId: number, isFeatured: boolean): Promise<ApiResponse<any>> => {
+    const response = await fetch(`${API_BASE_URL}/api/admin/kos/${kosId}/featured`, {
+      method: 'PATCH',
+      headers: createAuthHeaders(),
+      body: JSON.stringify({ isFeatured }),
+    });
+    return response.json();
+  },
+};
+
 export default {
   kos: kosApi,
   auth: authApi,
@@ -421,4 +447,5 @@ export default {
   bookings: bookingsApi,
   user: userApi,
   seller: sellerApi,
+  admin: adminApi,
 };

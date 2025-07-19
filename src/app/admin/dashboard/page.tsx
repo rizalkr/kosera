@@ -1,6 +1,5 @@
 'use client';
 
-import { useState } from 'react';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import ProtectedRoute from '@/components/ProtectedRoute';
@@ -18,6 +17,7 @@ export default function AdminDashboard() {
     analytics 
   } = useAdminDashboard();
 
+  // Utility functions for activity display
   const getActivityIcon = (type: string) => {
     switch (type) {
       case 'user_register':
@@ -31,22 +31,6 @@ export default function AdminDashboard() {
         return '💰';
       default:
         return '📋';
-    }
-  };
-
-  const getActivityColor = (type: string) => {
-    switch (type) {
-      case 'user_register':
-        return 'bg-green-100 text-green-700';
-      case 'kos_added':
-      case 'kos_updated':
-        return 'bg-blue-100 text-blue-700';
-      case 'booking_made':
-        return 'bg-purple-100 text-purple-700';
-      case 'payment_received':
-        return 'bg-yellow-100 text-yellow-700';
-      default:
-        return 'bg-gray-100 text-gray-700';
     }
   };
 
@@ -235,7 +219,10 @@ export default function AdminDashboard() {
                 <div className="text-2xl mb-2">👤</div>
                 <div className="text-sm">Kelola Users</div>
               </button>
-              <button className="bg-green-600 text-white px-6 py-3 rounded-lg hover:bg-green-700 transition-colors text-center">
+              <button 
+                onClick={() => window.location.href = '/admin/kos'}
+                className="bg-green-600 text-white px-6 py-3 rounded-lg hover:bg-green-700 transition-colors text-center"
+              >
                 <div className="text-2xl mb-2">🏠</div>
                 <div className="text-sm">Kelola Kos</div>
               </button>

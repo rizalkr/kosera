@@ -7,6 +7,7 @@ import Footer from '@/components/Footer';
 import ProtectedRoute from '@/components/ProtectedRoute';
 import { useAuthGuard } from '@/hooks/useAuthGuard';
 import { useAuthToken } from '@/hooks/useAuthToken';
+import { useSearchDebounce } from '@/hooks/useDebounce';
 import { showConfirm, showSuccess, showError } from '@/lib/sweetalert';
 
 interface User {
@@ -47,6 +48,9 @@ export default function AdminUsersPage() {
   const [selectedUsers, setSelectedUsers] = useState<number[]>([]);
   const [showDeleted, setShowDeleted] = useState(false);
 
+  // Use debounced search with 400ms delay
+  const { debouncedSearchTerm, isSearching } = useSearchDebounce(searchTerm, 400);
+
   const usersPerPage = 10;
 
   // Check URL params for showDeleted
@@ -68,7 +72,7 @@ export default function AdminUsersPage() {
       const queryParams = new URLSearchParams({
         page: currentPage.toString(),
         limit: usersPerPage.toString(),
-        search: searchTerm,
+        search: debouncedSearchTerm,
         role: filterRole === 'all' ? '' : filterRole,
         showDeleted: showDeleted.toString(),
       });
@@ -96,7 +100,7 @@ export default function AdminUsersPage() {
 
   useEffect(() => {
     fetchUsers();
-  }, [currentPage, searchTerm, filterRole, showDeleted]);
+  }, [currentPage, debouncedSearchTerm, filterRole, showDeleted]);
 
   // Handle search
   const handleSearch = (term: string) => {
@@ -285,15 +289,22 @@ export default function AdminUsersPage() {
               {/* Search */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Cari User
+                  Cari User {isSearching && <span className="text-blue-500 text-xs">(mencari...)</span>}
                 </label>
-                <input
-                  type="text"
-                  placeholder="Cari nama atau username..."
-                  value={searchTerm}
-                  onChange={(e) => handleSearch(e.target.value)}
-                  className="w-full px-3 py-2 text-gray-500 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-700 focus:border-transparent"
-                />
+                <div className="relative">
+                  <input
+                    type="text"
+                    placeholder="Cari nama atau username..."
+                    value={searchTerm}
+                    onChange={(e) => handleSearch(e.target.value)}
+                    className="w-full px-3 py-2 text-gray-500 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-700 focus:border-transparent"
+                  />
+                  {isSearching && (
+                    <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-500"></div>
+                    </div>
+                  )}
+                </div>
               </div>
 
               {/* Filter by Role */}

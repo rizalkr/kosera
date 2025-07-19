@@ -1,7 +1,7 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
 import { withAdmin, AuthenticatedRequest } from '@/lib/middleware';
 import { db, users } from '@/db';
-import { like, eq, sql, count, isNull } from 'drizzle-orm';
+import { eq, sql, count, isNull, ilike } from 'drizzle-orm';
 import bcrypt from 'bcryptjs';
 
 async function getAllUsersHandler(request: AuthenticatedRequest) {
@@ -16,7 +16,7 @@ async function getAllUsersHandler(request: AuthenticatedRequest) {
     const offset = (page - 1) * limit;
 
     // Build where conditions
-    let whereConditions = [];
+    const whereConditions = [];
     
     // Show only active users by default, or only deleted users if showDeleted=true
     if (showDeleted) {
@@ -32,7 +32,7 @@ async function getAllUsersHandler(request: AuthenticatedRequest) {
     }
     
     if (role && role !== 'all') {
-      whereConditions.push(eq(users.role, role as any));
+      whereConditions.push(eq(users.role, role as 'ADMIN' | 'SELLER' | 'RENTER'));
     }
 
     // Combine conditions with AND

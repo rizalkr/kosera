@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { kosApi, authApi, favoritesApi, bookingsApi, sellerApi, SearchParams, KosData } from '@/lib/api';
+import { kosApi, authApi, favoritesApi, bookingsApi, sellerApi, adminApi, SearchParams, KosData } from '@/lib/api';
 
 // Kos hooks
 export const useKosFeatured = () => {
@@ -185,6 +185,27 @@ export const useMyKos = () => {
   return useQuery({
     queryKey: ['kos', 'my'],
     queryFn: kosApi.getMyKos,
+  });
+};
+
+// Admin hooks
+export const useAdminKos = (params: any = {}) => {
+  return useQuery({
+    queryKey: ['admin', 'kos', params],
+    queryFn: () => adminApi.getAllKos(params),
+  });
+};
+
+export const useToggleFeatured = () => {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: ({ kosId, isFeatured }: { kosId: number; isFeatured: boolean }) =>
+      adminApi.toggleFeatured(kosId, isFeatured),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin', 'kos'] });
+      queryClient.invalidateQueries({ queryKey: ['kos', 'featured'] });
+    },
   });
 };
 

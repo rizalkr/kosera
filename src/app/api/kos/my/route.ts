@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
 import { withSellerOrAdmin, AuthenticatedRequest } from '@/lib/middleware';
 import { db } from '@/db';
 import { kos, posts } from '@/db/schema';
