@@ -15,6 +15,13 @@
       "when": 1752730967711,
       "tag": "0001_material_valeria_richards",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1753061426826,
+      "tag": "0002_milky_nextwave",
+      "breakpoints": true
     }
   ]
 }
