@@ -1,7 +1,7 @@
 'use client';
 
-import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
-import { JWTPayload } from '@/lib/auth';
+import { createContext, useContext, useEffect, useState, useCallback, ReactNode } from 'react';
+import { JWTPayload } from '../lib/auth';
 
 export interface User {
   id: number;
@@ -45,18 +45,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setToken(authToken);
   };
 
-  const logout = () => {
+  const logout = useCallback(() => {
     localStorage.removeItem('auth_token');
     localStorage.removeItem('user_data');
     setUser(null);
     setToken(null);
-  };
+  }, []);
 
   const requireAuth = (): boolean => {
     return !!(user && token);
   };
 
-  const checkAuth = async () => {
+  const checkAuth = useCallback(async () => {
     try {
       // First, get token from state or localStorage
       const currentToken = token || localStorage.getItem('auth_token');
@@ -94,11 +94,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [token, logout]);
 
   useEffect(() => {
     checkAuth();
-  }, []);
+  }, [checkAuth]);
 
   const value = {
     user,

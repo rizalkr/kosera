@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter, useParams } from 'next/navigation';
-import { useAuthGuard } from '@/hooks/useAuthGuard';
 import { useAuthToken } from '@/hooks/useAuthToken';
 import ProtectedRoute from '@/components/ProtectedRoute';
 import Header from '@/components/Header';
@@ -94,7 +93,6 @@ const updateKos = async (kosId: number, formData: EditKosFormData, getToken: () 
 export default function EditKosPage() {
   const router = useRouter();
   const params = useParams();
-  const { user, isAuthenticated } = useAuthGuard();
   const { getToken, hasValidToken } = useAuthToken();
   const kosId = parseInt(params.id as string);
   
@@ -154,7 +152,7 @@ export default function EditKosPage() {
     if (kosId) {
       loadKosData();
     }
-  }, [kosId, router]);
+  }, [kosId, router, getToken, hasValidToken]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value } = e.target;

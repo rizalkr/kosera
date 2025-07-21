@@ -41,10 +41,10 @@ export async function PUT(request: NextRequest) {
     const token = authorization.split(' ')[1];
 
     // Verify token
-    let decoded;
+    let decoded: { userId: number };
     try {
-      decoded = jwt.verify(token, JWT_SECRET) as any;
-    } catch (error) {
+      decoded = jwt.verify(token, JWT_SECRET) as { userId: number };
+    } catch {
       return NextResponse.json(
         { success: false, message: 'Invalid token' },
         { status: 401 }

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useAuthToken } from './useAuthToken';
 
 export interface AdminKosData {
@@ -73,7 +73,7 @@ export const useAdminKos = (filters: AdminKosFilters = {}) => {
     hasPrevPage: false,
   });
 
-  const fetchAdminKos = async () => {
+  const fetchAdminKos = useCallback(async () => {
     try {
       setLoading(true);
       const token = getToken();
@@ -126,7 +126,7 @@ export const useAdminKos = (filters: AdminKosFilters = {}) => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [getToken, filters.page, filters.limit, filters.search, filters.city, filters.ownerType, filters.sortBy, filters.showDeleted]);
 
   const refetch = () => {
     fetchAdminKos();
@@ -135,6 +135,7 @@ export const useAdminKos = (filters: AdminKosFilters = {}) => {
   useEffect(() => {
     fetchAdminKos();
   }, [
+    fetchAdminKos,
     filters.page,
     filters.limit,
     filters.search,

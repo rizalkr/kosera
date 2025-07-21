@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { GET } from '@/app/api/kos/recommendations/route';
+import { GET } from '../../src/app/api/kos/recommendations/route';
 import { createMockRequest, parseResponse } from '../helpers';
 
 // Mock the database

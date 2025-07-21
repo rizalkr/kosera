@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/db';
 import { kos, posts, bookings, users } from '@/db/schema';
-import { eq, and, count, sum, sql } from 'drizzle-orm';
+import { eq, and, count, sum } from 'drizzle-orm';
 import { verifyToken } from '@/lib/auth';
 
 export async function GET(request: NextRequest) {

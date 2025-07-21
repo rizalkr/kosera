@@ -15,7 +15,7 @@ export default function MapSection() {
         pos => {
           setPosition([pos.coords.latitude, pos.coords.longitude]);
         },
-        err => {
+        () => {
           setPosition([-6.200000, 106.816666]); // Jakarta
         }
       );

@@ -1,13 +1,31 @@
 'use client';
 
-import Header from '@/components/Header';
-import Footer from '@/components/Footer';
-import ProtectedRoute from '@/components/ProtectedRoute';
-import KosImage from '@/components/KosImage';
-import { useAuthGuard } from '@/hooks/useAuthGuard';
-import { useFavorites, useRemoveFavorite } from '@/hooks/useApi';
-import { showConfirm } from '@/lib/sweetalert';
+import Header from '../../components/Header';
+import Footer from '../../components/Footer';
+import ProtectedRoute from '../../components/ProtectedRoute';
+import KosImage from '../../components/KosImage';
+import { useAuthGuard } from '../../hooks/useAuthGuard';
+import { useFavorites, useRemoveFavorite } from '../../hooks/useApi';
+import { showConfirm } from '../../lib/sweetalert';
 import Link from 'next/link';
+
+interface FavoriteItem {
+  id: number;
+  createdAt: string;
+  kos: {
+    id: number;
+    name: string;
+    address: string;
+    price: number;
+    city: string;
+    averageRating: number;
+    facilities: string;
+  };
+  post: {
+    averageRating: number;
+    price: number;
+  };
+}
 
 export default function FavoritesPage() {
   const { user } = useAuthGuard();
@@ -112,7 +130,7 @@ export default function FavoritesPage() {
               </div>
             ) : (
               <div className="space-y-6">
-                {favorites.map((favorite: any) => (
+                {favorites.map((favorite: FavoriteItem) => (
                   <div key={favorite.id} className="bg-gray-50 rounded-lg p-6 hover:shadow-md transition-shadow">
                     <div className="flex flex-col md:flex-row gap-4">
                       <div className="w-full md:w-48 h-32 rounded-lg overflow-hidden relative">
@@ -145,7 +163,7 @@ export default function FavoritesPage() {
                                   <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
                                 </svg>
                                 <span className="text-sm font-medium text-gray-700">
-                                  {parseFloat(favorite.post.averageRating).toFixed(1)}
+                                  {favorite.post.averageRating.toFixed(1)}
                                 </span>
                               </div>
                               <span className="mx-2 text-gray-400">•</span>

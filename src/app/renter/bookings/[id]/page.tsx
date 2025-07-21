@@ -1,11 +1,10 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import ProtectedRoute from '@/components/ProtectedRoute';
-import { useAuthGuard } from '@/hooks/useAuthGuard';
 import { useAuthToken } from '@/hooks/useAuthToken';
 import { showConfirm, showSuccess, showError } from '@/lib/sweetalert';
 
@@ -45,7 +44,6 @@ type BookingDetail = {
 export default function BookingDetailPage() {
   const params = useParams();
   const router = useRouter();
-  const { user } = useAuthGuard();
   const { getToken } = useAuthToken();
   const [booking, setBooking] = useState<BookingDetail | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -53,11 +51,7 @@ export default function BookingDetailPage() {
 
   const bookingId = params.id as string;
 
-  useEffect(() => {
-    fetchBookingDetail();
-  }, [bookingId]);
-
-  const fetchBookingDetail = async () => {
+  const fetchBookingDetail = useCallback(async () => {
     try {
       setIsLoading(true);
       const token = getToken();
@@ -90,7 +84,11 @@ export default function BookingDetailPage() {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [bookingId, getToken]);
+
+  useEffect(() => {
+    fetchBookingDetail();
+  }, [fetchBookingDetail]);
 
   const getStatusColor = (status: BookingStatus) => {
     switch (status) {

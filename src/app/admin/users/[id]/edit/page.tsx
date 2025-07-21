@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
@@ -36,7 +36,7 @@ export default function EditUserPage() {
   });
 
   // Fetch user data
-  const fetchUser = async () => {
+  const fetchUser = useCallback(async () => {
     try {
       setLoading(true);
       const token = getToken();
@@ -75,13 +75,13 @@ export default function EditUserPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [userId, getToken]);
 
   useEffect(() => {
     if (userId) {
       fetchUser();
     }
-  }, [userId]);
+  }, [userId, fetchUser]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
@@ -115,7 +115,13 @@ export default function EditUserPage() {
         throw new Error('No authentication token found');
       }
 
-      const updateData: any = {
+      const updateData: {
+        name: string;
+        username: string;
+        contact: string;
+        role: string;
+        password?: string;
+      } = {
         name: formData.name,
         username: formData.username,
         contact: formData.contact,

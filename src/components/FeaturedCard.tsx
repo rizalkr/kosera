@@ -2,9 +2,10 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import { useTrackView, useAddFavorite, useRemoveFavorite } from '@/hooks/useApi';
-import { useProtectedAction } from '@/hooks/useProtectedAction';
-import { useKosImage } from '@/hooks/useKosImage';
+import Image from 'next/image';
+import { useTrackView, useAddFavorite, useRemoveFavorite } from '../hooks/useApi';
+import { useProtectedAction } from '../hooks/useProtectedAction';
+import { useKosImage } from '../hooks/useKosImage';
 
 interface FeaturedCardProps {
   id: number;
@@ -21,7 +22,6 @@ interface FeaturedCardProps {
 
 export default function FeaturedCard({ 
   id,
-  images, 
   price, 
   description, 
   area, 
@@ -100,13 +100,14 @@ export default function FeaturedCard({
 
       <div className="flex gap-4 p-4">
         <div className="w-32 h-32 flex-shrink-0 rounded-lg overflow-hidden bg-blue-50 flex items-center justify-center relative">
-          <img
+          <Image
             src={imageUrl}
             alt={description}
+            width={128}
+            height={128}
             className="object-cover w-full h-full"
-            onError={(e) => {
-              const target = e.target as HTMLImageElement;
-              target.src = '/images/rooms/room1.jpg'; // Fallback image
+            onError={() => {
+              console.log('Image failed to load for featured kos:', id);
             }}
           />
           {!hasPhotos && (

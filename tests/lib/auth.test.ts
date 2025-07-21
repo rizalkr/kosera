@@ -6,7 +6,7 @@ import {
   generateToken,
   verifyToken,
   extractTokenFromHeader,
-} from '@/lib/auth';
+} from '../../src/lib/auth';
 
 // Mock jsonwebtoken
 vi.mock('jsonwebtoken', () => ({

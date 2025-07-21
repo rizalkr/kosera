@@ -1,13 +1,7 @@
 import { NextResponse } from 'next/server';
 import { withAdmin, AuthenticatedRequest } from '@/lib/middleware';
 import { db, kos, posts } from '@/db';
-import { eq, sql, isNull } from 'drizzle-orm';
-
-interface RouteContext {
-  params: {
-    id: string;
-  };
-}
+import { eq, sql } from 'drizzle-orm';
 
 // Soft delete kos (move to archive)
 async function deleteKosHandler(request: AuthenticatedRequest) {

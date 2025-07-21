@@ -2,25 +2,24 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import Header from '@/components/Header';
-import FilterBar from '@/components/FilterBar';
-import FeaturedList from '@/components/FeaturedList';
-import MapSection from '@/components/maps/MapSection';
-import RecommendationCarousel from '@/components/RecommendationCarousel';
-import Footer from '@/components/Footer';
-import KosImage from '@/components/KosImage';
-import { useKosSearch } from '@/hooks/useApi';
-import { useAuthGuard } from '@/hooks/useAuthGuard';
-import { useAddFavorite, useRemoveFavorite, useFavorites } from '@/hooks/useApi';
-import { useKosImage } from '@/hooks/useKosImage';
-import { SearchParams, KosData } from '@/lib/api';
+import Header from '../components/Header';
+import FilterBar from '../components/FilterBar';
+import FeaturedList from '../components/FeaturedList';
+import MapSection from '../components/maps/MapSection';
+import RecommendationCarousel from '../components/RecommendationCarousel';
+import Footer from '../components/Footer';
+import KosImage from '../components/KosImage';
+import { useKosSearch } from '../hooks/useApi';
+import { useAuthGuard } from '../hooks/useAuthGuard';
+import { useAddFavorite, useRemoveFavorite, useFavorites } from '../hooks/useApi';
+import { SearchParams, KosData } from '../lib/api';
 
 export default function HomePage() {
   const [searchFilters, setSearchFilters] = useState<SearchParams>({});
   const [isSearching, setIsSearching] = useState(false);
   
   const { data: searchResults, isLoading: isSearchLoading } = useKosSearch(searchFilters);
-  const { checkFavoritePermission, isAuthenticated } = useAuthGuard();
+  const { checkFavoritePermission } = useAuthGuard();
   
   // Favorites hooks
   const { data: favoritesData } = useFavorites();
@@ -29,7 +28,7 @@ export default function HomePage() {
   
   // Extract favorites list for checking if kos is favorited
   const favoriteKosIds = new Set(
-    favoritesData?.data?.favorites?.map((fav: any) => fav.kos.id) || []
+    favoritesData?.data?.favorites?.map((fav: { kos: { id: number } }) => fav.kos.id) || []
   );
 
   const handleFilter = (filters: SearchParams) => {
@@ -194,7 +193,7 @@ export default function HomePage() {
                       <Link 
                         href={`/kos/${kos.id}/view`} 
                         className="text-blue-400 hover:underline font-medium text-sm transition-all relative z-10 cursor-pointer"
-                        onClick={(e) => {
+                        onClick={() => {
                           console.log('Link clicked:', `/kos/${kos.id}/view`);
                         }}
                       >

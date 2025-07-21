@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { GET } from '@/app/api/user/profile/route';
+import { GET } from '../../src/app/api/user/profile/route';
 import { createMockRequest, createAuthenticatedRequest, parseResponse } from '../helpers';
 
 // Mock middleware

@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { POST } from '@/app/api/auth/login/route';
+import { POST } from '../../src/app/api/auth/login/route';
 import { createMockRequest, parseResponse, mockUsers } from '../helpers';
-import { hashPassword } from '@/lib/auth';
+import { hashPassword } from '../../src/lib/auth';
 
 // Mock the database
 const mockDbSelect = vi.fn();
@@ -37,7 +37,7 @@ describe('POST /api/auth/login', () => {
   });
 
   it('should login successfully with valid credentials', async () => {
-    const { verifyPassword } = await import('@/lib/auth');
+    const { verifyPassword } = await import('../../src/lib/auth');
     
     // Mock database response
     mockDbLimit.mockResolvedValue([mockUsers.admin]);
@@ -100,7 +100,7 @@ describe('POST /api/auth/login', () => {
   });
 
   it('should fail with invalid password', async () => {
-    const { verifyPassword } = await import('@/lib/auth');
+    const { verifyPassword } = await import('../../src/lib/auth');
     
     // Mock database response
     mockDbLimit.mockResolvedValue([mockUsers.admin]);
@@ -119,7 +119,7 @@ describe('POST /api/auth/login', () => {
   });
 
   it('should login with contact email', async () => {
-    const { verifyPassword } = await import('@/lib/auth');
+    const { verifyPassword } = await import('../../src/lib/auth');
     
     // Mock database response - first query returns empty, second returns user
     mockDbLimit

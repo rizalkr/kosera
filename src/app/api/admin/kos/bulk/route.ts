@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { db } from '@/db';
 import { kos, posts } from '@/db/schema';
-import { inArray, eq, and, isNull, isNotNull } from 'drizzle-orm';
+import { inArray, and, isNull, isNotNull } from 'drizzle-orm';
 import { withAdmin, AuthenticatedRequest } from '@/lib/middleware';
 
 // Bulk archive - soft delete multiple kos

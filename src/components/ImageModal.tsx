@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import Image from 'next/image';
 
 interface ImageModalProps {
@@ -22,6 +22,18 @@ export default function ImageModal({
 }: ImageModalProps) {
   const [imageIndex, setImageIndex] = useState(currentIndex);
   const [isZoomed, setIsZoomed] = useState(false);
+
+  const handlePrevious = useCallback(() => {
+    const newIndex = imageIndex > 0 ? imageIndex - 1 : images.length - 1;
+    setImageIndex(newIndex);
+    onImageChange(newIndex);
+  }, [imageIndex, images.length, onImageChange]);
+
+  const handleNext = useCallback(() => {
+    const newIndex = imageIndex < images.length - 1 ? imageIndex + 1 : 0;
+    setImageIndex(newIndex);
+    onImageChange(newIndex);
+  }, [imageIndex, images.length, onImageChange]);
 
   useEffect(() => {
     setImageIndex(currentIndex);
@@ -59,19 +71,7 @@ export default function ImageModal({
       window.removeEventListener('keydown', handleKeyDown);
       document.body.style.overflow = 'unset';
     };
-  }, [isOpen, imageIndex, isZoomed]);
-
-  const handlePrevious = () => {
-    const newIndex = imageIndex > 0 ? imageIndex - 1 : images.length - 1;
-    setImageIndex(newIndex);
-    onImageChange(newIndex);
-  };
-
-  const handleNext = () => {
-    const newIndex = imageIndex < images.length - 1 ? imageIndex + 1 : 0;
-    setImageIndex(newIndex);
-    onImageChange(newIndex);
-  };
+  }, [isOpen, imageIndex, isZoomed, handleNext, handlePrevious, onClose]);
 
   const handleBackdropClick = (e: React.MouseEvent) => {
     if (e.target === e.currentTarget) {

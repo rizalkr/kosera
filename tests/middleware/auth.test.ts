@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { withAuth, withRole, withAdmin, withSellerOrAdmin, withAnyRole } from '@/lib/middleware';
+import { withAuth, withRole, withAdmin, withSellerOrAdmin, withAnyRole } from '../../src/lib/middleware';
 import { createMockRequest, createAuthenticatedRequest, parseResponse } from '../helpers';
 import { NextResponse } from 'next/server';
 
@@ -20,7 +20,7 @@ describe('Middleware', () => {
 
   describe('withAuth', () => {
     it('should pass through authenticated request', async () => {
-      const { verifyToken, extractTokenFromHeader } = await import('@/lib/auth');
+      const { verifyToken, extractTokenFromHeader } = await import('../../src/lib/auth');
       
       // Mock auth functions
       (extractTokenFromHeader as any).mockReturnValue('valid-token');
@@ -46,7 +46,7 @@ describe('Middleware', () => {
     });
 
     it('should reject request without token', async () => {
-      const { extractTokenFromHeader } = await import('@/lib/auth');
+      const { extractTokenFromHeader } = await import('../../src/lib/auth');
       
       // Mock auth functions
       (extractTokenFromHeader as any).mockReturnValue(null);
@@ -64,7 +64,7 @@ describe('Middleware', () => {
     });
 
     it('should reject request with invalid token', async () => {
-      const { verifyToken, extractTokenFromHeader } = await import('@/lib/auth');
+      const { verifyToken, extractTokenFromHeader } = await import('../../src/lib/auth');
       
       // Mock auth functions
       (extractTokenFromHeader as any).mockReturnValue('invalid-token');
@@ -85,7 +85,7 @@ describe('Middleware', () => {
 
   describe('withRole', () => {
     it('should allow access for correct role', async () => {
-      const { verifyToken, extractTokenFromHeader } = await import('@/lib/auth');
+      const { verifyToken, extractTokenFromHeader } = await import('../../src/lib/auth');
       
       // Mock auth functions
       (extractTokenFromHeader as any).mockReturnValue('valid-token');
@@ -111,7 +111,7 @@ describe('Middleware', () => {
     });
 
     it('should deny access for incorrect role', async () => {
-      const { verifyToken, extractTokenFromHeader } = await import('@/lib/auth');
+      const { verifyToken, extractTokenFromHeader } = await import('../../src/lib/auth');
       
       // Mock auth functions
       (extractTokenFromHeader as any).mockReturnValue('valid-token');
@@ -136,7 +136,7 @@ describe('Middleware', () => {
 
   describe('withAdmin', () => {
     it('should allow admin access', async () => {
-      const { verifyToken, extractTokenFromHeader } = await import('@/lib/auth');
+      const { verifyToken, extractTokenFromHeader } = await import('../../src/lib/auth');
       
       // Mock auth functions
       (extractTokenFromHeader as any).mockReturnValue('valid-token');
@@ -160,7 +160,7 @@ describe('Middleware', () => {
     });
 
     it('should deny non-admin access', async () => {
-      const { verifyToken, extractTokenFromHeader } = await import('@/lib/auth');
+      const { verifyToken, extractTokenFromHeader } = await import('../../src/lib/auth');
       
       // Mock auth functions
       (extractTokenFromHeader as any).mockReturnValue('valid-token');
@@ -183,7 +183,7 @@ describe('Middleware', () => {
 
   describe('withSellerOrAdmin', () => {
     it('should allow seller access', async () => {
-      const { verifyToken, extractTokenFromHeader } = await import('@/lib/auth');
+      const { verifyToken, extractTokenFromHeader } = await import('../../src/lib/auth');
       
       // Mock auth functions
       (extractTokenFromHeader as any).mockReturnValue('valid-token');
@@ -207,7 +207,7 @@ describe('Middleware', () => {
     });
 
     it('should allow admin access', async () => {
-      const { verifyToken, extractTokenFromHeader } = await import('@/lib/auth');
+      const { verifyToken, extractTokenFromHeader } = await import('../../src/lib/auth');
       
       // Mock auth functions
       (extractTokenFromHeader as any).mockReturnValue('valid-token');
@@ -231,7 +231,7 @@ describe('Middleware', () => {
     });
 
     it('should deny renter access', async () => {
-      const { verifyToken, extractTokenFromHeader } = await import('@/lib/auth');
+      const { verifyToken, extractTokenFromHeader } = await import('../../src/lib/auth');
       
       // Mock auth functions
       (extractTokenFromHeader as any).mockReturnValue('valid-token');
@@ -254,7 +254,7 @@ describe('Middleware', () => {
 
   describe('withAnyRole', () => {
     it('should allow any authenticated user', async () => {
-      const { verifyToken, extractTokenFromHeader } = await import('@/lib/auth');
+      const { verifyToken, extractTokenFromHeader } = await import('../../src/lib/auth');
       
       // Mock auth functions
       (extractTokenFromHeader as any).mockReturnValue('valid-token');

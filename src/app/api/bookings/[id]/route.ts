@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/db';
 import { bookings, kos, posts, users } from '@/db/schema';
-import { eq, and } from 'drizzle-orm';
+import { eq } from 'drizzle-orm';
 import { extractTokenFromHeader, verifyToken } from '@/lib/auth';
 import { z } from 'zod';
 

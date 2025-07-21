@@ -1,5 +1,6 @@
-import Header from '@/components/Header';
-import Footer from '@/components/Footer';
+import Header from '../../components/Header';
+import Footer from '../../components/Footer';
+import Image from 'next/image';
 
 export default function ContactPage() {
   return (
@@ -8,9 +9,11 @@ export default function ContactPage() {
       <main className="max-w-2xl mx-auto mt-12 bg-white rounded-xl shadow p-8">
         <h1 className="text-3xl font-bold text-blue-400 mb-4">Contact & Profile</h1>
         <div className="flex flex-col items-center gap-4">
-          <img
+          <Image
             src="/images/profile.jpg"
             alt="Profile"
+            width={128}
+            height={128}
             className="w-32 h-32 rounded-full object-cover border-4 border-blue-200"
           />
           <div className="text-center">

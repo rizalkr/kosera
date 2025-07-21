@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { withSellerOrAdmin, AuthenticatedRequest } from '@/lib/middleware';
 import { db } from '@/db';
-import { kos, posts, NewKos } from '@/db/schema';
+import { kos, posts } from '@/db/schema';
 import { eq, and, gte, lte } from 'drizzle-orm';
 
 // GET /api/kos - Get all kos (public endpoint)

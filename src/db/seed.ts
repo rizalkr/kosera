@@ -1,5 +1,4 @@
 import { db, users, posts, kos, reviews, favorites, kosPhotos, bookings } from './index';
-import { eq } from 'drizzle-orm';
 import { hashPassword } from '../lib/auth';
 
 async function seed() {

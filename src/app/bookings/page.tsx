@@ -1,12 +1,13 @@
 "use client";
 
-import Header from '@/components/Header';
-import Footer from '@/components/Footer';
-import ProtectedRoute from '@/components/ProtectedRoute';
+import Header from '../../components/Header';
+import Footer from '../../components/Footer';
+import ProtectedRoute from '../../components/ProtectedRoute';
+import Image from 'next/image';
 import { useEffect } from 'react';
-import { useAuthGuard } from '@/hooks/useAuthGuard';
-import { useBookings, useUpdateBooking } from '@/hooks/useApi';
-import { showSuccess } from '@/lib/sweetalert';
+import { useAuthGuard } from '../../hooks/useAuthGuard';
+import { useBookings, useUpdateBooking } from '../../hooks/useApi';
+import { showSuccess } from '../../lib/sweetalert';
 
 type BookingItem = {
   id: number;
@@ -47,7 +48,10 @@ export default function BookingsPage() {
   }, [user]);
 
   // Extract bookings from API data  
-  const bookings: BookingItem[] = (bookingsData?.data as any)?.bookings || [];
+  const bookingsResponse = bookingsData?.data as unknown;
+  const bookings: BookingItem[] = (bookingsResponse && typeof bookingsResponse === 'object' && 'bookings' in bookingsResponse) 
+    ? (bookingsResponse as { bookings: BookingItem[] }).bookings 
+    : [];
   const total = bookings.reduce((sum: number, item: BookingItem) => sum + item.totalPrice, 0);
 
   function handleRemove(id: number) {
@@ -107,7 +111,7 @@ export default function BookingsPage() {
               <ul className="divide-y">
                 {bookings.map(item => (
                   <li key={item.id} className="flex items-center gap-4 py-4">
-                    <img src="/images/profile.jpg" alt={item.kos.name} className="w-20 h-20 object-cover rounded-lg border" />
+                    <Image src="/images/profile.jpg" alt={item.kos.name} width={80} height={80} className="w-20 h-20 object-cover rounded-lg border" />
                     <div className="flex-1">
                       <div className="font-semibold text-blue-500">{item.post.title}</div>
                       <div className="text-gray-600 text-sm">{item.kos.address}, {item.kos.city}</div>

@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { verifyToken, extractTokenFromHeader, JWTPayload, UserRole } from '@/lib/auth';
+import { verifyToken, extractTokenFromHeader, JWTPayload, UserRole } from './auth';
 
 export interface AuthenticatedRequest extends NextRequest {
   user?: JWTPayload;

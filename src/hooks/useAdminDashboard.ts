@@ -106,7 +106,7 @@ type RecentActivity = {
 };
 
 export function useAdminDashboard() {
-  const { token, hasValidToken, isValidAuthenticated } = useAuthToken();
+  const { token, isValidAuthenticated } = useAuthToken();
   const [analytics, setAnalytics] = useState<AnalyticsData | null>(null);
   const [users, setUsers] = useState<UserData | null>(null);
   const [bookings, setBookings] = useState<BookingData | null>(null);
@@ -198,7 +198,7 @@ export function useAdminDashboard() {
   }, [isValidAuthenticated, token]);
 
   // Calculate dashboard statistics from fetched data
-  const calculateStats = () => {
+  const calculateStats = useCallback(() => {
     console.log('Calculating stats...', { analytics: !!analytics, users: !!users, bookings: !!bookings });
     
     // Provide default stats even if some data is missing
@@ -246,10 +246,10 @@ export function useAdminDashboard() {
 
     console.log('Calculated stats:', newStats);
     setStats(newStats);
-  };
+  }, [analytics, users, bookings]);
 
   // Generate recent activities from fetched data
-  const generateRecentActivities = () => {
+  const generateRecentActivities = useCallback(() => {
     console.log('Generating recent activities...', { analytics: !!analytics, users: !!users, bookings: !!bookings });
     
     const activities: RecentActivity[] = [];
@@ -260,7 +260,7 @@ export function useAdminDashboard() {
         .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
         .slice(0, 3);
 
-      recentUsers.forEach((user, index) => {
+      recentUsers.forEach((user) => {
         activities.push({
           id: `user_${user.id}`,
           type: 'user_register',
@@ -290,7 +290,7 @@ export function useAdminDashboard() {
         .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
         .slice(0, 3);
 
-      recentBookings.forEach((booking, index) => {
+      recentBookings.forEach((booking) => {
         activities.push({
           id: `booking_${booking.id}`,
           type: 'booking_made',
@@ -310,7 +310,7 @@ export function useAdminDashboard() {
 
     console.log('Generated activities:', activities.slice(0, 8));
     setRecentActivities(activities.slice(0, 8));
-  };
+  }, [analytics, users, bookings]);
 
   // Helper function to get relative time
   const getRelativeTime = (dateString: string): string => {
@@ -392,7 +392,7 @@ export function useAdminDashboard() {
   useEffect(() => {
     calculateStats();
     generateRecentActivities();
-  }, [analytics, users, bookings]);
+  }, [calculateStats, generateRecentActivities]);
 
   return {
     analytics,

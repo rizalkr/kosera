@@ -1,8 +1,10 @@
 import { NextResponse } from 'next/server';
 import { withAdmin, AuthenticatedRequest } from '@/lib/middleware';
 import { db, users } from '@/db';
-import { eq, sql, count, isNull, ilike } from 'drizzle-orm';
+import { eq, sql, count, isNull } from 'drizzle-orm';
 import bcrypt from 'bcryptjs';
+
+type UserRole = 'ADMIN' | 'SELLER' | 'RENTER';
 
 async function getAllUsersHandler(request: AuthenticatedRequest) {
   try {
@@ -189,7 +191,7 @@ async function createUserHandler(request: AuthenticatedRequest) {
         name,
         username,
         contact,
-        role: role as any,
+        role: role as UserRole,
         password: hashedPassword,
         createdBy: currentUserId,
       })

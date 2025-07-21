@@ -1,8 +1,8 @@
 "use client";
-import Header from '@/components/Header';
-import Footer from '@/components/Footer';
+import Header from '../../components/Header';
+import Footer from '../../components/Footer';
 import { useState } from 'react';
-import { showSuccess } from '@/lib/sweetalert';
+import { showSuccess } from '../../lib/sweetalert';
 
 export default function ComplaintPage() {
   const [submitted, setSubmitted] = useState(false);

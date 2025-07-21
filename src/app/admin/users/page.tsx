@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
@@ -36,7 +36,7 @@ interface User {
 
 export default function AdminUsersPage() {
   const router = useRouter();
-  const { user } = useAuthGuard();
+  useAuthGuard(); // Verify admin access but don't need the user variable
   const { getToken } = useAuthToken();
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
@@ -60,7 +60,7 @@ export default function AdminUsersPage() {
   }, []);
 
   // Fetch users data
-  const fetchUsers = async () => {
+  const fetchUsers = useCallback(async () => {
     try {
       setLoading(true);
       const token = getToken();
@@ -96,11 +96,11 @@ export default function AdminUsersPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [currentPage, debouncedSearchTerm, filterRole, showDeleted, getToken]);
 
   useEffect(() => {
     fetchUsers();
-  }, [currentPage, debouncedSearchTerm, filterRole, showDeleted]);
+  }, [fetchUsers]);
 
   // Handle search
   const handleSearch = (term: string) => {

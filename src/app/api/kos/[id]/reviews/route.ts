@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { withAuth, AuthenticatedRequest } from '@/lib/middleware';
+import { AuthenticatedRequest } from '@/lib/middleware';
 import { db } from '@/db';
 import { reviews, kos, posts, users } from '@/db/schema';
 import { eq, desc, count, avg, sql, and } from 'drizzle-orm';
@@ -141,7 +141,7 @@ export async function POST(
   const authenticatedRequest = request as AuthenticatedRequest;
   
   // Extract and verify token
-  const { extractTokenFromHeader, verifyToken } = await import('@/lib/auth');
+  const { extractTokenFromHeader, verifyToken } = await import('../../../../../lib/auth');
   const token = extractTokenFromHeader(authHeader);
   
   if (!token) {

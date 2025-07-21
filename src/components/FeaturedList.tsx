@@ -1,8 +1,8 @@
 'use client';
 
 import FeaturedCard from './FeaturedCard';
-import { useKosFeatured, useFavorites } from '@/hooks/useApi';
-import { KosData } from '@/lib/api';
+import { useKosFeatured, useFavorites } from '../hooks/useApi';
+import { KosData } from '../lib/api';
 
 export default function FeaturedList() {
   const { data, isLoading, error } = useKosFeatured();

@@ -5,13 +5,11 @@ import { useState } from 'react';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import ProtectedRoute from '@/components/ProtectedRoute';
-import { useAuthGuard } from '@/hooks/useAuthGuard';
 import { useSellerKosDetail } from '@/hooks/useApi';
 
 export default function SellerKosDetailPage() {
   const params = useParams();
   const router = useRouter();
-  const { user } = useAuthGuard();
   const kosId = params.id as string;
   
   const { data: kosResponse, isLoading, error, refetch } = useSellerKosDetail(parseInt(kosId));

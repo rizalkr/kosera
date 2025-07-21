@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { generateToken } from '@/lib/auth';
-import type { UserRole } from '@/lib/auth';
+import { generateToken } from '../src/lib/auth';
+import type { UserRole } from '../src/lib/auth';
 import { vi } from 'vitest';
-import { db, users, posts, kos } from '@/db';
+import { db, users, posts, kos } from '../src/db';
 import { eq, or } from 'drizzle-orm';
 
 // Base URL for API testing

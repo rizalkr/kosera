@@ -1,7 +1,7 @@
 import { vi } from 'vitest';
-import { db } from '@/db';
-import { users, posts, kos } from '@/db/schema';
-import { generateToken, hashPassword } from '@/lib/auth';
+import { db } from '../../src/db';
+import { users, posts, kos } from '../../src/db/schema';
+import { generateToken, hashPassword } from '../../src/lib/auth';
 import { eq } from 'drizzle-orm';
 
 export const createMockDb = () => {

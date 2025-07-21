@@ -1,9 +1,9 @@
 import { describe, it, expect, beforeAll, afterAll, beforeEach } from 'vitest';
 import { NextRequest } from 'next/server';
-import { GET as searchKos } from '@/app/api/kos/search/route';
+import { GET as searchKos } from '../../src/app/api/kos/search/route';
 import { createTestUser, cleanupTestData } from '../utils/mock-factory';
-import { db } from '@/db';
-import { users, posts, kos } from '@/db/schema';
+import { db } from '../../src/db';
+import { users, posts, kos } from '../../src/db/schema';
 import { eq } from 'drizzle-orm';
 
 // Helper function to create a test request

@@ -1,12 +1,12 @@
 'use client';
 
 import { useState } from 'react';
-import { useAuthGuard } from '@/hooks/useAuthGuard';
-import { useAuthToken } from '@/hooks/useAuthToken';
+import { useAuthGuard } from '../hooks/useAuthGuard';
+import { useAuthToken } from '../hooks/useAuthToken';
 
 interface PhotoUploadFormProps {
   kosId: number;
-  onUploadSuccess?: (photos: any[]) => void;
+  onUploadSuccess?: (photos: Array<{ id: number; url: string; isPrimary: boolean }>) => void;
   onUploadError?: (error: string) => void;
 }
 
@@ -20,8 +20,8 @@ export default function PhotoUploadForm({
   const [isUploading, setIsUploading] = useState(false);
   const [dragActive, setDragActive] = useState(false);
   
-  const { user, isAuthenticated } = useAuthGuard();
-  const { getToken, hasValidToken, isLoading } = useAuthToken();
+  const { isAuthenticated } = useAuthGuard();
+  const { getToken, hasValidToken } = useAuthToken();
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files.length > 0) {

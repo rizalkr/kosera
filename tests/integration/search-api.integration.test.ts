@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import { createTestUser, cleanupTestData } from '../utils/mock-factory';
-import { db } from '@/db';
-import { users, posts, kos } from '@/db/schema';
+import { db } from '../../src/db';
+import { users, posts, kos } from '../../src/db/schema';
 
 describe('Search API Integration Tests', () => {
   let baseUrl: string;
