@@ -1,7 +1,7 @@
 'use client';
 import { useState, useEffect } from 'react';
-import { SearchParams } from '@/lib/api';
-import { useFiltersDebounce } from '@/hooks/useDebounce';
+import { SearchParams } from '../lib/api';
+import { useFiltersDebounce } from '../hooks/useDebounce';
 
 interface FilterBarProps {
   onFilter?: (filters: SearchParams) => void;
@@ -31,7 +31,7 @@ export default function FilterBar({ onFilter, initialFilters = {} }: FilterBarPr
   // Auto-apply filters when debounced values change
   useEffect(() => {
     const cleanFilters = Object.fromEntries(
-      Object.entries(debouncedFilters).filter(([_, value]) => value !== undefined)
+      Object.entries(debouncedFilters).filter(([, value]) => value !== undefined)
     );
     onFilter?.(cleanFilters);
   }, [debouncedFilters, onFilter]);
@@ -79,7 +79,7 @@ export default function FilterBar({ onFilter, initialFilters = {} }: FilterBarPr
 
     // Remove undefined values
     const cleanFilters = Object.fromEntries(
-      Object.entries(filters).filter(([_, value]) => value !== undefined)
+      Object.entries(filters).filter(([, value]) => value !== undefined)
     );
 
     onFilter?.(cleanFilters);

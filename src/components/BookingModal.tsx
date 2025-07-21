@@ -1,9 +1,9 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { KosData } from '@/lib/api';
-import { useCreateBooking } from '@/hooks/useApi';
-import { showCustomAlert, showError } from '@/lib/sweetalert';
+import { KosData } from '../lib/api';
+import { useCreateBooking } from '../hooks/useApi';
+import { showCustomAlert, showError } from '../lib/sweetalert';
 
 interface BookingModalProps {
   kos: KosData;

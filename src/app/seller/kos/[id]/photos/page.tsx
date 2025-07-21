@@ -1,11 +1,11 @@
 'use client';
 
 import { useParams, useRouter } from 'next/navigation';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
+import Image from 'next/image';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import ProtectedRoute from '@/components/ProtectedRoute';
-import { useAuthGuard } from '@/hooks/useAuthGuard';
 import { useAuthToken } from '@/hooks/useAuthToken';
 import { useKosDetails } from '@/hooks/useApi';
 import { showSuccess, showError, showConfirm, showLoading, showToast } from '@/lib/sweetalert';
@@ -14,8 +14,7 @@ import Swal from 'sweetalert2';
 export default function SellerKosPhotosPage() {
   const params = useParams();
   const router = useRouter();
-  const { user } = useAuthGuard();
-  const { getToken, hasValidToken } = useAuthToken();
+  const { getToken } = useAuthToken();
   const kosId = params.id as string;
   
   const { data: kosResponse, isLoading, error, refetch } = useKosDetails(parseInt(kosId));
@@ -23,12 +22,18 @@ export default function SellerKosPhotosPage() {
   
   const [isUploading, setIsUploading] = useState(false);
   const [selectedFiles, setSelectedFiles] = useState<FileList | null>(null);
-  const [photos, setPhotos] = useState<any[]>([]);
+  const [photos, setPhotos] = useState<Array<{ 
+    id: number; 
+    url: string; 
+    isPrimary: boolean; 
+    caption?: string; 
+    createdAt: string; 
+  }>>([]);
   const [loadingPhotos, setLoadingPhotos] = useState(true);
   const [dragActive, setDragActive] = useState(false);
 
   // Fetch photos
-  const fetchPhotos = async () => {
+  const fetchPhotos = useCallback(async () => {
     try {
       const token = getToken();
       if (!token) return;
@@ -50,13 +55,13 @@ export default function SellerKosPhotosPage() {
     } finally {
       setLoadingPhotos(false);
     }
-  };
+  }, [kosId, getToken]);
 
   useEffect(() => {
     if (kosId) {
       fetchPhotos();
     }
-  }, [kosId]);
+  }, [kosId, fetchPhotos]);
 
   const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
     const files = event.target.files;
@@ -184,7 +189,7 @@ export default function SellerKosPhotosPage() {
     }
   };
 
-  const handleDeletePhoto = async (photoId: number, photoUrl: string) => {
+  const handleDeletePhoto = async (photoId: number) => {
     const result = await showConfirm(
       'Foto yang dihapus tidak dapat dikembalikan',
       'Hapus foto ini?',
@@ -452,17 +457,19 @@ export default function SellerKosPhotosPage() {
                   {photos.map((photo, index) => (
                     <div key={photo.id} className="bg-gray-50 rounded-xl overflow-hidden border border-gray-200">
                       <div className="relative">
-                        <img
+                        <Image
                           src={photo.url}
                           alt={photo.caption || `Foto kos ${index + 1}`}
+                          width={400}
+                          height={192}
                           className="w-full h-48 object-cover"
-                          onError={(e) => {
-                            e.currentTarget.src = "/images/profile.jpg";
+                          onError={() => {
+                            console.log('Failed to load photo:', photo.id);
                           }}
                         />
                         <div className="absolute top-3 right-3">
                           <button 
-                            onClick={() => handleDeletePhoto(photo.id, photo.url)}
+                            onClick={() => handleDeletePhoto(photo.id)}
                             className="bg-red-500 hover:bg-red-600 text-white p-2 rounded-full transition-colors"
                             title="Hapus foto"
                           >

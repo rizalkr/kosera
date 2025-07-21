@@ -50,7 +50,7 @@ export async function POST(
     // Clean old cache entries (simple cleanup)
     if (viewCache.size > 1000) {
       const oldEntries = Array.from(viewCache.entries())
-        .filter(([_, timestamp]) => now - timestamp > CACHE_DURATION);
+        .filter(([, timestamp]) => now - timestamp > CACHE_DURATION);
       oldEntries.forEach(([key]) => viewCache.delete(key));
     }
 

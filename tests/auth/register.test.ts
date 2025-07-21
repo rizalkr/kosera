@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { POST } from '@/app/api/auth/register/route';
+import { POST } from '../../src/app/api/auth/register/route';
 import { createMockRequest, parseResponse, mockUsers } from '../helpers';
 
 // Mock the database
@@ -39,7 +39,7 @@ describe('POST /api/auth/register', () => {
   });
 
   it('should register a new user successfully', async () => {
-    const { hashPassword } = await import('@/lib/auth');
+    const { hashPassword } = await import('../../src/lib/auth');
     
     // Mock database responses
     mockDbLimit.mockResolvedValue([]); // No existing user
@@ -125,7 +125,7 @@ describe('POST /api/auth/register', () => {
   });
 
   it('should default to RENTER role when not specified', async () => {
-    const { hashPassword } = await import('@/lib/auth');
+    const { hashPassword } = await import('../../src/lib/auth');
     
     // Mock database responses
     mockDbLimit.mockResolvedValue([]); // No existing user

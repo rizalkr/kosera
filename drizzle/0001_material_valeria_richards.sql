@@ -1,4 +1,4 @@
-CREATE TABLE "bookings" (
+CREATE TABLE IF NOT EXISTS "bookings" (
 	"id" serial PRIMARY KEY NOT NULL,
 	"kos_id" integer NOT NULL,
 	"user_id" integer NOT NULL,
@@ -12,14 +12,14 @@ CREATE TABLE "bookings" (
 	"updated_at" timestamp DEFAULT now() NOT NULL
 );
 --> statement-breakpoint
-CREATE TABLE "favorites" (
+CREATE TABLE IF NOT EXISTS "favorites" (
 	"id" serial PRIMARY KEY NOT NULL,
 	"user_id" integer NOT NULL,
 	"kos_id" integer NOT NULL,
 	"created_at" timestamp DEFAULT now() NOT NULL
 );
 --> statement-breakpoint
-CREATE TABLE "kos_photos" (
+CREATE TABLE IF NOT EXISTS "kos_photos" (
 	"id" serial PRIMARY KEY NOT NULL,
 	"kos_id" integer NOT NULL,
 	"url" text NOT NULL,
@@ -28,7 +28,7 @@ CREATE TABLE "kos_photos" (
 	"created_at" timestamp DEFAULT now() NOT NULL
 );
 --> statement-breakpoint
-CREATE TABLE "reviews" (
+CREATE TABLE IF NOT EXISTS "reviews" (
 	"id" serial PRIMARY KEY NOT NULL,
 	"kos_id" integer NOT NULL,
 	"user_id" integer NOT NULL,
@@ -38,12 +38,48 @@ CREATE TABLE "reviews" (
 	"updated_at" timestamp DEFAULT now() NOT NULL
 );
 --> statement-breakpoint
-ALTER TABLE "kos" ADD COLUMN "total_rooms" integer DEFAULT 1 NOT NULL;--> statement-breakpoint
-ALTER TABLE "kos" ADD COLUMN "occupied_rooms" integer DEFAULT 0;--> statement-breakpoint
-ALTER TABLE "bookings" ADD CONSTRAINT "bookings_kos_id_kos_id_fk" FOREIGN KEY ("kos_id") REFERENCES "public"."kos"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
-ALTER TABLE "bookings" ADD CONSTRAINT "bookings_user_id_users_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."users"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
-ALTER TABLE "favorites" ADD CONSTRAINT "favorites_user_id_users_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."users"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
-ALTER TABLE "favorites" ADD CONSTRAINT "favorites_kos_id_kos_id_fk" FOREIGN KEY ("kos_id") REFERENCES "public"."kos"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
-ALTER TABLE "kos_photos" ADD CONSTRAINT "kos_photos_kos_id_kos_id_fk" FOREIGN KEY ("kos_id") REFERENCES "public"."kos"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
-ALTER TABLE "reviews" ADD CONSTRAINT "reviews_kos_id_kos_id_fk" FOREIGN KEY ("kos_id") REFERENCES "public"."kos"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
-ALTER TABLE "reviews" ADD CONSTRAINT "reviews_user_id_users_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."users"("id") ON DELETE cascade ON UPDATE no action;
+DO $$ BEGIN
+    ALTER TABLE "kos" ADD COLUMN "total_rooms" integer DEFAULT 1 NOT NULL;
+EXCEPTION
+    WHEN duplicate_column THEN null;
+END $$;--> statement-breakpoint
+DO $$ BEGIN
+    ALTER TABLE "kos" ADD COLUMN "occupied_rooms" integer DEFAULT 0;
+EXCEPTION
+    WHEN duplicate_column THEN null;
+END $$;--> statement-breakpoint
+DO $$ BEGIN
+    ALTER TABLE "bookings" ADD CONSTRAINT "bookings_kos_id_kos_id_fk" FOREIGN KEY ("kos_id") REFERENCES "public"."kos"("id") ON DELETE cascade ON UPDATE no action;
+EXCEPTION
+    WHEN duplicate_object THEN null;
+END $$;--> statement-breakpoint
+DO $$ BEGIN
+    ALTER TABLE "bookings" ADD CONSTRAINT "bookings_user_id_users_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."users"("id") ON DELETE cascade ON UPDATE no action;
+EXCEPTION
+    WHEN duplicate_object THEN null;
+END $$;--> statement-breakpoint
+DO $$ BEGIN
+    ALTER TABLE "favorites" ADD CONSTRAINT "favorites_user_id_users_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."users"("id") ON DELETE cascade ON UPDATE no action;
+EXCEPTION
+    WHEN duplicate_object THEN null;
+END $$;--> statement-breakpoint
+DO $$ BEGIN
+    ALTER TABLE "favorites" ADD CONSTRAINT "favorites_kos_id_kos_id_fk" FOREIGN KEY ("kos_id") REFERENCES "public"."kos"("id") ON DELETE cascade ON UPDATE no action;
+EXCEPTION
+    WHEN duplicate_object THEN null;
+END $$;--> statement-breakpoint
+DO $$ BEGIN
+    ALTER TABLE "kos_photos" ADD CONSTRAINT "kos_photos_kos_id_kos_id_fk" FOREIGN KEY ("kos_id") REFERENCES "public"."kos"("id") ON DELETE cascade ON UPDATE no action;
+EXCEPTION
+    WHEN duplicate_object THEN null;
+END $$;--> statement-breakpoint
+DO $$ BEGIN
+    ALTER TABLE "reviews" ADD CONSTRAINT "reviews_kos_id_kos_id_fk" FOREIGN KEY ("kos_id") REFERENCES "public"."kos"("id") ON DELETE cascade ON UPDATE no action;
+EXCEPTION
+    WHEN duplicate_object THEN null;
+END $$;--> statement-breakpoint
+DO $$ BEGIN
+    ALTER TABLE "reviews" ADD CONSTRAINT "reviews_user_id_users_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."users"("id") ON DELETE cascade ON UPDATE no action;
+EXCEPTION
+    WHEN duplicate_object THEN null;
+END $$;

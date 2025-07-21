@@ -1,12 +1,12 @@
 import { describe, it, expect, beforeAll, afterAll, beforeEach } from 'vitest';
 import { createTestUser, createAuthToken, cleanupTestData } from '../utils/mock-factory';
-import { db } from '@/db';
-import { users, posts, kos } from '@/db/schema';
+import { db } from '../../src/db';
+import { users, posts, kos } from '../../src/db/schema';
 import { eq } from 'drizzle-orm';
 import { NextRequest } from 'next/server';
-import { GET as getKos, POST as createKos } from '@/app/api/kos/route';
-import { GET as getKosById, PUT as updateKos, DELETE as deleteKos } from '@/app/api/kos/[id]/route';
-import { GET as getMyKos } from '@/app/api/kos/my/route';
+import { GET as getKos, POST as createKos } from '../../src/app/api/kos/route';
+import { GET as getKosById, PUT as updateKos, DELETE as deleteKos } from '../../src/app/api/kos/[id]/route';
+import { GET as getMyKos } from '../../src/app/api/kos/my/route';
 
 describe('Kos CRUD API', () => {
   let sellerUser: any;

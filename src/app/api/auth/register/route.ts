@@ -95,11 +95,17 @@ export async function POST(request: NextRequest) {
       }
     }, { status: 201 });
 
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Registration error:', error);
     
+    // Type guard for database error
+    const isDatabaseError = (err: unknown): err is { code: string; constraint?: string; message: string } => {
+      return typeof err === 'object' && err !== null && 'code' in err;
+    };
+    
     // Handle specific database errors
-    if (error.message === 'Username already exists') {
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+    if (errorMessage === 'Username already exists') {
       return NextResponse.json(
         { 
           success: false,
@@ -110,7 +116,7 @@ export async function POST(request: NextRequest) {
       );
     }
     
-    if (error.message === 'Contact already exists') {
+    if (errorMessage === 'Contact already exists') {
       return NextResponse.json(
         { 
           success: false,
@@ -122,7 +128,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Handle PostgreSQL unique constraint violations
-    if (error.code === '23505') {
+    if (isDatabaseError(error) && error.code === '23505') {
       if (error.constraint?.includes('username')) {
         return NextResponse.json(
           { 

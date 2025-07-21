@@ -1,24 +1,34 @@
-import { useKosImage } from '@/hooks/useKosImage';
+import { useKosImage } from '../hooks/useKosImage';
+import Image from 'next/image';
 
 interface KosImageProps {
   kosId: number;
   kosName: string;
   className?: string;
+  width?: number;
+  height?: number;
 }
 
-export default function KosImage({ kosId, kosName, className = "object-cover w-full h-full" }: KosImageProps) {
-  const { imageUrl, isLoading, hasPhotos } = useKosImage(kosId);
+export default function KosImage({ 
+  kosId, 
+  kosName, 
+  className = "object-cover w-full h-full",
+  width = 400,
+  height = 300
+}: KosImageProps) {
+  const { imageUrl, hasPhotos } = useKosImage(kosId);
 
   return (
     <>
-      <img
+      <Image
         src={imageUrl}
         alt={kosName}
+        width={width}
+        height={height}
         className={className}
-        onError={(e) => {
-          // Fallback to sample image if photo fails to load
-          const target = e.target as HTMLImageElement;
-          target.src = '/images/rooms/room1.jpg';
+        onError={() => {
+          // Handle error - Next.js Image handles fallbacks differently
+          console.log('Image failed to load for kos:', kosId);
         }}
       />
       {!hasPhotos && (

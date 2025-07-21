@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { withSellerOrAdmin, AuthenticatedRequest } from '@/lib/middleware';
 import { db } from '@/db';
 import { kos, posts, users, reviews } from '@/db/schema';
-import { eq, and, desc, count, avg, sql } from 'drizzle-orm';
+import { eq, desc, count, avg, sql } from 'drizzle-orm';
 
 // GET /api/kos/[id] - Get specific kos by ID with reviews and statistics (public)
 export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {

@@ -2,7 +2,6 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { useAuthGuard } from '@/hooks/useAuthGuard';
 import { useAuthToken } from '@/hooks/useAuthToken';
 import ProtectedRoute from '@/components/ProtectedRoute';
 import { showSuccess, showError, showLoading } from '@/lib/sweetalert';
@@ -62,7 +61,6 @@ const createKos = async (formData: KosFormData, getToken: () => string | null, h
 
 export default function NewKosPage() {
   const router = useRouter();
-  const { user, isAuthenticated } = useAuthGuard();
   const { getToken, hasValidToken } = useAuthToken();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});

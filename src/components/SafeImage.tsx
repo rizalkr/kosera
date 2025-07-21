@@ -1,7 +1,7 @@
 'use client';
 
 import Image from 'next/image';
-import { useImageWithFallback } from '@/hooks/useImageWithFallback';
+import { useImageWithFallback } from '../hooks/useImageWithFallback';
 
 interface SafeImageProps {
   src: string;
@@ -24,7 +24,7 @@ export default function SafeImage({
   onClick,
   fallbackSrc = '/images/rooms/room1.jpg'
 }: SafeImageProps) {
-  const { src: safeSrc, onError, isError } = useImageWithFallback({ 
+  const { src: safeSrc, onError } = useImageWithFallback({ 
     src, 
     fallbackSrc 
   });

@@ -1,10 +1,10 @@
 import { NextResponse } from 'next/server';
-import { withAdmin, AuthenticatedRequest } from '@/lib/middleware';
+import { withAdmin } from '@/lib/middleware';
 import { db, kos, posts } from '@/db';
 import { sql, inArray } from 'drizzle-orm';
 
 // Bulk cleanup - permanently delete all archived kos
-async function bulkCleanupHandler(request: AuthenticatedRequest) {
+async function bulkCleanupHandler() {
   try {
     // Get all deleted kos
     const deletedKos = await db

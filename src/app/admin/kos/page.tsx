@@ -12,7 +12,7 @@ import { showConfirm, showSuccess, showError } from '@/lib/sweetalert';
 
 export default function AdminKosPage() {
   const router = useRouter();
-  const { user } = useAuthGuard();
+  useAuthGuard(); // Verify admin access but don't need the user variable
   
   // State for filters
   const [searchTerm, setSearchTerm] = useState('');
@@ -39,10 +39,10 @@ export default function AdminKosPage() {
     showDeleted: showDeleted,
   });
 
-  const { toggleFeatured, loading: toggleLoading } = useToggleFeatured();
-  const { deleteKos, loading: deleteLoading } = useDeleteKos();
-  const { permanentDeleteKos, loading: permanentDeleteLoading } = usePermanentDeleteKos();
-  const { restoreKos, loading: restoreLoading } = useRestoreKos();
+  const { toggleFeatured } = useToggleFeatured();
+  const { deleteKos } = useDeleteKos();
+  const { permanentDeleteKos } = usePermanentDeleteKos();
+  const { restoreKos } = useRestoreKos();
   const { bulkCleanupKos, loading: bulkCleanupLoading } = useBulkCleanupKos();
   const { bulkArchiveKos, loading: bulkArchiveLoading } = useBulkArchiveKos();
   const { bulkPermanentDeleteKos, loading: bulkPermanentDeleteLoading } = useBulkPermanentDeleteKos();
@@ -175,14 +175,6 @@ export default function AdminKosPage() {
       currency: 'IDR',
       minimumFractionDigits: 0,
     }).format(amount);
-  };
-
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('id-ID', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric',
-    });
   };
 
   if (loading && kosList.length === 0) {

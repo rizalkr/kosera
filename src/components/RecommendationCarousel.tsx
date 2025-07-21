@@ -2,8 +2,8 @@
 import { Swiper, SwiperSlide } from 'swiper/react';
 import 'swiper/css';
 import FeaturedCard from './FeaturedCard';
-import { useKosRecommendations } from '@/hooks/useApi';
-import { KosData } from '@/lib/api';
+import { useKosRecommendations } from '../hooks/useApi';
+import { KosData } from '../lib/api';
 
 export default function RecommendationCarousel() {
   const { data, isLoading, error } = useKosRecommendations({ limit: 6 });

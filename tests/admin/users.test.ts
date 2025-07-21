@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { GET } from '@/app/api/admin/users/route';
+import { GET } from '../../src/app/api/admin/users/route';
 import { createMockRequest, parseResponse, mockUsers } from '../helpers';
 
 // Mock the database

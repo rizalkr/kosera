@@ -1,14 +1,10 @@
 import { NextResponse } from 'next/server';
 import { withAdmin, AuthenticatedRequest } from '@/lib/middleware';
 import { db, users } from '@/db';
-import { eq, isNull, sql } from 'drizzle-orm';
+import { eq, sql } from 'drizzle-orm';
 import bcrypt from 'bcryptjs';
 
-interface RouteContext {
-  params: {
-    id: string;
-  };
-}
+type UserRole = 'ADMIN' | 'SELLER' | 'RENTER';
 
 async function getUserHandler(request: AuthenticatedRequest) {
   try {
@@ -121,11 +117,17 @@ async function updateUserHandler(request: AuthenticatedRequest) {
     }
 
     // Prepare update data
-    const updateData: any = {
+    const updateData: {
+      name: string;
+      username: string;
+      contact: string;
+      role: UserRole;
+      password?: string;
+    } = {
       name,
       username,
       contact,
-      role: role as any,
+      role: role as UserRole,
     };
 
     // Update password if provided

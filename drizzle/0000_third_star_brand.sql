@@ -1,5 +1,9 @@
-CREATE TYPE "public"."user_role" AS ENUM('ADMIN', 'SELLER', 'RENTER');--> statement-breakpoint
-CREATE TABLE "kos" (
+DO $$ BEGIN
+    CREATE TYPE "public"."user_role" AS ENUM('ADMIN', 'SELLER', 'RENTER');
+EXCEPTION
+    WHEN duplicate_object THEN null;
+END $$;--> statement-breakpoint
+CREATE TABLE IF NOT EXISTS "kos" (
 	"id" serial PRIMARY KEY NOT NULL,
 	"post_id" integer NOT NULL,
 	"name" text NOT NULL,
@@ -11,7 +15,7 @@ CREATE TABLE "kos" (
 	CONSTRAINT "kos_post_id_unique" UNIQUE("post_id")
 );
 --> statement-breakpoint
-CREATE TABLE "posts" (
+CREATE TABLE IF NOT EXISTS "posts" (
 	"id" serial PRIMARY KEY NOT NULL,
 	"user_id" integer NOT NULL,
 	"title" text NOT NULL,
@@ -29,7 +33,7 @@ CREATE TABLE "posts" (
 	"updated_at" timestamp DEFAULT now() NOT NULL
 );
 --> statement-breakpoint
-CREATE TABLE "users" (
+CREATE TABLE IF NOT EXISTS "users" (
 	"id" serial PRIMARY KEY NOT NULL,
 	"name" text NOT NULL,
 	"username" text NOT NULL,
@@ -40,5 +44,13 @@ CREATE TABLE "users" (
 	CONSTRAINT "users_username_unique" UNIQUE("username")
 );
 --> statement-breakpoint
-ALTER TABLE "kos" ADD CONSTRAINT "kos_post_id_posts_id_fk" FOREIGN KEY ("post_id") REFERENCES "public"."posts"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
-ALTER TABLE "posts" ADD CONSTRAINT "posts_user_id_users_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."users"("id") ON DELETE cascade ON UPDATE no action;
+DO $$ BEGIN
+    ALTER TABLE "kos" ADD CONSTRAINT "kos_post_id_posts_id_fk" FOREIGN KEY ("post_id") REFERENCES "public"."posts"("id") ON DELETE cascade ON UPDATE no action;
+EXCEPTION
+    WHEN duplicate_object THEN null;
+END $$;--> statement-breakpoint
+DO $$ BEGIN
+    ALTER TABLE "posts" ADD CONSTRAINT "posts_user_id_users_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."users"("id") ON DELETE cascade ON UPDATE no action;
+EXCEPTION
+    WHEN duplicate_object THEN null;
+END $$;

@@ -1,12 +1,12 @@
 'use client';
 
 import { useState } from 'react';
-import { useAuth } from '@/contexts/AuthContext';
+import { useAuth } from '../../contexts/AuthContext';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
-import LoginRequired from '@/components/LoginRequired';
-import UpdatePasswordModal from '@/components/UpdatePasswordModal';
-import { showSuccess } from '@/lib/sweetalert';
+import LoginRequired from '../../components/LoginRequired';
+import UpdatePasswordModal from '../../components/UpdatePasswordModal';
+import { showSuccess } from '../../lib/sweetalert';
 
 export default function ProfilePage() {
   const { user, logout } = useAuth();

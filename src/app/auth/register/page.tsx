@@ -91,9 +91,10 @@ export default function RegisterPage() {
           response.message || response.error || 'Terjadi kesalahan saat mendaftar'
         );
       }
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Registration error:', err);
-      await showError('Error', err.message || 'Terjadi kesalahan jaringan');
+      const errorMessage = err instanceof Error ? err.message : 'Terjadi kesalahan jaringan';
+      await showError('Error', errorMessage);
     } finally {
       setIsLoading(false);
     }

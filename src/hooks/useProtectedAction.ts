@@ -1,8 +1,8 @@
 'use client';
 
-import { useAuth } from '@/contexts/AuthContext';
+import { useAuth } from '../contexts/AuthContext';
 import { useRouter } from 'next/navigation';
-import { showToast as showSweetToast } from '@/lib/sweetalert';
+import { showToast as showSweetToast } from '../lib/sweetalert';
 
 export function useProtectedAction() {
   const { isAuthenticated, isLoading } = useAuth();

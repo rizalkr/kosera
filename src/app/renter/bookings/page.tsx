@@ -44,7 +44,10 @@ export default function RenterBookingsPage() {
   const [selectedStatus, setSelectedStatus] = useState<BookingStatus | 'all'>('all');
 
   // Extract bookings from API data
-  const bookings: BookingItem[] = (bookingsData?.data as any)?.bookings || [];
+  const bookingsResponse = bookingsData?.data as unknown;
+  const bookings: BookingItem[] = (bookingsResponse && typeof bookingsResponse === 'object' && 'bookings' in bookingsResponse) 
+    ? (bookingsResponse as { bookings: BookingItem[] }).bookings 
+    : [];
   
   // Debug logging
   console.log('Bookings Data:', bookingsData);

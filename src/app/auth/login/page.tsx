@@ -47,9 +47,10 @@ export default function LoginPage() {
         console.error('Login failed:', response);
         await showError('Login Gagal', response.error || response.message || 'Username atau password salah');
       }
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Login error:', err);
-      await showError('Error', err.message || 'Terjadi kesalahan jaringan');
+      const errorMessage = err instanceof Error ? err.message : 'Terjadi kesalahan jaringan';
+      await showError('Error', errorMessage);
     } finally {
       setIsLoading(false);
     }

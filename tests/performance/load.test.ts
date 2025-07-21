@@ -18,7 +18,7 @@ describe('API Performance Tests', () => {
     });
 
     it('should validate password hashing performance', async () => {
-      const { hashPassword } = await import('@/lib/auth');
+      const { hashPassword } = await import('../../src/lib/auth');
       
       const startTime = performance.now();
       await hashPassword('testpassword123');
@@ -34,7 +34,7 @@ describe('API Performance Tests', () => {
 
   describe('Memory Usage Tests', () => {
     it('should not create memory leaks in token generation', async () => {
-      const { generateToken } = await import('@/lib/auth');
+      const { generateToken } = await import('../../src/lib/auth');
       
       const initialMemory = process.memoryUsage().heapUsed;
       
@@ -57,7 +57,7 @@ describe('API Performance Tests', () => {
 
   describe('Concurrent Operations', () => {
     it('should handle concurrent password hashing', async () => {
-      const { hashPassword } = await import('@/lib/auth');
+      const { hashPassword } = await import('../../src/lib/auth');
       
       const passwords = Array.from({ length: 10 }, (_, i) => `password${i}`);
       
@@ -79,7 +79,7 @@ describe('API Performance Tests', () => {
     });
 
     it('should handle concurrent token verification', async () => {
-      const { generateToken, verifyToken } = await import('@/lib/auth');
+      const { generateToken, verifyToken } = await import('../../src/lib/auth');
       
       // Generate test tokens
       const tokens = Array.from({ length: 100 }, (_, i) => 
@@ -109,7 +109,7 @@ describe('API Performance Tests', () => {
 
   describe('Edge Cases', () => {
     it('should handle large payloads', async () => {
-      const { generateToken } = await import('@/lib/auth');
+      const { generateToken } = await import('../../src/lib/auth');
       
       // Create a large username
       const largeUsername = 'a'.repeat(1000);
@@ -132,7 +132,7 @@ describe('API Performance Tests', () => {
     });
 
     it('should handle rapid successive calls', async () => {
-      const { extractTokenFromHeader } = await import('@/lib/auth');
+      const { extractTokenFromHeader } = await import('../../src/lib/auth');
       
       const testToken = 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.test';
       
@@ -184,7 +184,7 @@ describe('API Performance Tests', () => {
 
   describe('Error Handling Performance', () => {
     it('should handle errors efficiently', async () => {
-      const { verifyToken } = await import('@/lib/auth');
+      const { verifyToken } = await import('../../src/lib/auth');
       
       const invalidTokens = Array.from({ length: 100 }, (_, i) => `invalid-token-${i}`);
       

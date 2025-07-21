@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { GET } from '@/app/api/auth/verify/route';
+import { GET } from '../../src/app/api/auth/verify/route';
 import { createMockRequest, createAuthenticatedRequest, parseResponse, testTokens } from '../helpers';
 
 // Mock auth functions
@@ -18,7 +18,7 @@ describe('GET /api/auth/verify', () => {
   });
 
   it('should verify valid token successfully', async () => {
-    const { verifyToken, extractTokenFromHeader } = await import('@/lib/auth');
+    const { verifyToken, extractTokenFromHeader } = await import('../../src/lib/auth');
     
     // Mock auth functions
     (extractTokenFromHeader as any).mockReturnValue('valid-token');
@@ -42,7 +42,7 @@ describe('GET /api/auth/verify', () => {
   });
 
   it('should fail with no token provided', async () => {
-    const { extractTokenFromHeader } = await import('@/lib/auth');
+    const { extractTokenFromHeader } = await import('../../src/lib/auth');
     
     // Mock auth functions
     (extractTokenFromHeader as any).mockReturnValue(null);
@@ -57,7 +57,7 @@ describe('GET /api/auth/verify', () => {
   });
 
   it('should fail with invalid token', async () => {
-    const { verifyToken, extractTokenFromHeader } = await import('@/lib/auth');
+    const { verifyToken, extractTokenFromHeader } = await import('../../src/lib/auth');
     
     // Mock auth functions
     (extractTokenFromHeader as any).mockReturnValue('invalid-token');
@@ -73,7 +73,7 @@ describe('GET /api/auth/verify', () => {
   });
 
   it('should fail with malformed authorization header', async () => {
-    const { extractTokenFromHeader } = await import('@/lib/auth');
+    const { extractTokenFromHeader } = await import('../../src/lib/auth');
     
     // Mock auth functions
     (extractTokenFromHeader as any).mockReturnValue(null);
@@ -90,7 +90,7 @@ describe('GET /api/auth/verify', () => {
   });
 
   it('should handle token verification errors', async () => {
-    const { verifyToken, extractTokenFromHeader } = await import('@/lib/auth');
+    const { verifyToken, extractTokenFromHeader } = await import('../../src/lib/auth');
     
     // Mock auth functions
     (extractTokenFromHeader as any).mockReturnValue('valid-token');

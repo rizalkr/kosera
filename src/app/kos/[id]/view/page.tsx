@@ -3,7 +3,6 @@
 import { useParams } from 'next/navigation';
 import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
-import Image from 'next/image';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import BookingModal from '@/components/BookingModal';
@@ -11,7 +10,7 @@ import ImageModal from '@/components/ImageModal';
 import SafeImage from '@/components/SafeImage';
 import { useKosDetails, useTrackView, useAddFavorite, useRemoveFavorite, useFavorites, useKosPhotos } from '@/hooks/useApi';
 import { useAuthGuard } from '@/hooks/useAuthGuard';
-import { useKosImages, useImageWithFallback } from '@/hooks/useImageWithFallback';
+import { useKosImages } from '@/hooks/useImageWithFallback';
 
 interface Review {
   id: number;
@@ -71,7 +70,7 @@ export default function KosDetailPage() {
     : [];
   
   // Use custom hook for safe image handling
-  const { images: displayImages, hasValidPhotos } = useKosImages(sortedPhotos);
+  const { images: displayImages } = useKosImages(sortedPhotos);
 
   if (isLoading) {
     return (
