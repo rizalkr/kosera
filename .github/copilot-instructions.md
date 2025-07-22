@@ -16,3 +16,8 @@ We use Tailwind CSS for styling. Use `clsx` or `cn` utility for combining class 
 ## Documentation: ##
   - When creating documentation, generate it as a markdown file (`.md`).
   - All documentation files must be saved in the `blob/docs/` directory.
+## Commit Messages: ##
+  - All commit messages must follow the Conventional Commits specification.
+  - The format should be `type(scope): subject`. For example: `feat(auth): add google sign-in button`.
+  - Common types are: `feat`, `fix`, `docs`, `refactor`, `perf`, `test`, `chore`.
+  - Always write commit messages in English.

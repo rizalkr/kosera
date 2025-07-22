@@ -4,13 +4,15 @@
  * Migration script to move existing local images to Cloudinary
  * This script migrates photos from local storage to Cloudinary
  * 
- * Usage: node scripts/migrate-to-cloudinary.js
+ * Usage: npm run cloudinary:migrate
  */
 
 import dotenv from 'dotenv';
-import { db, kosPhotos } from '../src/db/index.js';
+import { drizzle } from 'drizzle-orm/postgres-js';
+import postgres from 'postgres';
+import { pgTable, serial, text, integer, timestamp, boolean } from 'drizzle-orm/pg-core';
 import { isNull, eq } from 'drizzle-orm';
-import { uploadToCloudinary } from '../src/lib/cloudinary.js';
+import { v2 as cloudinary } from 'cloudinary';
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
@@ -20,6 +22,58 @@ dotenv.config({ path: '.env.local' });
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
+
+// Configure Cloudinary
+cloudinary.config({
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+  api_key: process.env.CLOUDINARY_API_KEY,
+  api_secret: process.env.CLOUDINARY_API_SECRET,
+});
+
+// Database schema
+const kosPhotos = pgTable('kos_photos', {
+  id: serial('id').primaryKey(),
+  kosId: integer('kos_id').notNull(),
+  url: text('url').notNull(),
+  cloudinaryPublicId: text('cloudinary_public_id'),
+  caption: text('caption'),
+  isPrimary: boolean('is_primary').default(false).notNull(),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+});
+
+// Database connection
+const connectionString = process.env.DATABASE_URL;
+const sql = postgres(connectionString);
+const db = drizzle(sql);
+
+/**
+ * Upload image to Cloudinary
+ */
+const uploadToCloudinary = async (file, folder = 'kos-photos') => {
+  try {
+    const result = await cloudinary.uploader.upload(
+      typeof file === 'string' ? file : `data:image/jpeg;base64,${file.toString('base64')}`,
+      {
+        resource_type: 'image',
+        folder: folder,
+        quality: 'auto',
+        fetch_format: 'auto',
+      }
+    );
+
+    return {
+      public_id: result.public_id,
+      secure_url: result.secure_url,
+      width: result.width,
+      height: result.height,
+      bytes: result.bytes,
+      format: result.format,
+    };
+  } catch (error) {
+    console.error('Cloudinary upload error:', error);
+    throw new Error('Failed to upload image to Cloudinary');
+  }
+};
 
 async function migrateLocalImagesToCloudinary() {
   try {
