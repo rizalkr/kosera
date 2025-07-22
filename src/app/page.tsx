@@ -2,17 +2,17 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import Header from '../components/Header';
-import FilterBar from '../components/FilterBar';
-import FeaturedList from '../components/FeaturedList';
-import MapSection from '../components/maps/MapSection';
-import RecommendationCarousel from '../components/RecommendationCarousel';
-import Footer from '../components/Footer';
-import KosImage from '../components/KosImage';
-import { useKosSearch } from '../hooks/useApi';
-import { useAuthGuard } from '../hooks/useAuthGuard';
-import { useAddFavorite, useRemoveFavorite, useFavorites } from '../hooks/useApi';
-import { SearchParams, KosData } from '../lib/api';
+import Header from '@/components/Header';
+import FilterBar from '@/components/FilterBar';
+import FeaturedList from '@/components/FeaturedList';
+import MapSection from '@/components/maps/MapSection';
+import RecommendationCarousel from '@/components/RecommendationCarousel';
+import Footer from '@/components/Footer';
+import KosImage from '@/components/KosImage';
+import { useKosSearch } from '@/hooks/useApi';
+import { useAuthGuard } from '@/hooks/useAuthGuard';
+import { useAddFavorite, useRemoveFavorite, useFavorites } from '@/hooks/useApi';
+import { SearchParams, KosData } from '@/lib/api';
 
 export default function HomePage() {
   const [searchFilters, setSearchFilters] = useState<SearchParams>({});
