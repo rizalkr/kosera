@@ -84,6 +84,7 @@ export const kosPhotos = pgTable('kos_photos', {
   id: serial('id').primaryKey(),
   kosId: integer('kos_id').references(() => kos.id, { onDelete: 'cascade' }).notNull(),
   url: text('url').notNull(),
+  cloudinaryPublicId: text('cloudinary_public_id'), // For Cloudinary integration
   caption: text('caption'),
   isPrimary: boolean('is_primary').default(false).notNull(),
   createdAt: timestamp('created_at').defaultNow().notNull(),

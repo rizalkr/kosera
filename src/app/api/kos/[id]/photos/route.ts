@@ -3,6 +3,7 @@ import { db } from '@/db';
 import { kosPhotos, kos, posts } from '@/db/schema';
 import { eq, and, sql } from 'drizzle-orm';
 import { extractTokenFromHeader, verifyToken } from '@/lib/auth';
+import { deleteFromCloudinary, extractPublicIdFromUrl } from '@/lib/cloudinary';
 import { z } from 'zod';
 
 // Schema for photo upload
@@ -255,21 +256,56 @@ export async function DELETE(
       );
     }
 
-    // Delete photo
-    const deletedPhoto = await db
-      .delete(kosPhotos)
+    // Get photo info before deleting (to get Cloudinary public ID)
+    const photoToDelete = await db
+      .select({
+        id: kosPhotos.id,
+        url: kosPhotos.url,
+        cloudinaryPublicId: kosPhotos.cloudinaryPublicId,
+      })
+      .from(kosPhotos)
       .where(and(
         eq(kosPhotos.id, parsedPhotoId),
         eq(kosPhotos.kosId, kosId)
       ))
-      .returning();
+      .limit(1);
 
-    if (deletedPhoto.length === 0) {
+    if (photoToDelete.length === 0) {
       return NextResponse.json(
         { success: false, error: 'Photo not found' },
         { status: 404 }
       );
     }
+
+    const photo = photoToDelete[0];
+
+    // Delete from Cloudinary if it's a Cloudinary image
+    if (photo.cloudinaryPublicId) {
+      try {
+        await deleteFromCloudinary(photo.cloudinaryPublicId);
+      } catch (cloudinaryError) {
+        console.warn('Failed to delete from Cloudinary:', cloudinaryError);
+        // Continue with database deletion even if Cloudinary deletion fails
+      }
+    } else if (photo.url.includes('cloudinary.com')) {
+      // Try to extract public ID from URL if cloudinaryPublicId is not stored
+      const publicId = extractPublicIdFromUrl(photo.url);
+      if (publicId) {
+        try {
+          await deleteFromCloudinary(publicId);
+        } catch (cloudinaryError) {
+          console.warn('Failed to delete from Cloudinary:', cloudinaryError);
+        }
+      }
+    }
+
+    // Delete photo from database
+    await db
+      .delete(kosPhotos)
+      .where(and(
+        eq(kosPhotos.id, parsedPhotoId),
+        eq(kosPhotos.kosId, kosId)
+      ));
 
     // Update photo count in posts
     await db

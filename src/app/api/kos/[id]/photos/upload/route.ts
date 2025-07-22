@@ -1,10 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { writeFile, mkdir } from 'fs/promises';
-import { join } from 'path';
 import { db } from '@/db';
 import { kosPhotos, kos, posts } from '@/db/schema';
 import { eq, sql } from 'drizzle-orm';
 import { extractTokenFromHeader, verifyToken } from '@/lib/auth';
+import { parseFormData, validateImageFile } from '@/lib/upload';
+import { uploadToCloudinary } from '@/lib/cloudinary';
 
 // POST /api/kos/[id]/photos/upload - Upload photo files
 export async function POST(
@@ -67,9 +67,9 @@ export async function POST(
       );
     }
 
-    const formData = await request.formData();
-    const files = formData.getAll('photos') as File[];
-    const isPrimary = formData.get('isPrimary') === 'true';
+    // Parse form data
+    const { files } = await parseFormData(request);
+    const isPrimary = request.nextUrl.searchParams.get('isPrimary') === 'true';
 
     if (files.length === 0) {
       return NextResponse.json(
@@ -79,14 +79,6 @@ export async function POST(
     }
 
     const uploadedPhotos = [];
-
-    // Ensure upload directory exists
-    const uploadDir = join(process.cwd(), 'public', 'images', 'rooms');
-    try {
-      await mkdir(uploadDir, { recursive: true });
-    } catch {
-      // Directory might already exist
-    }
 
     // If setting as primary, unset other primary photos first
     if (isPrimary) {
@@ -99,47 +91,48 @@ export async function POST(
     for (let i = 0; i < files.length; i++) {
       const file = files[i];
       
-      if (!file || !file.name) continue;
+      if (!file || !file.originalname) continue;
 
-      // Validate file type
-      const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
-      if (!allowedTypes.includes(file.type)) {
+      // Validate file
+      const validation = validateImageFile(file);
+      if (!validation.isValid) {
+        console.warn(`Skipping file ${file.originalname}: ${validation.error}`);
         continue; // Skip invalid files
       }
 
-      // Validate file size (max 5MB)
-      const maxSize = 5 * 1024 * 1024; // 5MB
-      if (file.size > maxSize) {
-        continue; // Skip large files
-      }
-
-      // Generate unique filename
-      const timestamp = Date.now();
-      const randomNum = Math.floor(Math.random() * 1000);
-      const extension = file.name.split('.').pop()?.toLowerCase();
-      const filename = `kos-${kosId}-${timestamp}-${randomNum}.${extension}`;
-      
       try {
-        // Convert file to buffer and write to disk
-        const bytes = await file.arrayBuffer();
-        const buffer = Buffer.from(bytes);
-        const filepath = join(uploadDir, filename);
-        
-        await writeFile(filepath, buffer);
+        // Upload to Cloudinary
+        const cloudinaryResult = await uploadToCloudinary(
+          file.buffer,
+          `kos-photos/kos-${kosId}`, // Organize by kos ID in Cloudinary
+          {
+            width: 1200,
+            height: 800,
+            crop: 'limit', // Don't upscale, just limit max dimensions
+            quality: 'auto:good',
+            format: 'auto'
+          }
+        );
 
-        // Save to database
-        const photoUrl = `/images/rooms/${filename}`;
+        // Save to database with Cloudinary URL
         const [newPhoto] = await db.insert(kosPhotos).values({
           kosId,
-          url: photoUrl,
+          url: cloudinaryResult.secure_url,
+          cloudinaryPublicId: cloudinaryResult.public_id,
           isPrimary: isPrimary && i === 0, // Only first photo can be primary if specified
-          caption: file.name.split('.')[0] // Use filename without extension as caption
+          caption: file.originalname.split('.')[0] // Use filename without extension as caption
         }).returning();
 
-        uploadedPhotos.push(newPhoto);
+        uploadedPhotos.push({
+          ...newPhoto,
+          width: cloudinaryResult.width,
+          height: cloudinaryResult.height,
+          fileSize: cloudinaryResult.bytes,
+          format: cloudinaryResult.format
+        });
 
       } catch (fileError) {
-        console.error(`Error processing file ${file.name}:`, fileError);
+        console.error(`Error processing file ${file.originalname}:`, fileError);
         continue; // Skip this file and continue with others
       }
     }
