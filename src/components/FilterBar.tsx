@@ -1,5 +1,5 @@
 'use client';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import { SearchParams } from '../lib/api';
 import { useFiltersDebounce } from '../hooks/useDebounce';
 
@@ -9,6 +9,8 @@ interface FilterBarProps {
 }
 
 export default function FilterBar({ onFilter, initialFilters = {} }: FilterBarProps) {
+  const isInitialized = useRef(false);
+  
   const [searchText, setSearchText] = useState(initialFilters.search || '');
   const [city, setCity] = useState(initialFilters.city || '');
   const [minPrice, setMinPrice] = useState(initialFilters.minPrice?.toString() || '');
@@ -16,20 +18,25 @@ export default function FilterBar({ onFilter, initialFilters = {} }: FilterBarPr
   const [selectedFacilities, setSelectedFacilities] = useState<string[]>(initialFilters.facilities || []);
   const [isAdvancedOpen, setIsAdvancedOpen] = useState(false);
 
-  // Create filters object for debouncing
-  const filters = {
+  // Create filters object for debouncing - memoized to prevent infinite loops
+  const filters = useMemo(() => ({
     search: searchText.trim() || undefined,
     city: city || undefined,
     minPrice: minPrice ? parseInt(minPrice) : undefined,
     maxPrice: maxPrice ? parseInt(maxPrice) : undefined,
     facilities: selectedFacilities.length > 0 ? selectedFacilities : undefined,
-  };
+  }), [searchText, city, minPrice, maxPrice, selectedFacilities]);
 
   // Use debounced filters with 400ms delay
   const { debouncedFilters, isFiltering } = useFiltersDebounce(filters, 400);
 
-  // Auto-apply filters when debounced values change
+  // Auto-apply filters when debounced values change - but not on initial render
   useEffect(() => {
+    if (!isInitialized.current) {
+      isInitialized.current = true;
+      return; // Skip first run to prevent initial trigger
+    }
+    
     const cleanFilters = Object.fromEntries(
       Object.entries(debouncedFilters).filter(([, value]) => value !== undefined)
     );
@@ -173,7 +180,7 @@ export default function FilterBar({ onFilter, initialFilters = {} }: FilterBarPr
                 placeholder="Min"
                 value={minPrice}
                 onChange={(e) => setMinPrice(e.target.value)}
-                className="border rounded-lg px-3 py-2 w-24 outline-none focus:ring-2 focus:ring-blue-200"
+                className="text-gray-500 border rounded-lg px-3 py-2 w-24 outline-none focus:ring-2 focus:ring-blue-200"
               />
               <span className="text-gray-500">-</span>
               <input
@@ -181,7 +188,7 @@ export default function FilterBar({ onFilter, initialFilters = {} }: FilterBarPr
                 placeholder="Max"
                 value={maxPrice}
                 onChange={(e) => setMaxPrice(e.target.value)}
-                className="border rounded-lg px-3 py-2 w-24 outline-none focus:ring-2 focus:ring-blue-200"
+                className="text-gray-500 border rounded-lg px-3 py-2 w-24 outline-none focus:ring-2 focus:ring-blue-200"
               />
               <span className="text-sm text-gray-500">ribu/bulan</span>
             </div>

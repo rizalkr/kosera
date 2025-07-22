@@ -1,15 +1,19 @@
 'use client';
 
+import { useMemo } from 'react';
 import FeaturedCard from './FeaturedCard';
-import { useKosFeatured, useFavorites } from '../hooks/useApi';
-import { KosData } from '../lib/api';
+import { useKosFeatured, useFavorites } from '@/hooks/useApi';
+import { KosData } from '@/lib/api';
 
 export default function FeaturedList() {
   const { data, isLoading, error } = useKosFeatured();
   const { data: favoritesData } = useFavorites();
 
-  // Debug logs
-  console.log('FeaturedList Debug:', { data, isLoading, error });
+  // Extract favorite kos IDs - memoized to prevent infinite loops
+  const favoriteKosIds = useMemo(() => {
+    if (!favoritesData?.data?.favorites) return new Set();
+    return new Set(favoritesData.data.favorites.map((fav: any) => fav.kos.id));
+  }, [favoritesData]);
 
   if (isLoading) {
     return (
@@ -45,11 +49,6 @@ export default function FeaturedList() {
   }
 
   const kosList = data?.data?.data || [];
-  
-  // Extract favorite kos IDs
-  const favoriteKosIds = new Set(
-    favoritesData?.data?.favorites?.map((fav: any) => fav.kos.id) || []
-  );
 
   if (kosList.length === 0) {
     return (

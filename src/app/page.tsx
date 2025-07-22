@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useMemo, useCallback } from 'react';
 import Link from 'next/link';
 import Header from '@/components/Header';
 import FilterBar from '@/components/FilterBar';
@@ -26,15 +26,16 @@ export default function HomePage() {
   const addFavoriteMutation = useAddFavorite();
   const removeFavoriteMutation = useRemoveFavorite();
   
-  // Extract favorites list for checking if kos is favorited
-  const favoriteKosIds = new Set(
-    favoritesData?.data?.favorites?.map((fav: { kos: { id: number } }) => fav.kos.id) || []
-  );
+  // Extract favorites list for checking if kos is favorited - memoized to prevent infinite loops
+  const favoriteKosIds = useMemo(() => {
+    if (!favoritesData?.data?.favorites) return new Set();
+    return new Set(favoritesData.data.favorites.map((fav: { kos: { id: number } }) => fav.kos.id));
+  }, [favoritesData]);
 
-  const handleFilter = (filters: SearchParams) => {
+  const handleFilter = useCallback((filters: SearchParams) => {
     setSearchFilters(filters);
     setIsSearching(Object.keys(filters).length > 0);
-  };
+  }, []);
 
   const handleToggleFavorite = (kosId: number) => {
     if (!checkFavoritePermission()) {
@@ -231,7 +232,7 @@ export default function HomePage() {
       <Header />
       <main className="mt-8">
         <h1 className="text-5xl font-bold mb-6 text-blue-400">Temukan Kos Idealmu!</h1>
-        <FilterBar onFilter={handleFilter} initialFilters={searchFilters} />
+        <FilterBar onFilter={handleFilter} />
         <div className="mt-8">
           {renderContent()}
         </div>

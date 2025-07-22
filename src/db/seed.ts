@@ -1,5 +1,5 @@
 import { db, users, posts, kos, reviews, favorites, kosPhotos, bookings } from './index';
-import { hashPassword } from '../lib/auth';
+import { hashPassword } from '@/lib/auth';
 
 async function seed() {
   try {
