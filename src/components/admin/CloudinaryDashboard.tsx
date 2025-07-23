@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useProtectedAction } from '@/hooks/useProtectedAction';
 import { useAuth } from '@/contexts/AuthContext';
 
@@ -43,7 +43,7 @@ export const CloudinaryDashboard = () => {
   const { executeProtectedAction } = useProtectedAction();
   const { token } = useAuth();
 
-  const fetchUsage = async () => {
+  const fetchUsage = useCallback(async () => {
     setLoading(true);
     setError(null);
     
@@ -76,11 +76,11 @@ export const CloudinaryDashboard = () => {
       message: 'You need to be logged in to view Cloudinary dashboard',
       showToast: true
     });
-  };
+  }, [executeProtectedAction, token]);
 
   useEffect(() => {
     fetchUsage();
-  }, []);
+  }, [fetchUsage]);
 
   const getUsageColor = (percent: number) => {
     if (percent >= 90) return 'text-red-600 bg-red-100';

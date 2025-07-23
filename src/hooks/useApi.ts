@@ -189,7 +189,7 @@ export const useMyKos = () => {
 };
 
 // Admin hooks
-export const useAdminKos = (params: Record<string, any> = {}) => {
+export const useAdminKos = (params: SearchParams = {}) => {
   return useQuery({
     queryKey: ['admin', 'kos', params],
     queryFn: () => adminApi.getAllKos(params),

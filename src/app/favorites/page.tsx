@@ -1,31 +1,14 @@
 'use client';
 
-import Header from '../../components/Header';
-import Footer from '../../components/Footer';
-import ProtectedRoute from '../../components/ProtectedRoute';
-import KosImage from '../../components/KosImage';
-import { useAuthGuard } from '../../hooks/useAuthGuard';
-import { useFavorites, useRemoveFavorite } from '../../hooks/useApi';
-import { showConfirm } from '../../lib/sweetalert';
+import { FavoriteKos } from '@/types/favorites';
+import Header from '@/components/Header';
+import Footer from '@/components/Footer';
+import ProtectedRoute from '@/components/ProtectedRoute';
+import KosImage from '@/components/KosImage';
+import { useAuthGuard } from '@/hooks/useAuthGuard';
+import { useFavorites, useRemoveFavorite } from '@/hooks/useApi';
+import { showConfirm } from '@/lib/sweetalert';
 import Link from 'next/link';
-
-interface FavoriteItem {
-  id: number;
-  createdAt: string;
-  kos: {
-    id: number;
-    name: string;
-    address: string;
-    price: number;
-    city: string;
-    averageRating: number;
-    facilities: string;
-  };
-  post: {
-    averageRating: number;
-    price: number;
-  };
-}
 
 export default function FavoritesPage() {
   const { user } = useAuthGuard();
@@ -130,7 +113,7 @@ export default function FavoritesPage() {
               </div>
             ) : (
               <div className="space-y-6">
-                {favorites.map((favorite: FavoriteItem) => (
+                {favorites.map((favorite: FavoriteKos) => (
                   <div key={favorite.id} className="bg-gray-50 rounded-lg p-6 hover:shadow-md transition-shadow">
                     <div className="flex flex-col md:flex-row gap-4">
                       <div className="w-full md:w-48 h-32 rounded-lg overflow-hidden relative">

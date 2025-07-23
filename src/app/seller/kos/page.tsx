@@ -6,6 +6,7 @@ import KosImage from '@/components/KosImage';
 import { useAuthGuard } from '@/hooks/useAuthGuard';
 import { useMyKos } from '@/hooks/useApi';
 import { useState } from 'react';
+import type { KosData } from '@/lib/api';
 
 export default function SellerKosPage() {
   const { user } = useAuthGuard();
@@ -19,10 +20,14 @@ export default function SellerKosPage() {
     setIsRefreshing(false);
   };
 
-  const getKosStatus = (kos: any) => {
+  const getKosStatus = (kos: KosData) => {
     // Menggunakan logika sederhana untuk menentukan status kos
-    if (kos.isActive === false) return { label: 'Tidak Aktif', color: 'bg-red-100 text-red-800' };
-    if (kos.verified === false) return { label: 'Menunggu Verifikasi', color: 'bg-yellow-100 text-yellow-800' };
+    // Check if fields exist with optional chaining
+    const isActive = (kos as KosData & { isActive?: boolean }).isActive;
+    const verified = (kos as KosData & { verified?: boolean }).verified;
+    
+    if (isActive === false) return { label: 'Tidak Aktif', color: 'bg-red-100 text-red-800' };
+    if (verified === false) return { label: 'Menunggu Verifikasi', color: 'bg-yellow-100 text-yellow-800' };
     return { label: 'Aktif', color: 'bg-green-100 text-green-800' };
   };
 
@@ -32,15 +37,15 @@ export default function SellerKosPage() {
   };
 
   const getActiveKosCount = () => {
-    return kosList.filter((kos: any) => getKosStatus(kos).label === 'Aktif').length;
+    return kosList.filter((kos) => getKosStatus(kos).label === 'Aktif').length;
   };
 
   const getPendingKosCount = () => {
-    return kosList.filter((kos: any) => getKosStatus(kos).label === 'Menunggu Verifikasi').length;
+    return kosList.filter((kos) => getKosStatus(kos).label === 'Menunggu Verifikasi').length;
   };
 
   const getTotalPrice = () => {
-    return kosList.reduce((total: number, kos: any) => total + (kos.price || 0), 0);
+    return kosList.reduce((total: number, kos) => total + (kos.price || 0), 0);
   };
 
   // Loading state
@@ -174,7 +179,7 @@ export default function SellerKosPage() {
             ) : (
               /* Kos List */
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {kosList.map((kos: any) => {
+                {kosList.map((kos) => {
                   const status = getKosStatus(kos);
                   return (
                     <div key={kos.id} className="bg-gray-50 rounded-xl p-6 hover:shadow-md transition-shadow border">
@@ -204,9 +209,9 @@ export default function SellerKosPage() {
                           <span className="text-lg font-bold text-blue-600">
                             {formatPrice(kos.price)}/bulan
                           </span>
-                          {kos.roomType && (
+                          {(kos as KosData & { roomType?: string }).roomType && (
                             <span className="text-xs bg-gray-200 text-gray-700 px-2 py-1 rounded">
-                              {kos.roomType}
+                              {(kos as KosData & { roomType?: string }).roomType}
                             </span>
                           )}
                         </div>
@@ -215,11 +220,11 @@ export default function SellerKosPage() {
                       {/* Additional Info */}
                       <div className="grid grid-cols-2 gap-4 mb-4 text-sm">
                         <div className="bg-white rounded p-3 text-center">
-                          <div className="font-semibold text-gray-800">{kos.totalPost || 0}</div>
+                          <div className="font-semibold text-gray-800">{(kos as KosData & { totalPost?: number }).totalPost || 0}</div>
                           <div className="text-gray-500 text-xs">Total Post</div>
                         </div>
                         <div className="bg-white rounded p-3 text-center">
-                          <div className="font-semibold text-gray-800">{kos.totalPenjualan || 0}</div>
+                          <div className="font-semibold text-gray-800">{(kos as KosData & { totalPenjualan?: number }).totalPenjualan || 0}</div>
                           <div className="text-gray-500 text-xs">Penjualan</div>
                         </div>
                       </div>

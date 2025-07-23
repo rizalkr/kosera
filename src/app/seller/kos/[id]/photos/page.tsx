@@ -413,9 +413,11 @@ export default function SellerKosPhotosPage() {
                       {Array.from(selectedFiles).map((file, index) => (
                         <div key={index} className="bg-white rounded-lg p-3 border border-gray-200">
                           <div className="relative mb-2">
-                            <img 
+                            <Image 
                               src={URL.createObjectURL(file)}
                               alt={file.name}
+                              width={100}
+                              height={64}
                               className="w-full h-16 object-cover rounded"
                               onLoad={(e) => {
                                 // Clean up object URL after image loads

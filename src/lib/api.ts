@@ -1,4 +1,6 @@
 // API Client utilities for Kosera frontend
+import type { User, BookingData } from '@/types';
+import type { FavoritesResponse } from '@/types/favorites';
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000';
 
@@ -196,7 +198,7 @@ export const kosApi = {
   },
 
   // Get seller's own kos
-  getMyKos: async (): Promise<ApiResponse<any>> => {
+  getMyKos: async (): Promise<ApiResponse<KosData[]>> => {
     const response = await fetch(`${API_BASE_URL}/api/kos/my`, {
       headers: createAuthHeaders(),
     });
@@ -221,7 +223,7 @@ export const kosApi = {
 
 // Auth API
 export const authApi = {
-  login: async (username: string, password: string): Promise<ApiResponse<{ token: string; user: any }>> => {
+  login: async (username: string, password: string): Promise<ApiResponse<{ token: string; user: User }>> => {
     const response = await fetch(`${API_BASE_URL}/api/auth/login`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -244,7 +246,7 @@ export const authApi = {
       return {
         success: false,
         message: result.message || 'Login failed',
-        data: { token: '', user: null },
+        data: { token: '', user: null as unknown as User },
         error: result.error || 'Login failed'
       };
     }
@@ -256,7 +258,7 @@ export const authApi = {
     password: string;
     contact: string;
     role?: 'ADMIN' | 'SELLER' | 'RENTER';
-  }): Promise<ApiResponse<{ token: string; user: any }>> => {
+  }): Promise<ApiResponse<{ token: string; user: User }>> => {
     // Send data directly without role mapping
     const response = await fetch(`${API_BASE_URL}/api/auth/register`, {
       method: 'POST',
@@ -266,7 +268,7 @@ export const authApi = {
     return response.json();
   },
 
-  verify: async (token: string): Promise<ApiResponse<{ user: any }>> => {
+  verify: async (token: string): Promise<ApiResponse<{ user: User }>> => {
     const response = await fetch(`${API_BASE_URL}/api/auth/verify`, {
       method: 'GET',
       headers: { 
@@ -277,10 +279,10 @@ export const authApi = {
     return response.json();
   },
 
-  verifyToken: async (): Promise<ApiResponse<{ user: any }>> => {
+  verifyToken: async (): Promise<ApiResponse<{ user: User }>> => {
     const token = getAuthToken();
     if (!token) {
-      return { success: false, message: 'No token found', data: { user: null }, error: 'No token found' };
+      return { success: false, message: 'No token found', data: { user: null as unknown as User }, error: 'No token found' };
     }
     
     const response = await fetch(`${API_BASE_URL}/api/auth/verify`, {
@@ -293,14 +295,14 @@ export const authApi = {
 
 // Favorites API
 export const favoritesApi = {
-  getFavorites: async (): Promise<ApiResponse<{ favorites: any[]; pagination: any }>> => {
+  getFavorites: async (): Promise<FavoritesResponse> => {
     const response = await fetch(`${API_BASE_URL}/api/user/favorites`, {
       headers: createAuthHeaders(),
     });
     return response.json();
   },
 
-  addFavorite: async (kosId: number): Promise<ApiResponse<any>> => {
+  addFavorite: async (kosId: number): Promise<ApiResponse<{ favorite: { id: number; kosId: number; userId: number } }>> => {
     const response = await fetch(`${API_BASE_URL}/api/user/favorites`, {
       method: 'POST',
       headers: createAuthHeaders(),
@@ -309,7 +311,7 @@ export const favoritesApi = {
     return response.json();
   },
 
-  removeFavorite: async (kosId: number): Promise<ApiResponse<any>> => {
+  removeFavorite: async (kosId: number): Promise<ApiResponse<{ message: string }>> => {
     const response = await fetch(`${API_BASE_URL}/api/user/favorites`, {
       method: 'DELETE',
       headers: createAuthHeaders(),
@@ -321,7 +323,7 @@ export const favoritesApi = {
 
 // Bookings API
 export const bookingsApi = {
-  getBookings: async (): Promise<ApiResponse<PaginatedResponse<any>>> => {
+  getBookings: async (): Promise<ApiResponse<PaginatedResponse<BookingData>>> => {
     const response = await fetch(`${API_BASE_URL}/api/bookings`, {
       headers: createAuthHeaders(),
     });
@@ -333,7 +335,7 @@ export const bookingsApi = {
     checkInDate: string;
     duration: number;
     notes?: string;
-  }): Promise<ApiResponse<any>> => {
+  }): Promise<ApiResponse<BookingData>> => {
     const response = await fetch(`${API_BASE_URL}/api/bookings`, {
       method: 'POST',
       headers: createAuthHeaders(),
@@ -342,7 +344,7 @@ export const bookingsApi = {
     return response.json();
   },
 
-  updateBooking: async (id: number, status: string, notes?: string): Promise<ApiResponse<any>> => {
+  updateBooking: async (id: number, status: string, notes?: string): Promise<ApiResponse<BookingData>> => {
     const response = await fetch(`${API_BASE_URL}/api/bookings/${id}`, {
       method: 'PUT',
       headers: createAuthHeaders(),
@@ -356,7 +358,7 @@ export const bookingsApi = {
 export const userApi = {
   // ...existing user API functions
 
-  updatePassword: async (currentPassword: string, newPassword: string): Promise<ApiResponse<any>> => {
+  updatePassword: async (currentPassword: string, newPassword: string): Promise<ApiResponse<{ message: string }>> => {
     const response = await fetch(`${API_BASE_URL}/api/user/password`, {
       method: 'PUT',
       headers: createAuthHeaders(),
@@ -415,11 +417,15 @@ export const sellerApi = {
 
 // Admin API
 export const adminApi = {
-  getAllKos: async (params: any = {}): Promise<ApiResponse<any>> => {
+  getAllKos: async (params: SearchParams = {}): Promise<ApiResponse<PaginatedResponse<KosData>>> => {
     const searchParams = new URLSearchParams();
     Object.entries(params).forEach(([key, value]) => {
       if (value !== undefined && value !== null) {
-        searchParams.append(key, value.toString());
+        if (Array.isArray(value)) {
+          value.forEach(v => searchParams.append(key, v.toString()));
+        } else {
+          searchParams.append(key, value.toString());
+        }
       }
     });
 
@@ -429,7 +435,7 @@ export const adminApi = {
     return response.json();
   },
 
-  toggleFeatured: async (kosId: number, isFeatured: boolean): Promise<ApiResponse<any>> => {
+  toggleFeatured: async (kosId: number, isFeatured: boolean): Promise<ApiResponse<{ kos: KosData }>> => {
     const response = await fetch(`${API_BASE_URL}/api/admin/kos/${kosId}/featured`, {
       method: 'PATCH',
       headers: createAuthHeaders(),
@@ -439,7 +445,7 @@ export const adminApi = {
   },
 };
 
-export default {
+const apiClient = {
   kos: kosApi,
   auth: authApi,
   favorites: favoritesApi,
@@ -448,3 +454,5 @@ export default {
   seller: sellerApi,
   admin: adminApi,
 };
+
+export default apiClient;

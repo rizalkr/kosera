@@ -1,8 +1,8 @@
 'use client';
 
-import { useAuth } from '../contexts/AuthContext';
+import { useAuth } from '@/contexts/AuthContext';
 import { useRouter } from 'next/navigation';
-import { showToast as showSweetToast } from '../lib/sweetalert';
+import { showToast as showSweetToast } from '@/lib/sweetalert';
 
 export function useProtectedAction() {
   const { isAuthenticated, isLoading } = useAuth();
@@ -45,7 +45,7 @@ export function useProtectedAction() {
 }
 
 // Hook for protected mutations
-export function useProtectedMutation<T extends (...args: any[]) => any>(
+export function useProtectedMutation<T extends (...args: unknown[]) => void | Promise<void>>(
   mutation: T,
   options?: {
     message?: string;

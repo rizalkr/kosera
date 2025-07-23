@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useAuthToken } from '@/hooks/useAuthToken';
 import ProtectedRoute from '@/components/ProtectedRoute';
 import { showSuccess, showError, showLoading } from '@/lib/sweetalert';
+import { AppError } from '@/types/common';
 
 interface KosFormData {
   title: string;
@@ -166,14 +167,15 @@ export default function NewKosPage() {
         await showError('Gagal membuat kos baru. Silakan coba lagi.');
         setErrors({ general: 'Gagal membuat kos baru' });
       }
-    } catch (error: any) {
-      console.error('Error creating kos:', error);
+    } catch (error: unknown) {
+      const appError = error as AppError;
+      console.error('Error creating kos:', appError);
       await showError(
-        error.message || 'Terjadi kesalahan saat membuat kos baru. Silakan coba lagi.',
+        appError.message || 'Terjadi kesalahan saat membuat kos baru. Silakan coba lagi.',
         'Gagal Menyimpan'
       );
       setErrors({ 
-        general: error.message || 'Terjadi kesalahan saat membuat kos baru' 
+        general: appError.message || 'Terjadi kesalahan saat membuat kos baru' 
       });
     } finally {
       setIsSubmitting(false);
@@ -525,7 +527,7 @@ export default function NewKosPage() {
             <ul className="space-y-2 text-sm text-blue-800">
               <li className="flex items-start">
                 <span className="inline-block w-2 h-2 bg-blue-400 rounded-full mt-2 mr-3 flex-shrink-0"></span>
-                <span>Gunakan judul yang menarik dan deskriptif seperti "Kos Putri Nyaman Dekat Kampus"</span>
+                <span>Gunakan judul yang menarik dan deskriptif seperti &ldquo;Kos Putri Nyaman Dekat Kampus&rdquo;</span>
               </li>
               <li className="flex items-start">
                 <span className="inline-block w-2 h-2 bg-blue-400 rounded-full mt-2 mr-3 flex-shrink-0"></span>

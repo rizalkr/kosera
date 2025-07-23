@@ -1,6 +1,7 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
+import Image from 'next/image';
 import { useAuth } from '@/contexts/AuthContext';
 
 interface CloudinaryUsage {
@@ -80,7 +81,7 @@ export const EnhancedCloudinaryDashboard = () => {
   const [activeTab, setActiveTab] = useState<'overview' | 'analytics' | 'optimization'>('overview');
   const { token, isAuthenticated, user } = useAuth();
 
-  const fetchData = async () => {
+  const fetchData = useCallback(async () => {
     if (!token || !isAuthenticated || user?.role !== 'ADMIN') {
       setError('Admin authentication required');
       setLoading(false);
@@ -132,11 +133,11 @@ export const EnhancedCloudinaryDashboard = () => {
     }
     
     setLoading(false);
-  };
+  }, [token, isAuthenticated, user?.role]);
 
   useEffect(() => {
     fetchData();
-  }, []);
+  }, [fetchData]);
 
   const formatBytes = (bytes: number) => {
     if (bytes === 0) return '0 Bytes';
@@ -432,10 +433,13 @@ export const EnhancedCloudinaryDashboard = () => {
                   {analytics.recentUploads.map((upload, index) => (
                     <tr key={index} className="hover:bg-gray-50">
                       <td className="px-4 py-2">
-                        <img 
+                        <Image 
                           src={upload.url} 
-                          alt="" 
-                          className="w-12 h-12 object-cover rounded"
+                          alt={`Upload ${upload.publicId}`}
+                          width={48}
+                          height={48}
+                          className="object-cover rounded"
+                          unoptimized // Since these are already optimized Cloudinary images
                         />
                       </td>
                       <td className="px-4 py-2 text-sm font-mono text-gray-600 max-w-xs truncate">

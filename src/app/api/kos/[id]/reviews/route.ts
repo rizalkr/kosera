@@ -141,7 +141,7 @@ export async function POST(
   const authenticatedRequest = request as AuthenticatedRequest;
   
   // Extract and verify token
-  const { extractTokenFromHeader, verifyToken } = await import('../../../../../lib/auth');
+  const { extractTokenFromHeader, verifyToken } = await import('@/lib/auth');
   const token = extractTokenFromHeader(authHeader);
   
   if (!token) {

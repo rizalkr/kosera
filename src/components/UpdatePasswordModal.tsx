@@ -34,8 +34,9 @@ export default function UpdatePasswordModal({ onClose, onSuccess }: UpdatePasswo
       } else {
         showError(response.message || 'Gagal memperbarui kata sandi.', 'Gagal Memperbarui');
       }
-    } catch (err: any) {
-      showError(err.message || 'Terjadi kesalahan jaringan.', 'Kesalahan Jaringan');
+    } catch (err: unknown) {
+      const error = err as { message?: string };
+      showError(error.message || 'Terjadi kesalahan jaringan.', 'Kesalahan Jaringan');
     } finally {
       setIsLoading(false);
     }

@@ -1,4 +1,5 @@
 import { useKosPhotos } from './useApi';
+import { KosPhotoData } from '@/types/kos';
 
 /**
  * Custom hook untuk mendapatkan image primary dari kos
@@ -10,7 +11,7 @@ export function useKosImage(kosId: number) {
   const kosPhotos = photosData?.success ? photosData.data.photos : [];
   
   // Cari foto primary, jika tidak ada ambil foto pertama
-  const primaryPhoto = kosPhotos.find((photo: any) => photo.isPrimary);
+  const primaryPhoto = kosPhotos.find((photo: KosPhotoData) => photo.isPrimary);
   const firstPhoto = kosPhotos[0];
   
   // Return URL foto atau fallback
@@ -33,7 +34,7 @@ export function useKosImages(kosId: number) {
   
   // Sort photos - primary first, then by creation date
   const sortedPhotos = kosPhotos.length > 0 
-    ? [...kosPhotos].sort((a: any, b: any) => {
+    ? [...kosPhotos].sort((a: KosPhotoData, b: KosPhotoData) => {
         if (a.isPrimary && !b.isPrimary) return -1;
         if (!a.isPrimary && b.isPrimary) return 1;
         return new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
@@ -42,7 +43,7 @@ export function useKosImages(kosId: number) {
   
   // Convert to URL array with fallback
   const imageUrls = sortedPhotos.length > 0 
-    ? sortedPhotos.map((photo: any) => photo.url)
+    ? sortedPhotos.map((photo: KosPhotoData) => photo.url)
     : [
         '/images/rooms/room1.jpg',
         '/images/rooms/room2.jpg',

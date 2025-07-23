@@ -1,13 +1,13 @@
 "use client";
 
-import Header from '../../components/Header';
-import Footer from '../../components/Footer';
-import ProtectedRoute from '../../components/ProtectedRoute';
+import Header from '@/components/Header';
+import Footer from '@/components/Footer';
+import ProtectedRoute from '@/components/ProtectedRoute';
 import Image from 'next/image';
 import { useEffect } from 'react';
-import { useAuthGuard } from '../../hooks/useAuthGuard';
-import { useBookings, useUpdateBooking } from '../../hooks/useApi';
-import { showSuccess } from '../../lib/sweetalert';
+import { useAuthGuard } from '@/hooks/useAuthGuard';
+import { useBookings, useUpdateBooking } from '@/hooks/useApi';
+import { showSuccess } from '@/lib/sweetalert';
 
 type BookingItem = {
   id: number;

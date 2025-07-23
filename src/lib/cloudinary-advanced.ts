@@ -8,7 +8,19 @@ cloudinary.config({
 });
 
 /**
- * Advanced image transformation configurations for different use cases
+ * Advanced image transformation configurations for d}
+
+const cloudinaryAdvanced = {
+  ImageTransformations,
+  ResponsiveImageSets,
+  getOptimizedImageUrl,
+  generateResponsiveSrcSet,
+  getWatermarkedImageUrl,
+  getAIEnhancedImageUrl,
+  analyzeImageContent
+};
+
+export default cloudinaryAdvanced;e cases
  */
 export const ImageTransformations = {
   // Profile and user avatars
@@ -161,7 +173,7 @@ export const getOptimizedImageUrl = (
   publicId: string,
   transformationType: keyof typeof ImageTransformations,
   size?: string,
-  customTransformations?: Record<string, any>
+  customTransformations?: Record<string, unknown>
 ): string => {
   if (!publicId) return '';
 
@@ -194,7 +206,7 @@ export const generateResponsiveSrcSet = (
 ): { srcSet: string; sizes: string } => {
   const config = ResponsiveImageSets[type];
   
-  const srcSetItems = config.sizes.map(({ width, suffix }) => {
+  const srcSetItems = config.sizes.map(({ width }) => {
     const url = cloudinary.url(publicId, {
       ...config.baseTransformation,
       width
@@ -221,7 +233,7 @@ export const generateResponsiveSrcSet = (
 export const getWatermarkedImageUrl = (
   publicId: string,
   watermarkText: string = 'Kosera',
-  options: Record<string, any> = {}
+  options: Record<string, unknown> = {}
 ): string => {
   const defaultOptions = {
     width: 800,
@@ -293,14 +305,4 @@ export const analyzeImageContent = async (publicId: string) => {
     console.error('Image analysis error:', error);
     return null;
   }
-};
-
-export default {
-  ImageTransformations,
-  ResponsiveImageSets,
-  getOptimizedImageUrl,
-  generateResponsiveSrcSet,
-  getWatermarkedImageUrl,
-  getAIEnhancedImageUrl,
-  analyzeImageContent
 };

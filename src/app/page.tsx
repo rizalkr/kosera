@@ -13,6 +13,7 @@ import { useKosSearch } from '@/hooks/useApi';
 import { useAuthGuard } from '@/hooks/useAuthGuard';
 import { useAddFavorite, useRemoveFavorite, useFavorites } from '@/hooks/useApi';
 import { SearchParams, KosData } from '@/lib/api';
+import { FavoriteKos } from '@/types/favorites';
 
 export default function HomePage() {
   const [searchFilters, setSearchFilters] = useState<SearchParams>({});
@@ -29,7 +30,7 @@ export default function HomePage() {
   // Extract favorites list for checking if kos is favorited - memoized to prevent infinite loops
   const favoriteKosIds = useMemo(() => {
     if (!favoritesData?.data?.favorites) return new Set();
-    return new Set(favoritesData.data.favorites.map((fav: { kos: { id: number } }) => fav.kos.id));
+    return new Set(favoritesData.data.favorites.map((fav: FavoriteKos) => fav.kos.id));
   }, [favoritesData]);
 
   const handleFilter = useCallback((filters: SearchParams) => {

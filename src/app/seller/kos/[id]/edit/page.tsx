@@ -6,6 +6,7 @@ import { useAuthToken } from '@/hooks/useAuthToken';
 import ProtectedRoute from '@/components/ProtectedRoute';
 import Header from '@/components/Header';
 import { showSuccess, showError, showLoading, showConfirm } from '@/lib/sweetalert';
+import { AppError } from '@/types/common';
 
 interface EditKosFormData {
   title: string;
@@ -137,10 +138,11 @@ export default function EditKosPage() {
             longitude: kosData.longitude || undefined,
           });
         }
-      } catch (error: any) {
-        console.error('Error loading kos data:', error);
+      } catch (error: unknown) {
+        const appError = error as AppError;
+        console.error('Error loading kos data:', appError);
         showError(
-          error.message || 'Gagal memuat data kos. Silakan coba lagi.',
+          appError.message || 'Gagal memuat data kos. Silakan coba lagi.',
           'Gagal Memuat Data'
         );
         router.push('/seller/kos');
@@ -245,14 +247,15 @@ export default function EditKosPage() {
         await showError('Gagal menyimpan perubahan. Silakan coba lagi.');
         setErrors({ general: 'Gagal menyimpan perubahan' });
       }
-    } catch (error: any) {
-      console.error('Error updating kos:', error);
+    } catch (error: unknown) {
+      const appError = error as AppError;
+      console.error('Error updating kos:', appError);
       await showError(
-        error.message || 'Terjadi kesalahan saat menyimpan perubahan. Silakan coba lagi.',
+        appError.message || 'Terjadi kesalahan saat menyimpan perubahan. Silakan coba lagi.',
         'Gagal Menyimpan'
       );
       setErrors({ 
-        general: error.message || 'Terjadi kesalahan saat menyimpan perubahan' 
+        general: appError.message || 'Terjadi kesalahan saat menyimpan perubahan' 
       });
     } finally {
       setIsSubmitting(false);
