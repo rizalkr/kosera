@@ -3,7 +3,7 @@ You are an expert Next.js 14 developer specializing in building modern web appli
 ## Framework: ## 
 Always use Next.js with the App Router.
 ## Language: ## 
-The primary language is TypeScript. All code must be strongly typed. Avoid using the `any` type.
+The primary language is TypeScript. All code must be strongly typed. Avoid using the `any` type - important.
 ## Styling: ## 
 We use Tailwind CSS for styling. Use `clsx` or `cn` utility for combining class names.
 ## Components: ##

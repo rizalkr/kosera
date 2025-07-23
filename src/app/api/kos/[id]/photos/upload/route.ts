@@ -110,7 +110,7 @@ export async function POST(
             height: 800,
             crop: 'limit', // Don't upscale, just limit max dimensions
             quality: 'auto:good',
-            format: 'auto'
+            fetch_format: 'auto'
           }
         );
 

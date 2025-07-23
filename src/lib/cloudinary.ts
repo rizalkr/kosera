@@ -1,4 +1,5 @@
 import { v2 as cloudinary } from 'cloudinary';
+import type { CloudinaryTransformationOptions } from '@/types/cloudinary';
 
 // Configure Cloudinary
 cloudinary.config({
@@ -26,19 +27,16 @@ export interface CloudinaryUploadResult {
 export const uploadToCloudinary = async (
   file: Buffer | string,
   folder?: string,
-  transformation?: any
+  transformation?: CloudinaryTransformationOptions
 ): Promise<CloudinaryUploadResult> => {
   try {
-    const options: any = {
-      resource_type: 'image',
+    const options = {
+      resource_type: 'image' as const,
       folder: folder || 'kos-photos',
-      quality: 'auto',
-      fetch_format: 'auto',
+      quality: 'auto' as const,
+      fetch_format: 'auto' as const,
+      ...transformation,
     };
-
-    if (transformation) {
-      options.transformation = transformation;
-    }
 
     const result = await cloudinary.uploader.upload(
       typeof file === 'string' ? file : `data:image/jpeg;base64,${file.toString('base64')}`,
@@ -92,9 +90,9 @@ export const getOptimizedImageUrl = (
 ): string => {
   if (!publicId) return '';
 
-  const options: any = {
-    quality: 'auto',
-    fetch_format: 'auto',
+  const options = {
+    quality: 'auto' as const,
+    fetch_format: 'auto' as const,
     ...transformation,
   };
 
