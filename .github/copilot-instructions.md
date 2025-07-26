@@ -21,3 +21,6 @@ We use Tailwind CSS for styling. Use `clsx` or `cn` utility for combining class 
   - The format should be `type(scope): subject`. For example: `feat(auth): add google sign-in button`.
   - Common types are: `feat`, `fix`, `docs`, `refactor`, `perf`, `test`, `chore`.
   - Always write commit messages in English.
+## NPM: ##
+  - Dont run `npm install`,`npm update`, `npm run dev`, `npm run build` commands, only give me the command what u want and i will give you the messages from commands have been i runing with your instuction.
+  - Only run `npm run lint`, `npm run format`, `npm run test`, and `npm run release` commands.

@@ -3,6 +3,8 @@
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import ProtectedRoute from '@/components/ProtectedRoute';
+import { VisualizationPanel } from '@/components/VisualizationPanel';
+import { UserCompositionChart } from '@/components/UserCompositionChart';
 import { useAuthGuard } from '@/hooks/useAuthGuard';
 import { useAdminDashboard } from '@/hooks/useAdminDashboard';
 
@@ -180,32 +182,36 @@ export default function AdminDashboard() {
               </div>
             </div>
 
-            {/* Revenue Overview */}
+            {/* Platform Overview */}
             <div className="bg-white rounded-lg shadow-lg p-6">
-              <h2 className="text-xl font-semibold text-gray-800 mb-4">Ringkasan Pendapatan</h2>
-              <div className="text-center">
-                <div className="text-4xl font-bold text-blue-600 mb-2">
-                  Rp {stats?.totalRevenue?.toLocaleString() || '0'}
-                </div>
-                <p className="text-sm text-gray-500 mb-4">Total pendapatan dari booking terkonfirmasi</p>
-                {analytics?.overview && (
-                  <div className="grid grid-cols-2 gap-4 mt-4">
-                    <div className="bg-blue-50 p-3 rounded-lg">
-                      <div className="text-lg font-semibold text-blue-600">
-                        {analytics.overview.totalViews?.toLocaleString() || '0'}
-                      </div>
-                      <div className="text-xs text-blue-500">Total Views</div>
-                    </div>
-                    <div className="bg-green-50 p-3 rounded-lg">
-                      <div className="text-lg font-semibold text-green-600">
-                        {stats?.averageRating ? Number(stats.averageRating).toFixed(1) : '0.0'}⭐
-                      </div>
-                      <div className="text-xs text-green-500">Rata-rata Rating</div>
-                    </div>
+              <h2 className="text-xl font-semibold text-gray-800 mb-4">Ringkasan Platform</h2>
+              
+              {/* Key Metrics */}
+              <div className="grid grid-cols-2 gap-4 mb-6">
+                <div className="bg-blue-50 p-4 rounded-lg text-center">
+                  <div className="text-2xl font-bold text-blue-600 mb-1">
+                    {analytics?.overview?.totalViews?.toLocaleString() || '0'}
                   </div>
-                )}
+                  <div className="text-sm text-blue-500">Total Views</div>
+                </div>
+                <div className="bg-green-50 p-4 rounded-lg text-center">
+                  <div className="text-2xl font-bold text-green-600 mb-1">
+                    {stats?.averageRating ? Number(stats.averageRating).toFixed(1) : '0.0'}⭐
+                  </div>
+                  <div className="text-sm text-green-500">Rata-rata Rating</div>
+                </div>
+              </div>
+
+              {/* User Composition Chart */}
+              <div className="mt-25">
+                <UserCompositionChart />
               </div>
             </div>
+          </div>
+
+          {/* Platform Trends Chart */}
+          <div className="mt-8">
+            <VisualizationPanel />
           </div>
 
           {/* Quick Actions */}
