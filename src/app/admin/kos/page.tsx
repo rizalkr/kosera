@@ -5,9 +5,9 @@ import { useRouter } from 'next/navigation';
 import Header from '@/components/layouts/Header';
 import Footer from '@/components/layouts/Footer';
 import ProtectedRoute from '@/components/layouts/ProtectedRoute';
-import { useAuthGuard } from '@/hooks/useAuthGuard';
+import { useAuthGuard } from '@/hooks/auth/useAuthGuard';
 import { useSearchDebounce } from '@/hooks/useDebounce';
-import { useAdminKos, useToggleFeatured, useDeleteKos, usePermanentDeleteKos, useRestoreKos, useBulkCleanupKos, useBulkArchiveKos, useBulkPermanentDeleteKos, type AdminKosData } from '@/hooks/useAdminKos';
+import { useAdminKos, useToggleFeatured, useDeleteKos, usePermanentDeleteKos, useRestoreKos, useBulkCleanupKos, useBulkArchiveKos, useBulkPermanentDeleteKos, type AdminKosData } from '@/hooks/admin/useAdminKos';
 import { showConfirm, showSuccess, showError } from '@/lib/sweetalert';
 
 export default function AdminKosPage() {

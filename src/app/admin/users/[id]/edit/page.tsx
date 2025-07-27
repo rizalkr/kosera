@@ -5,7 +5,7 @@ import { useRouter, useParams } from 'next/navigation';
 import Header from '@/components/layouts/Header';
 import Footer from '@/components/layouts/Footer';
 import ProtectedRoute from '@/components/layouts/ProtectedRoute';
-import { useAuthToken } from '@/hooks/useAuthToken';
+import { useAuthToken } from '@/hooks/auth/useAuthToken';
 
 interface User {
   id: number;

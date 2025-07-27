@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import { useAuthToken } from './useAuthToken';
+import { useAuthToken } from '../auth/useAuthToken';
 
 export interface AdminKosData {
   id: number;

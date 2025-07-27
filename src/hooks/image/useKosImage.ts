@@ -1,4 +1,4 @@
-import { useKosPhotos } from './useApi';
+import { useKosPhotos } from '../useApi';
 import { KosPhotoData } from '@/types/kos';
 
 /**

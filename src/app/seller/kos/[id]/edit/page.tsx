@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter, useParams } from 'next/navigation';
-import { useAuthToken } from '@/hooks/useAuthToken';
+import { useAuthToken } from '@/hooks/auth/useAuthToken';
 import ProtectedRoute from '@/components/layouts/ProtectedRoute';
 import Header from '@/components/layouts/Header';
 import { showSuccess, showError, showLoading, showConfirm } from '@/lib/sweetalert';

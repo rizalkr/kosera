@@ -10,7 +10,7 @@ import RecommendationCarousel from '@/components/dashboard/RecommendationCarouse
 import Footer from '@/components/layouts/Footer';
 import KosImage from '@/components/common/KosImage';
 import { useKosSearch } from '@/hooks/useApi';
-import { useAuthGuard } from '@/hooks/useAuthGuard';
+import { useAuthGuard } from '@/hooks/auth/useAuthGuard';
 import { useAddFavorite, useRemoveFavorite, useFavorites } from '@/hooks/useApi';
 import { SearchParams, KosData } from '@/lib/api';
 import { FavoriteKos } from '@/types/favorites';

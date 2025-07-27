@@ -5,8 +5,8 @@ import Footer from '@/components/layouts/Footer';
 import ProtectedRoute from '@/components/layouts/ProtectedRoute';
 import { VisualizationPanel } from '@/components/dashboard/VisualizationPanel';
 import { UserCompositionChart } from '@/components/dashboard/UserCompositionChart';
-import { useAuthGuard } from '@/hooks/useAuthGuard';
-import { useAdminDashboard } from '@/hooks/useAdminDashboard';
+import { useAuthGuard } from '@/hooks/auth/useAuthGuard';
+import { useAdminDashboard } from '@/hooks/admin/useAdminDashboard';
 
 export default function AdminDashboard() {
   const { user } = useAuthGuard();
@@ -232,11 +232,17 @@ export default function AdminDashboard() {
                 <div className="text-2xl mb-2">🏠</div>
                 <div className="text-sm">Kelola Kos</div>
               </button>
-              <button className="bg-purple-600 text-white px-6 py-3 rounded-lg hover:bg-purple-700 transition-colors text-center">
+              <button 
+                onClick={() => window.location.href = '/admin/bookings'}
+                className="bg-purple-600 text-white px-6 py-3 rounded-lg hover:bg-purple-700 transition-colors text-center"
+              >
                 <div className="text-2xl mb-2">📅</div>
                 <div className="text-sm">Kelola Booking</div>
               </button>
-              <button className="bg-orange-600 text-white px-6 py-3 rounded-lg hover:bg-orange-700 transition-colors text-center">
+              <button 
+                onClick={() => window.location.href = '/admin/reports'}
+                className="bg-orange-600 text-white px-6 py-3 rounded-lg hover:bg-orange-700 transition-colors text-center"
+              >
                 <div className="text-2xl mb-2">📊</div>
                 <div className="text-sm">Lihat Laporan</div>
               </button>

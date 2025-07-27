@@ -5,8 +5,8 @@ import { useRouter } from 'next/navigation';
 import Header from '@/components/layouts/Header';
 import Footer from '@/components/layouts/Footer';
 import ProtectedRoute from '@/components/layouts/ProtectedRoute';
-import { useAuthGuard } from '@/hooks/useAuthGuard';
-import { useAuthToken } from '@/hooks/useAuthToken';
+import { useAuthGuard } from '@/hooks/auth/useAuthGuard';
+import { useAuthToken } from '@/hooks/auth/useAuthToken';
 import { useSearchDebounce } from '@/hooks/useDebounce';
 import { showConfirm, showSuccess, showError } from '@/lib/sweetalert';
 

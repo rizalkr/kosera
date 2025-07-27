@@ -5,7 +5,7 @@ import Footer from '@/components/layouts/Footer';
 import ProtectedRoute from '@/components/layouts/ProtectedRoute';
 import Image from 'next/image';
 import { useEffect } from 'react';
-import { useAuthGuard } from '@/hooks/useAuthGuard';
+import { useAuthGuard } from '@/hooks/auth/useAuthGuard';
 import { useBookings, useUpdateBooking } from '@/hooks/useApi';
 import { showSuccess } from '@/lib/sweetalert';
 

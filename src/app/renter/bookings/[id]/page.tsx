@@ -5,7 +5,7 @@ import { useParams, useRouter } from 'next/navigation';
 import Header from '@/components/layouts/Header';
 import Footer from '@/components/layouts/Footer';
 import ProtectedRoute from '@/components/layouts/ProtectedRoute';
-import { useAuthToken } from '@/hooks/useAuthToken';
+import { useAuthToken } from '@/hooks/auth/useAuthToken';
 import { showConfirm, showSuccess, showError } from '@/lib/sweetalert';
 
 type BookingStatus = 'pending' | 'confirmed' | 'cancelled' | 'completed';

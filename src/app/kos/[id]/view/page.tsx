@@ -9,8 +9,8 @@ import BookingModal from '@/components/modals/BookingModal';
 import ImageModal from '@/components/modals/ImageModal';
 import SafeImage from '@/components/common/SafeImage';
 import { useKosDetails, useTrackView, useAddFavorite, useRemoveFavorite, useFavorites, useKosPhotos } from '@/hooks/useApi';
-import { useAuthGuard } from '@/hooks/useAuthGuard';
-import { useKosImages } from '@/hooks/useImageWithFallback';
+import { useAuthGuard } from '@/hooks/auth/useAuthGuard';
+import { useKosImages } from '@/hooks/image/useImageWithFallback';
 
 interface Review {
   id: number;

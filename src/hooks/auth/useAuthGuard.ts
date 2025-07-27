@@ -1,8 +1,8 @@
 'use client';
 
-import { useAuth } from '../contexts/AuthContext';
+import { useAuth } from '../../contexts/AuthContext';
 import { useRouter } from 'next/navigation';
-import { showError } from '../lib/sweetalert';
+import { showError } from '../../lib/sweetalert';
 
 export const useAuthGuard = () => {
   const { user, isAuthenticated, isLoading } = useAuth();

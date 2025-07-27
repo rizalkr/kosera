@@ -3,7 +3,7 @@
 import Header from '@/components/layouts/Header';
 import ProtectedRoute from '@/components/layouts/ProtectedRoute';
 import KosImage from '@/components/common/KosImage';
-import { useAuthGuard } from '@/hooks/useAuthGuard';
+import { useAuthGuard } from '@/hooks/auth/useAuthGuard';
 import { useMyKos } from '@/hooks/useApi';
 import { useState } from 'react';
 import type { KosData } from '@/lib/api';

@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import Header from '@/components/layouts/Header';
 import Footer from '@/components/layouts/Footer';
 import ProtectedRoute from '@/components/layouts/ProtectedRoute';
-import { useAuthToken } from '@/hooks/useAuthToken';
+import { useAuthToken } from '@/hooks/auth/useAuthToken';
 
 export default function CreateUserPage() {
   const router = useRouter();

@@ -6,7 +6,7 @@ import Image from 'next/image';
 import Header from '@/components/layouts/Header';
 import Footer from '@/components/layouts/Footer';
 import ProtectedRoute from '@/components/layouts/ProtectedRoute';
-import { useAuthToken } from '@/hooks/useAuthToken';
+import { useAuthToken } from '@/hooks/auth/useAuthToken';
 import { useKosDetails } from '@/hooks/useApi';
 import { showSuccess, showError, showConfirm, showLoading, showToast } from '@/lib/sweetalert';
 import Swal from 'sweetalert2';
