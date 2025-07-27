@@ -1,7 +1,7 @@
 'use client';
 import { useState, useEffect, useMemo, useRef } from 'react';
-import { SearchParams } from '../lib/api';
-import { useFiltersDebounce } from '../hooks/useDebounce';
+import { SearchParams } from '../../lib/api';
+import { useFiltersDebounce } from '../../hooks/useDebounce';
 
 interface FilterBarProps {
   onFilter?: (filters: SearchParams) => void;

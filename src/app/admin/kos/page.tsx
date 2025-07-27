@@ -2,9 +2,9 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import Header from '@/components/Header';
-import Footer from '@/components/Footer';
-import ProtectedRoute from '@/components/ProtectedRoute';
+import Header from '@/components/layouts/Header';
+import Footer from '@/components/layouts/Footer';
+import ProtectedRoute from '@/components/layouts/ProtectedRoute';
 import { useAuthGuard } from '@/hooks/useAuthGuard';
 import { useSearchDebounce } from '@/hooks/useDebounce';
 import { useAdminKos, useToggleFeatured, useDeleteKos, usePermanentDeleteKos, useRestoreKos, useBulkCleanupKos, useBulkArchiveKos, useBulkPermanentDeleteKos, type AdminKosData } from '@/hooks/useAdminKos';

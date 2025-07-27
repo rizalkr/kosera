@@ -2,10 +2,10 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import Header from '@/components/Header';
-import Footer from '@/components/Footer';
-import ProtectedRoute from '@/components/ProtectedRoute';
-import KosImage from '@/components/KosImage';
+import Header from '@/components/layouts/Header';
+import Footer from '@/components/layouts/Footer';
+import ProtectedRoute from '@/components/layouts/ProtectedRoute';
+import KosImage from '@/components/common/KosImage';
 import { useAuthGuard } from '@/hooks/useAuthGuard';
 import { useBookings, useUpdateBooking } from '@/hooks/useApi';
 import { showConfirm } from '@/lib/sweetalert';

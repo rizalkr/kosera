@@ -1,8 +1,8 @@
 "use client";
 
-import Header from '@/components/Header';
-import Footer from '@/components/Footer';
-import ProtectedRoute from '@/components/ProtectedRoute';
+import Header from '@/components/layouts/Header';
+import Footer from '@/components/layouts/Footer';
+import ProtectedRoute from '@/components/layouts/ProtectedRoute';
 import Image from 'next/image';
 import { useEffect } from 'react';
 import { useAuthGuard } from '@/hooks/useAuthGuard';

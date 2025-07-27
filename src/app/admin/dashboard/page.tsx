@@ -1,10 +1,10 @@
 'use client';
 
-import Header from '@/components/Header';
-import Footer from '@/components/Footer';
-import ProtectedRoute from '@/components/ProtectedRoute';
-import { VisualizationPanel } from '@/components/VisualizationPanel';
-import { UserCompositionChart } from '@/components/UserCompositionChart';
+import Header from '@/components/layouts/Header';
+import Footer from '@/components/layouts/Footer';
+import ProtectedRoute from '@/components/layouts/ProtectedRoute';
+import { VisualizationPanel } from '@/components/dashboard/VisualizationPanel';
+import { UserCompositionChart } from '@/components/dashboard/UserCompositionChart';
 import { useAuthGuard } from '@/hooks/useAuthGuard';
 import { useAdminDashboard } from '@/hooks/useAdminDashboard';
 

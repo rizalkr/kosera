@@ -1,8 +1,8 @@
 'use client';
 
 import { useState } from 'react';
-import { userApi } from '../lib/api';
-import { showSuccess, showError } from '../lib/sweetalert';
+import { userApi } from '../../lib/api';
+import { showSuccess, showError } from '../../lib/sweetalert';
 
 interface UpdatePasswordModalProps {
   onClose: () => void;

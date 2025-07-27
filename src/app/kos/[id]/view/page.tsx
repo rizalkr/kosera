@@ -3,11 +3,11 @@
 import { useParams } from 'next/navigation';
 import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
-import Header from '@/components/Header';
-import Footer from '@/components/Footer';
-import BookingModal from '@/components/BookingModal';
-import ImageModal from '@/components/ImageModal';
-import SafeImage from '@/components/SafeImage';
+import Header from '@/components/layouts/Header';
+import Footer from '@/components/layouts/Footer';
+import BookingModal from '@/components/modals/BookingModal';
+import ImageModal from '@/components/modals/ImageModal';
+import SafeImage from '@/components/common/SafeImage';
 import { useKosDetails, useTrackView, useAddFavorite, useRemoveFavorite, useFavorites, useKosPhotos } from '@/hooks/useApi';
 import { useAuthGuard } from '@/hooks/useAuthGuard';
 import { useKosImages } from '@/hooks/useImageWithFallback';

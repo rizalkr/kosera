@@ -1,8 +1,8 @@
 'use client';
 
-import Header from '@/components/Header';
-import ProtectedRoute from '@/components/ProtectedRoute';
-import KosImage from '@/components/KosImage';
+import Header from '@/components/layouts/Header';
+import ProtectedRoute from '@/components/layouts/ProtectedRoute';
+import KosImage from '@/components/common/KosImage';
 import { useAuthGuard } from '@/hooks/useAuthGuard';
 import { useMyKos } from '@/hooks/useApi';
 import { useState } from 'react';

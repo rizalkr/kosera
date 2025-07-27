@@ -2,13 +2,13 @@
 
 import { useState, useMemo, useCallback } from 'react';
 import Link from 'next/link';
-import Header from '@/components/Header';
-import FilterBar from '@/components/FilterBar';
-import FeaturedList from '@/components/FeaturedList';
+import Header from '@/components/layouts/Header';
+import FilterBar from '@/components/common/FilterBar';
+import FeaturedList from '@/components/common/FeaturedList';
 import MapSection from '@/components/maps/MapSection';
-import RecommendationCarousel from '@/components/RecommendationCarousel';
-import Footer from '@/components/Footer';
-import KosImage from '@/components/KosImage';
+import RecommendationCarousel from '@/components/dashboard/RecommendationCarousel';
+import Footer from '@/components/layouts/Footer';
+import KosImage from '@/components/common/KosImage';
 import { useKosSearch } from '@/hooks/useApi';
 import { useAuthGuard } from '@/hooks/useAuthGuard';
 import { useAddFavorite, useRemoveFavorite, useFavorites } from '@/hooks/useApi';

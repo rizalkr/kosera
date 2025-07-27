@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuthToken } from '@/hooks/useAuthToken';
-import ProtectedRoute from '@/components/ProtectedRoute';
+import ProtectedRoute from '@/components/layouts/ProtectedRoute';
 import { showSuccess, showError, showLoading } from '@/lib/sweetalert';
 import { AppError } from '@/types/common';
 

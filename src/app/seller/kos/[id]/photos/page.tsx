@@ -3,9 +3,9 @@
 import { useParams, useRouter } from 'next/navigation';
 import { useState, useEffect, useCallback } from 'react';
 import Image from 'next/image';
-import Header from '@/components/Header';
-import Footer from '@/components/Footer';
-import ProtectedRoute from '@/components/ProtectedRoute';
+import Header from '@/components/layouts/Header';
+import Footer from '@/components/layouts/Footer';
+import ProtectedRoute from '@/components/layouts/ProtectedRoute';
 import { useAuthToken } from '@/hooks/useAuthToken';
 import { useKosDetails } from '@/hooks/useApi';
 import { showSuccess, showError, showConfirm, showLoading, showToast } from '@/lib/sweetalert';

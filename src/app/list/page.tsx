@@ -1,7 +1,7 @@
-import Header from '@/components/Header';
-import Footer from '@/components/Footer';
-import FilterBar from '@/components/FilterBar';
-import FeaturedList from '@/components/FeaturedList';
+import Header from '@/components/layouts/Header';
+import Footer from '@/components/layouts/Footer';
+import FilterBar from '@/components/common/FilterBar';
+import FeaturedList from '@/components/common/FeaturedList';
 
 export default function DaftarKosPage() {
   return (
