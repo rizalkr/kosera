@@ -217,6 +217,6 @@ async function createUserHandler(request: AuthenticatedRequest) {
     );
   }
 }
-
 export const GET = withAdmin(getAllUsersHandler);
 export const POST = withAdmin(createUserHandler);
+

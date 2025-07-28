@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { useAdminBooking } from '@/hooks/admin/useAdminBooking';
+import { useDebounce } from '@/hooks/useDebounce';
 
 interface BookingSearchParams {
   page?: string;
@@ -24,13 +25,19 @@ export default function BookingAdminClient({ searchParams }: BookingAdminClientP
   const [currentPage, setCurrentPage] = useState(1);
   const bookingsPerPage = 10;
 
+  // Debounce the search query and filters
+  const debouncedSearchQuery = useDebounce(searchQuery, 500);
+  const debouncedStatus = useDebounce(status, 300);
+  const debouncedStartDate = useDebounce(startDate, 300);
+  const debouncedEndDate = useDebounce(endDate, 300);
+
   const { data: bookings, loading, error, pagination, refetch } = useAdminBooking({
     page: currentPage,
     limit: bookingsPerPage,
-    status: status !== 'all' ? status : undefined,
-    startDate: startDate || undefined,
-    endDate: endDate || undefined,
-    searchQuery: searchQuery || undefined,
+    status: debouncedStatus !== 'all' ? debouncedStatus : undefined,
+    startDate: debouncedStartDate || undefined,
+    endDate: debouncedEndDate || undefined,
+    searchQuery: debouncedSearchQuery || undefined,
   });
 
   const handleFilterChange = (type: string, value: string) => {
@@ -43,7 +50,15 @@ export default function BookingAdminClient({ searchParams }: BookingAdminClientP
 
   return (
     <div className="bg-white rounded-lg shadow-lg p-6">
-      <h1 className="text-2xl font-bold text-blue-600 mb-4">Manage Bookings</h1>
+      <div className="flex items-center justify-between mb-4">
+        <h1 className="text-2xl font-bold text-blue-600">Manage Bookings</h1>
+        {loading && (
+          <div className="flex items-center text-sm text-gray-500">
+            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600 mr-2"></div>
+            Updating...
+          </div>
+        )}
+      </div>
       {/* Filters */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
         <div>
@@ -92,11 +107,43 @@ export default function BookingAdminClient({ searchParams }: BookingAdminClientP
       {/* Table */}
       <div className="overflow-x-auto">
         {loading ? (
-          <div className="text-center py-12 text-gray-500">Loading bookings...</div>
+          <div className="text-center py-12">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
+            <div className="text-gray-500">Loading bookings...</div>
+          </div>
         ) : error ? (
-          <div className="text-center py-12 text-red-600">{error}</div>
+          <div className="text-center py-12">
+            <div className="text-red-500 text-6xl mb-4">⚠️</div>
+            <div className="text-red-600 font-semibold mb-2">Failed to load bookings</div>
+            <div className="text-gray-600 mb-4">{error}</div>
+            <button 
+              onClick={() => refetch()}
+              className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
+            >
+              Try Again
+            </button>
+          </div>
+        ) : bookings.length === 0 ? (
+          <div className="text-center py-12">
+            <div className="text-gray-400 text-6xl mb-4">📋</div>
+            <div className="text-gray-600 font-semibold mb-2">No bookings found</div>
+            <div className="text-gray-500">Try adjusting your filters or search criteria</div>
+          </div>
         ) : (
-          <table className="min-w-full divide-y divide-gray-200">
+          <>
+            {/* Results Summary */}
+            <div className="mb-4 p-4 bg-gray-50 rounded-lg">
+              <div className="flex items-center justify-between">
+                <div className="text-sm text-gray-600">
+                  Showing {bookings.length} of {pagination.totalCount} bookings
+                </div>
+                <div className="text-sm text-gray-500">
+                  Page {pagination.currentPage} of {pagination.totalPages}
+                </div>
+              </div>
+            </div>
+            
+            <table className="min-w-full divide-y divide-gray-200">
             <thead className="bg-gray-50">
               <tr>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">ID</th>
@@ -122,7 +169,17 @@ export default function BookingAdminClient({ searchParams }: BookingAdminClientP
                     <div className="text-xs text-gray-500">{booking.kos.city}</div>
                   </td>
                   <td className="px-6 py-4">
-                    <span className="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-blue-100 text-blue-800">
+                    <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
+                      booking.status === 'pending' 
+                        ? 'bg-yellow-100 text-yellow-800' 
+                        : booking.status === 'confirmed' 
+                        ? 'bg-green-100 text-green-800' 
+                        : booking.status === 'cancelled' 
+                        ? 'bg-red-100 text-red-800' 
+                        : booking.status === 'completed' 
+                        ? 'bg-blue-100 text-blue-800' 
+                        : 'bg-gray-100 text-gray-800'
+                    }`}>
                       {booking.status}
                     </span>
                   </td>
@@ -133,7 +190,8 @@ export default function BookingAdminClient({ searchParams }: BookingAdminClientP
                 </tr>
               ))}
             </tbody>
-          </table>
+                      </table>
+          </>
         )}
       </div>
       {/* Pagination */}
