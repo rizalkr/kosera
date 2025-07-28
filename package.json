@@ -73,6 +73,7 @@
     "bcryptjs": "^3.0.2",
     "chart.js": "^4.5.0",
     "cloudinary": "^2.7.0",
+    "clsx": "^2.1.1",
     "dotenv": "^16.5.0",
     "drizzle-kit": "^0.31.4",
     "drizzle-orm": "^0.44.2",
@@ -88,6 +89,7 @@
     "react-leaflet": "^5.0.0",
     "sweetalert2": "^11.22.2",
     "swiper": "^11.2.6",
+    "swr": "^2.3.4",
     "zod": "^3.25.75"
   },
   "devDependencies": {

@@ -3,6 +3,11 @@
 import { useState } from 'react';
 import { useAdminBooking } from '@/hooks/admin/useAdminBooking';
 import { useDebounce } from '@/hooks/useDebounce';
+import { AdminBookingStatus, useAdminUpdateBookingStatus } from '@/hooks/admin/useAdminBookingStatus';
+import { BookingStatusDropdown } from '@/components/dashboard/bookings/BookingStatusDropdown';
+import { clsx } from 'clsx';
+// 1. Impor fungsi showConfirm dan showToast dari sweetalert
+import { showError, showConfirm, showToast } from '@/lib/sweetalert';
 
 interface BookingSearchParams {
   page?: string;
@@ -24,8 +29,8 @@ export default function BookingAdminClient({ searchParams }: BookingAdminClientP
   const [endDate, setEndDate] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
   const bookingsPerPage = 10;
+  const [updatingId, setUpdatingId] = useState<number | null>(null);
 
-  // Debounce the search query and filters
   const debouncedSearchQuery = useDebounce(searchQuery, 500);
   const debouncedStatus = useDebounce(status, 300);
   const debouncedStartDate = useDebounce(startDate, 300);
@@ -40,6 +45,8 @@ export default function BookingAdminClient({ searchParams }: BookingAdminClientP
     searchQuery: debouncedSearchQuery || undefined,
   });
 
+  const { trigger: updateStatus, isMutating } = useAdminUpdateBookingStatus();
+
   const handleFilterChange = (type: string, value: string) => {
     if (type === 'status') setStatus(value);
     if (type === 'search') setSearchQuery(value);
@@ -48,8 +55,43 @@ export default function BookingAdminClient({ searchParams }: BookingAdminClientP
     setCurrentPage(1);
   };
 
+  // 2. Buat satu fungsi handler untuk dipanggil di dalam loop
+  const handleStatusChange = async (bookingId: number, newStatus: AdminBookingStatus) => {
+    // Tampilkan dialog konfirmasi
+    const confirmation = await showConfirm(
+      `Anda akan mengubah status booking #${bookingId} menjadi "${newStatus}". Lanjutkan?`,
+      'Konfirmasi Perubahan Status'
+    );
+
+    // Batalkan jika admin tidak menekan "Ya"
+    if (!confirmation.isConfirmed) {
+      return;
+    }
+
+    setUpdatingId(bookingId);
+    try {
+      await updateStatus({
+        bookingId: bookingId,
+        status: newStatus,
+      });
+
+      // Tampilkan notifikasi toast jika berhasil
+      showToast('Status booking berhasil diperbarui', 'success');
+      
+      refetch(); // Muat ulang data tabel
+    } catch (err) {
+      // Tampilkan notifikasi error jika gagal
+      const errorMessage = (err as Error).message || 'Terjadi kesalahan tidak diketahui.';
+      showError(`Gagal memperbarui status: ${errorMessage}`);
+      console.error("Gagal update status:", err);
+    } finally {
+      setUpdatingId(null);
+    }
+  };
+
   return (
     <div className="bg-white rounded-lg shadow-lg p-6">
+      {/* ... (kode filter dan header tidak berubah) ... */}
       <div className="flex items-center justify-between mb-4">
         <h1 className="text-2xl font-bold text-blue-600">Manage Bookings</h1>
         {loading && (
@@ -104,7 +146,7 @@ export default function BookingAdminClient({ searchParams }: BookingAdminClientP
           />
         </div>
       </div>
-      {/* Table */}
+      {/* ... (kode loading, error, dan no bookings tidak berubah) ... */}
       <div className="overflow-x-auto">
         {loading ? (
           <div className="text-center py-12">
@@ -169,19 +211,30 @@ export default function BookingAdminClient({ searchParams }: BookingAdminClientP
                     <div className="text-xs text-gray-500">{booking.kos.city}</div>
                   </td>
                   <td className="px-6 py-4">
-                    <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-                      booking.status === 'pending' 
-                        ? 'bg-yellow-100 text-yellow-800' 
-                        : booking.status === 'confirmed' 
-                        ? 'bg-green-100 text-green-800' 
-                        : booking.status === 'cancelled' 
-                        ? 'bg-red-100 text-red-800' 
-                        : booking.status === 'completed' 
-                        ? 'bg-blue-100 text-blue-800' 
-                        : 'bg-gray-100 text-gray-800'
-                    }`}>
-                      {booking.status}
-                    </span>
+                    <div className="flex items-center gap-2">
+                      <span
+                        className={clsx(
+                          'inline-flex px-2 py-1 text-xs font-semibold rounded-full',
+                          booking.status === 'pending'
+                            ? 'bg-yellow-100 text-yellow-800'
+                            : booking.status === 'confirmed'
+                            ? 'bg-green-100 text-green-800'
+                            : booking.status === 'cancelled'
+                            ? 'bg-red-100 text-red-800'
+                            : booking.status === 'completed'
+                            ? 'bg-blue-100 text-blue-800'
+                            : 'bg-gray-100 text-gray-800'
+                        )}
+                      >
+                        {booking.status}
+                      </span>
+                      <BookingStatusDropdown
+                        value={booking.status as AdminBookingStatus}
+                        // 3. Panggil handler yang sudah dibuat
+                        onChange={(newStatus) => handleStatusChange(booking.id, newStatus)}
+                        disabled={isMutating && updatingId === booking.id}
+                      />
+                    </div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{booking.checkInDate}</td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{booking.checkOutDate}</td>
@@ -190,11 +243,11 @@ export default function BookingAdminClient({ searchParams }: BookingAdminClientP
                 </tr>
               ))}
             </tbody>
-                      </table>
+            </table>
           </>
         )}
       </div>
-      {/* Pagination */}
+      {/* ... (kode pagination tidak berubah) ... */}
       {pagination.totalPages > 1 && (
         <div className="flex items-center justify-between mt-6">
           <div className="text-sm text-gray-700">
@@ -223,4 +276,4 @@ export default function BookingAdminClient({ searchParams }: BookingAdminClientP
       )}
     </div>
   );
-}
+};
