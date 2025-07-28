@@ -55,7 +55,7 @@ export interface KosPhoto extends BaseKosPhoto {
  * Includes nested photos and rating info.
  */
 export interface PublicKosData extends BaseKosData {
-  averageRating: number;
+  averageRating: string;
   reviewCount: number;
   photos: BaseKosPhoto[]; // Use the base photo type for simplicity here
   createdAt: string;

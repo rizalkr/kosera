@@ -12,8 +12,8 @@ import KosImage from '@/components/ui/KosImage';
 import { useKosSearch } from '@/hooks/useApi';
 import { useAuthGuard } from '@/hooks/auth/useAuthGuard';
 import { useAddFavorite, useRemoveFavorite, useFavorites } from '@/hooks/useApi';
-import type { AdminKosFilters, BaseKosData } from '@/types';
-import { FavoriteKos } from '@/types/favorites';
+import { AdminKosFilters, PublicKosData, FavoriteKos } from '@/types';
+
 
 export default function HomePage() {
   const [searchFilters, setSearchFilters] = useState<AdminKosFilters>({});
@@ -120,7 +120,7 @@ export default function HomePage() {
           </div>
           
           <div className="space-y-6">
-            {kosList.map((kos: BaseKosData) => (
+            {kosList.map((kos: PublicKosData) => (
               <div key={kos.id} className="bg-[#E1F6F2] border border-blue-100 rounded-xl shadow hover:shadow-lg transition-all duration-200 relative group">
                 {/* Favorite Button */}
                 <button

@@ -1,9 +1,9 @@
 'use client';
 import { Swiper, SwiperSlide } from 'swiper/react';
 import 'swiper/css';
-import FeaturedCard from '../ui/FeaturedCard';
-import { useKosRecommendations } from '../../hooks/useApi';
-import { KosData } from '../../lib/api';
+import FeaturedCard from '@/components/ui/FeaturedCard';
+import { useKosRecommendations } from '@/hooks/useApi';
+import { PublicKosData } from '@/types';
 
 export default function RecommendationCarousel() {
   const { data, isLoading, error } = useKosRecommendations({ limit: 6 });
@@ -61,7 +61,7 @@ export default function RecommendationCarousel() {
         loop={recommendations.length > 1}
         autoplay={recommendations.length > 1 ? { delay: 5000 } : false}
       >
-        {recommendations.map((kos: KosData) => (
+        {recommendations.map((kos: PublicKosData) => (
           <SwiperSlide key={kos.id}>
             <FeaturedCard 
               id={kos.id}

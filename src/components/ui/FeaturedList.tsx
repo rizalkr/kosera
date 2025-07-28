@@ -3,8 +3,7 @@
 import { useMemo } from 'react';
 import FeaturedCard from './FeaturedCard';
 import { useKosFeatured, useFavorites } from '@/hooks/useApi';
-import { KosData } from '@/lib/api';
-import { FavoriteKos, AdminKosData } from '@/types';
+import { FavoriteKos, PublicKosData } from '@/types';
 
 export default function FeaturedList() {
   const { data, isLoading, error } = useKosFeatured();
@@ -61,7 +60,7 @@ export default function FeaturedList() {
 
   return (
     <div className="space-y-6">
-      {kosList.map((kos: KosData) => (
+      {kosList.map((kos: PublicKosData) => (
         <FeaturedCard 
           key={kos.id} 
           id={kos.id}

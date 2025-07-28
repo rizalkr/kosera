@@ -6,7 +6,7 @@ import KosImage from '@/components/ui/KosImage';
 import { useAuthGuard } from '@/hooks/auth/useAuthGuard';
 import { useMyKos } from '@/hooks/useApi';
 import { useState } from 'react';
-import type { KosData } from '@/lib/api';
+import type { BaseKosData } from '@/types/kos';
 
 export default function SellerKosPage() {
   const { user } = useAuthGuard();
@@ -20,11 +20,11 @@ export default function SellerKosPage() {
     setIsRefreshing(false);
   };
 
-  const getKosStatus = (kos: KosData) => {
+  const getKosStatus = (kos: BaseKosData) => {
     // Menggunakan logika sederhana untuk menentukan status kos
     // Check if fields exist with optional chaining
-    const isActive = (kos as KosData & { isActive?: boolean }).isActive;
-    const verified = (kos as KosData & { verified?: boolean }).verified;
+    const isActive = (kos as BaseKosData & { isActive?: boolean }).isActive;
+    const verified = (kos as BaseKosData & { verified?: boolean }).verified;
     
     if (isActive === false) return { label: 'Tidak Aktif', color: 'bg-red-100 text-red-800' };
     if (verified === false) return { label: 'Menunggu Verifikasi', color: 'bg-yellow-100 text-yellow-800' };
@@ -209,9 +209,9 @@ export default function SellerKosPage() {
                           <span className="text-lg font-bold text-blue-600">
                             {formatPrice(kos.price)}/bulan
                           </span>
-                          {(kos as KosData & { roomType?: string }).roomType && (
+                          {(kos as BaseKosData & { roomType?: string }).roomType && (
                             <span className="text-xs bg-gray-200 text-gray-700 px-2 py-1 rounded">
-                              {(kos as KosData & { roomType?: string }).roomType}
+                              {(kos as BaseKosData & { roomType?: string }).roomType}
                             </span>
                           )}
                         </div>
@@ -220,11 +220,11 @@ export default function SellerKosPage() {
                       {/* Additional Info */}
                       <div className="grid grid-cols-2 gap-4 mb-4 text-sm">
                         <div className="bg-white rounded p-3 text-center">
-                          <div className="font-semibold text-gray-800">{(kos as KosData & { totalPost?: number }).totalPost || 0}</div>
+                          <div className="font-semibold text-gray-800">{(kos as BaseKosData & { totalPost?: number }).totalPost || 0}</div>
                           <div className="text-gray-500 text-xs">Total Post</div>
                         </div>
                         <div className="bg-white rounded p-3 text-center">
-                          <div className="font-semibold text-gray-800">{(kos as KosData & { totalPenjualan?: number }).totalPenjualan || 0}</div>
+                          <div className="font-semibold text-gray-800">{(kos as BaseKosData & { totalPenjualan?: number }).totalPenjualan || 0}</div>
                           <div className="text-gray-500 text-xs">Penjualan</div>
                         </div>
                       </div>
