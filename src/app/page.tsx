@@ -3,20 +3,20 @@
 import { useState, useMemo, useCallback } from 'react';
 import Link from 'next/link';
 import Header from '@/components/layouts/Header';
-import FilterBar from '@/components/common/FilterBar';
-import FeaturedList from '@/components/common/FeaturedList';
-import MapSection from '@/components/maps/MapSection';
-import RecommendationCarousel from '@/components/dashboard/RecommendationCarousel';
+import FilterBar from '@/components/ui/FilterBar';
+import FeaturedList from '@/components/ui/FeaturedList';
+import MapSection from '@/components/features/maps/MapSection';
+import RecommendationCarousel from '@/components/features/dashboard/RecommendationCarousel';
 import Footer from '@/components/layouts/Footer';
-import KosImage from '@/components/common/KosImage';
+import KosImage from '@/components/ui/KosImage';
 import { useKosSearch } from '@/hooks/useApi';
 import { useAuthGuard } from '@/hooks/auth/useAuthGuard';
 import { useAddFavorite, useRemoveFavorite, useFavorites } from '@/hooks/useApi';
-import { SearchParams, KosData } from '@/lib/api';
+import type { AdminKosFilters, BaseKosData } from '@/types';
 import { FavoriteKos } from '@/types/favorites';
 
 export default function HomePage() {
-  const [searchFilters, setSearchFilters] = useState<SearchParams>({});
+  const [searchFilters, setSearchFilters] = useState<AdminKosFilters>({});
   const [isSearching, setIsSearching] = useState(false);
   
   const { data: searchResults, isLoading: isSearchLoading } = useKosSearch(searchFilters);
@@ -33,7 +33,7 @@ export default function HomePage() {
     return new Set(favoritesData.data.favorites.map((fav: FavoriteKos) => fav.kos.id));
   }, [favoritesData]);
 
-  const handleFilter = useCallback((filters: SearchParams) => {
+  const handleFilter = useCallback((filters: AdminKosFilters) => {
     setSearchFilters(filters);
     setIsSearching(Object.keys(filters).length > 0);
   }, []);
@@ -120,7 +120,7 @@ export default function HomePage() {
           </div>
           
           <div className="space-y-6">
-            {kosList.map((kos: KosData) => (
+            {kosList.map((kos: BaseKosData) => (
               <div key={kos.id} className="bg-[#E1F6F2] border border-blue-100 rounded-xl shadow hover:shadow-lg transition-all duration-200 relative group">
                 {/* Favorite Button */}
                 <button

@@ -1,39 +1,26 @@
-import { useAuthToken } from "@/hooks/auth/useAuthToken";
 import { useState } from "react";
+import { adminApi } from "@/lib/api";
 
 export const useRestoreKos = () => {
-  const { getToken } = useAuthToken();
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  const restoreKos = async (kosId: number) => {
+  const restoreKos = async (kosId: number): Promise<boolean> => {
     setLoading(true);
+    setError(null);
     try {
-      const token = getToken();
-      
-      if (!token) {
-        throw new Error('No authentication token found');
+      const response = await adminApi.restoreKos(kosId);
+      if (!response.success) {
+        throw new Error(response.message || 'Failed to restore kos');
       }
-
-      const response = await fetch(`/api/admin/kos/${kosId}/restore`, {
-        method: 'PATCH',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json',
-        },
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || 'Failed to restore kos');
-      }
-
-      return await response.json();
-    } catch (error) {
-      throw error;
+      return true;
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'An unknown error occurred');
+      return false;
     } finally {
       setLoading(false);
     }
   };
 
-  return { restoreKos, loading };
+  return { restoreKos, loading, error };
 };

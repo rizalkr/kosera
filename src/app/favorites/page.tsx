@@ -4,7 +4,7 @@ import { FavoriteKos } from '@/types/favorites';
 import Header from '@/components/layouts/Header';
 import Footer from '@/components/layouts/Footer';
 import ProtectedRoute from '@/components/layouts/ProtectedRoute';
-import KosImage from '@/components/common/KosImage';
+import KosImage from '@/components/ui/KosImage';
 import { useAuthGuard } from '@/hooks/auth/useAuthGuard';
 import { useFavorites, useRemoveFavorite } from '@/hooks/useApi';
 import { showConfirm } from '@/lib/sweetalert';

@@ -120,13 +120,4 @@ export interface AdminKosFilters {
   showDeleted?: boolean; // New parameter for archive view
 }
 
-export interface AdminKosFilters {
-  page?: number;
-  limit?: number;
-  search?: string;
-  city?: string;
-  ownerType?: string;
-  sortBy?: string;
-  showDeleted?: boolean;
-}
 export type AdminKosApiResponse = PaginatedResponse<AdminKosData>;

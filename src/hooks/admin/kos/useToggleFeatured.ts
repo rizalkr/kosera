@@ -1,42 +1,26 @@
-import { useAuthToken } from "@/hooks/auth/useAuthToken";
 import { useState } from "react";
+import { adminApi } from "@/lib/api";
 
 export const useToggleFeatured = () => {
-  const { getToken } = useAuthToken();
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  const toggleFeatured = async (kosId: number, isFeatured: boolean) => {
+  const toggleFeatured = async (kosId: number, isFeatured: boolean): Promise<boolean> => {
+    setLoading(true);
+    setError(null);
     try {
-      setLoading(true);
-      const token = getToken();
-      
-      if (!token) {
-        throw new Error('No authentication token found');
+      const response = await adminApi.toggleFeatured(kosId, isFeatured);
+      if (!response.success) {
+        throw new Error(response.message || 'Failed to update featured status');
       }
-
-      const response = await fetch(`/api/admin/kos/${kosId}/featured`, {
-        method: 'PATCH',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ isFeatured }),
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to update featured status');
-      }
-
       return true;
     } catch (err) {
-      throw new Error(err instanceof Error ? err.message : 'Failed to update featured status');
+      setError(err instanceof Error ? err.message : 'An unknown error occurred');
+      return false;
     } finally {
       setLoading(false);
     }
   };
 
-  return {
-    toggleFeatured,
-    loading,
-  };
+  return { toggleFeatured, loading, error };
 };

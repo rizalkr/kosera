@@ -1,40 +1,26 @@
-import { useAuthToken } from "@/hooks/auth/useAuthToken";
 import { useState } from "react";
+import { adminApi } from "@/lib/api";
 
 export const useBulkArchiveKos = () => {
-  const { getToken } = useAuthToken();
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  const bulkArchiveKos = async (kosIds: number[]) => {
+  const bulkArchiveKos = async (kosIds: number[]): Promise<boolean> => {
     setLoading(true);
+    setError(null);
     try {
-      const token = getToken();
-      
-      if (!token) {
-        throw new Error('No authentication token found');
+      const response = await adminApi.bulkArchiveKos(kosIds);
+      if (!response.success) {
+        throw new Error(response.message || 'Failed to archive selected kos');
       }
-
-      const response = await fetch(`/api/admin/kos/bulk`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ kosIds }),
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || 'Failed to archive selected kos');
-      }
-
-      return await response.json();
-    } catch (error) {
-      throw error;
+      return true;
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'An unknown error occurred');
+      return false;
     } finally {
       setLoading(false);
     }
   };
 
-  return { bulkArchiveKos, loading };
+  return { bulkArchiveKos, loading, error };
 };

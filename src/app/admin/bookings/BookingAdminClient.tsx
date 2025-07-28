@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { useAdminBooking } from '@/hooks/admin/useAdminBooking';
 import { useDebounce } from '@/hooks/useDebounce';
 import { AdminBookingStatus, useAdminUpdateBookingStatus } from '@/hooks/admin/useAdminBookingStatus';
-import { BookingStatusDropdown } from '@/components/dashboard/bookings/BookingStatusDropdown';
+import { BookingStatusDropdown } from '@/components/features/dashboard/bookings/BookingStatusDropdown';
 import { clsx } from 'clsx';
 // 1. Impor fungsi showConfirm dan showToast dari sweetalert
 import { showError, showConfirm, showToast } from '@/lib/sweetalert';

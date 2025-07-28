@@ -7,7 +7,7 @@ import Header from '@/components/layouts/Header';
 import Footer from '@/components/layouts/Footer';
 import BookingModal from '@/components/modals/BookingModal';
 import ImageModal from '@/components/modals/ImageModal';
-import SafeImage from '@/components/common/SafeImage';
+import SafeImage from '@/components/ui/SafeImage';
 import { useKosDetails, useTrackView, useAddFavorite, useRemoveFavorite, useFavorites, useKosPhotos } from '@/hooks/useApi';
 import { useAuthGuard } from '@/hooks/auth/useAuthGuard';
 import { useKosImages } from '@/hooks/image/useImageWithFallback';

@@ -1,40 +1,26 @@
-import { useAuthToken } from "@/hooks/auth/useAuthToken";
 import { useState } from "react";
+import { adminApi } from "@/lib/api";
 
 export const useDeleteKos = () => {
-  const { getToken } = useAuthToken();
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  const deleteKos = async (kosId: number) => {
+  const deleteKos = async (kosId: number): Promise<boolean> => {
+    setLoading(true);
+    setError(null);
     try {
-      setLoading(true);
-      const token = getToken();
-      
-      if (!token) {
-        throw new Error('No authentication token found');
+      const response = await adminApi.deleteKos(kosId);
+      if (!response.success) {
+        throw new Error(response.message || 'Failed to delete kos');
       }
-
-      const response = await fetch(`/api/admin/kos/${kosId}`, {
-        method: 'DELETE',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-        },
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to delete kos');
-      }
-
       return true;
     } catch (err) {
-      throw new Error(err instanceof Error ? err.message : 'Failed to delete kos');
+      setError(err instanceof Error ? err.message : 'An unknown error occurred');
+      return false;
     } finally {
       setLoading(false);
     }
   };
 
-  return {
-    deleteKos,
-    loading,
-  };
+  return { deleteKos, loading, error };
 };

@@ -4,7 +4,7 @@ import { useMemo } from 'react';
 import FeaturedCard from './FeaturedCard';
 import { useKosFeatured, useFavorites } from '@/hooks/useApi';
 import { KosData } from '@/lib/api';
-import { FavoriteKos } from '@/types/favorites';
+import { FavoriteKos, AdminKosData } from '@/types';
 
 export default function FeaturedList() {
   const { data, isLoading, error } = useKosFeatured();

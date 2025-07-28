@@ -1,7 +1,7 @@
 'use client';
 import { Swiper, SwiperSlide } from 'swiper/react';
 import 'swiper/css';
-import FeaturedCard from '../common/FeaturedCard';
+import FeaturedCard from '../ui/FeaturedCard';
 import { useKosRecommendations } from '../../hooks/useApi';
 import { KosData } from '../../lib/api';
 

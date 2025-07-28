@@ -1,39 +1,26 @@
-import { useAuthToken } from "@/hooks/auth/useAuthToken";
 import { useState } from "react";
+import { adminApi } from "@/lib/api";
 
 export const useBulkCleanupKos = () => {
-  const { getToken } = useAuthToken();
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  const bulkCleanupKos = async () => {
+  const bulkCleanupKos = async (): Promise<boolean> => {
     setLoading(true);
+    setError(null);
     try {
-      const token = getToken();
-      
-      if (!token) {
-        throw new Error('No authentication token found');
+      const response = await adminApi.bulkCleanupKos();
+      if (!response.success) {
+        throw new Error(response.message || 'Failed to cleanup archived kos');
       }
-
-      const response = await fetch(`/api/admin/kos/cleanup`, {
-        method: 'DELETE',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json',
-        },
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || 'Failed to cleanup archived kos');
-      }
-
-      return await response.json();
-    } catch (error) {
-      throw error;
+      return true;
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'An unknown error occurred');
+      return false;
     } finally {
       setLoading(false);
     }
   };
 
-  return { bulkCleanupKos, loading };
+  return { bulkCleanupKos, loading, error };
 };

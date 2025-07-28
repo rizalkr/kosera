@@ -1,39 +1,26 @@
-import { useAuthToken } from "@/hooks/auth/useAuthToken";
 import { useState } from "react";
+import { adminApi } from "@/lib/api";
 
 export const usePermanentDeleteKos = () => {
-  const { getToken } = useAuthToken();
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  const permanentDeleteKos = async (kosId: number) => {
+  const permanentDeleteKos = async (kosId: number): Promise<boolean> => {
     setLoading(true);
+    setError(null);
     try {
-      const token = getToken();
-      
-      if (!token) {
-        throw new Error('No authentication token found');
+      const response = await adminApi.permanentDeleteKos(kosId);
+      if (!response.success) {
+        throw new Error(response.message || 'Failed to permanently delete kos');
       }
-
-      const response = await fetch(`/api/admin/kos/${kosId}/permanent`, {
-        method: 'DELETE',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json',
-        },
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || 'Failed to permanently delete kos');
-      }
-
-      return await response.json();
-    } catch (error) {
-      throw error;
+      return true;
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'An unknown error occurred');
+      return false;
     } finally {
       setLoading(false);
     }
   };
 
-  return { permanentDeleteKos, loading };
+  return { permanentDeleteKos, loading, error };
 };
