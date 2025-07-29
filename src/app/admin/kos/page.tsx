@@ -42,6 +42,7 @@ export default function AdminKosPage() {
             initialFilters={filters}
             onFilterChange={handleFilterChange}
           />
+          {/* test git */}
           <AdminKosTable
             kosList={data}
             isLoading={loading || false}
