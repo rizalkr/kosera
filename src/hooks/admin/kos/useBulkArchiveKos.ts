@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { adminApi } from "@/lib/api";
+import  {adminApi}  from "@/lib/api";
 
 export const useBulkArchiveKos = () => {
   const [loading, setLoading] = useState(false);

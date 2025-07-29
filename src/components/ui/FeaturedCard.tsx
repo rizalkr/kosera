@@ -3,9 +3,9 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { useTrackView, useAddFavorite, useRemoveFavorite } from '../../hooks/useApi';
-import { useProtectedAction } from '../../hooks/useProtectedAction';
-import { useKosImage } from '../../hooks/image/useKosImage';
+import { useTrackView, useAddFavorite, useRemoveFavorite } from '@/hooks/useApi';
+import { useProtectedAction } from '@/hooks/useProtectedAction';
+import { useKosImage } from '@/hooks/image/useKosImage';
 
 interface FeaturedCardProps {
   id: number;

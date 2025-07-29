@@ -1,7 +1,7 @@
 'use client';
 
 import Image from 'next/image';
-import { useImageWithFallback } from '../../hooks/image/useImageWithFallback';
+import { useImageWithFallback } from '@/hooks/image/useImageWithFallback';
 
 interface SafeImageProps {
   src: string;

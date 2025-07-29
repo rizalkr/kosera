@@ -51,6 +51,7 @@ async function deleteKosHandler(request: AuthenticatedRequest) {
       .where(eq(posts.id, existingKos[0].postId));
 
     return NextResponse.json({
+      success: true,
       message: 'Kos moved to archive successfully',
     });
   } catch (error) {

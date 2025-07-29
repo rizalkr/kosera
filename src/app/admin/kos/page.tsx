@@ -21,7 +21,7 @@ export default function AdminKosPage() {
   });
 
   const { data, pagination, loading, error, refetch } = useAdminKos(filters);
-  console.log('STATUS DARI PAGE:', { data, loading, error, pagination });
+  // Handle filter changes and pagination
   const handleFilterChange = useCallback((newFilters: Partial<AdminKosFilters>) => {
     setFilters(prev => ({ ...prev, ...newFilters, page: 1 }));
   }, []);
@@ -47,6 +47,8 @@ export default function AdminKosPage() {
             isLoading={loading || false}
             error={error}
             showDeleted={filters.showDeleted || false}
+            currentPage={filters.page || 1}
+            limit={filters.limit || 10}
             onActionComplete={refetch}
           />
           <Pagination

@@ -12,11 +12,11 @@ import KosImage from '@/components/ui/KosImage';
 import { useKosSearch } from '@/hooks/useApi';
 import { useAuthGuard } from '@/hooks/auth/useAuthGuard';
 import { useAddFavorite, useRemoveFavorite, useFavorites } from '@/hooks/useApi';
-import { AdminKosFilters, PublicKosData, FavoriteKos } from '@/types';
+import type { SearchParams, PublicKosData, FavoriteKos } from '@/types';
 
 
 export default function HomePage() {
-  const [searchFilters, setSearchFilters] = useState<AdminKosFilters>({});
+  const [searchFilters, setSearchFilters] = useState<SearchParams>({});
   const [isSearching, setIsSearching] = useState(false);
   
   const { data: searchResults, isLoading: isSearchLoading } = useKosSearch(searchFilters);
@@ -33,7 +33,7 @@ export default function HomePage() {
     return new Set(favoritesData.data.favorites.map((fav: FavoriteKos) => fav.kos.id));
   }, [favoritesData]);
 
-  const handleFilter = useCallback((filters: AdminKosFilters) => {
+  const handleFilter = useCallback((filters: SearchParams) => {
     setSearchFilters(filters);
     setIsSearching(Object.keys(filters).length > 0);
   }, []);

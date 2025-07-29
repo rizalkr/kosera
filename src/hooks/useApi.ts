@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { kosApi, authApi, favoritesApi, bookingsApi, sellerApi, adminApi, SearchParams } from '../lib/api';
+import { kosApi, authApi, favoritesApi, bookingsApi, sellerApi, adminApi, SearchParams } from '../lib/api/utils';
 
 // Kos hooks
 export const useKosFeatured = () => {

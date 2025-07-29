@@ -42,6 +42,7 @@ async function permanentDeleteKosHandler(request: AuthenticatedRequest) {
       .where(eq(kos.id, kosId));
 
     return NextResponse.json({
+      success: true,
       message: 'Kos permanently deleted successfully',
       deletedKosId: kosId,
     });

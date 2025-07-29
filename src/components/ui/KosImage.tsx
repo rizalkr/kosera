@@ -1,4 +1,4 @@
-import { useKosImage } from '../../hooks/image/useKosImage';
+import { useKosImage } from '@/hooks/image/useKosImage';
 import Image from 'next/image';
 
 interface KosImageProps {

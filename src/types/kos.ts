@@ -110,6 +110,31 @@ export interface KosPhotosApiResponse {
   message?: string;
 }
 
+export interface KosSearchApiResponse {
+  success: boolean;
+  data?: {
+    results: PublicKosData[];
+    pagination?: { Pagination: PaginatedResponse<PublicKosData> };
+  };
+  message?: string;
+}
+
+export interface SearchParams {
+  search?: string;
+  city?: string;
+  minPrice?: number;
+  maxPrice?: number;
+  minRating?: number;
+  facilities?: string[];
+  latitude?: number;
+  longitude?: number;
+  radius?: number;
+  sortBy?: 'price' | 'rating' | 'distance' | 'newest';
+  sortOrder?: 'asc' | 'desc';
+  page?: number;
+  limit?: number;
+}
+
 export interface AdminKosFilters {
   page?: number;
   limit?: number;

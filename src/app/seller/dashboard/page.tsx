@@ -1,7 +1,7 @@
 'use client';
 
 import { useSellerDashboard } from '@/hooks/useApi';
-import { SellerKosData } from '@/lib/api';
+import { SellerKosData } from '@/lib/api/utils';
 import { useRouter } from 'next/navigation';
 
 const SellerDashboard = () => {
