@@ -9,7 +9,7 @@ export interface ApiResponse<T = unknown> {
 export interface PaginatedResponse<T> {
   success: boolean;
   data: {
-    items: T[];
+    kos: T[];
     pagination: {
       page: number;
       limit: number;

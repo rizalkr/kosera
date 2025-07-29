@@ -7,7 +7,6 @@ import { adminApi } from '@/lib/api';
 import type { 
   AdminKosData, 
   AdminKosFilters, 
-  AdminKosApiResponse
 } from '@/types'; 
 
 /**
@@ -39,7 +38,7 @@ export const useAdminKos = (filters: AdminKosFilters = {}) => {
       }
 
       // Sesuaikan dengan struktur PaginatedResponse dari common.ts Anda
-      setData(result.data?.items || []);
+      setData(result.data?.kos || []);
       setPagination({
         currentPage: result.data?.pagination?.page || 1,
         totalPages: result.data?.pagination?.totalPages || 1,

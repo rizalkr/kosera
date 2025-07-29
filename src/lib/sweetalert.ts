@@ -6,7 +6,7 @@ export const showSuccess = (message: string, title: string = 'Berhasil!') => {
     icon: 'success',
     title,
     text: message,
-    timer: 3000,
+    timer: 2000,
     timerProgressBar: true,
     showConfirmButton: false,
   });
@@ -90,6 +90,14 @@ export const showToast = (
     timer: 3000,
     timerProgressBar: true,
   });
+};
+
+export const showSuccessToast = (message: string) => {
+  return showToast(message, 'success');
+};
+
+export const showErrorToast = (message: string) => {
+  return showToast(message, 'error');
 };
 
 // Custom Alert with HTML content

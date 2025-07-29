@@ -3,8 +3,8 @@
 import Header from '@/components/layouts/Header';
 import Footer from '@/components/layouts/Footer';
 import ProtectedRoute from '@/components/layouts/ProtectedRoute';
-import { VisualizationPanel } from '@/components/dashboard/VisualizationPanel';
-import { UserCompositionChart } from '@/components/dashboard/UserCompositionChart';
+import { VisualizationPanel } from '@/components/features/dashboard/VisualizationPanel';
+import { UserCompositionChart } from '@/components/features/dashboard/UserCompositionChart';
 import { useAuthGuard } from '@/hooks/auth/useAuthGuard';
 import { useAdminDashboard } from '@/hooks/admin/useAdminDashboard';
 
