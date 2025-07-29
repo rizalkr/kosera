@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useAuth } from '@/contexts/AuthContext';
-import { authApi } from '@/lib/api/utils';
+import { authApi } from '@/lib/api';
 import { showError, showSuccess } from '@/lib/sweetalert';
 
 export default function LoginPage() {
@@ -44,7 +44,14 @@ export default function LoginPage() {
         router.push(from);
         router.refresh();
       } else {
-        console.error('Login failed:', response);
+        console.error('Login failed - Response structure:', {
+          success: response.success,
+          hasData: !!response.data,
+          hasToken: response.data?.token,
+          error: response.error,
+          message: response.message,
+          fullResponse: response
+        });
         await showError('Login Gagal', response.error || response.message || 'Username atau password salah');
       }
     } catch (err: unknown) {

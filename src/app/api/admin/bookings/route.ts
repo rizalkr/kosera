@@ -29,7 +29,7 @@ export async function GET(request: NextRequest) {
     const offset = (page - 1) * limit;
 
     // Build where conditions
-    let whereConditions = [];
+    const whereConditions = [];
 
     if (status && status !== 'all') {
       whereConditions.push(eq(bookings.status, status));

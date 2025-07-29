@@ -1,5 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { kosApi, authApi, favoritesApi, bookingsApi, sellerApi, adminApi, SearchParams } from '../lib/api/utils';
+import { kosApi, authApi, favoritesApi, bookingsApi, sellerApi, adminApi } from '../lib/api/';
+import type { SearchParams } from '@/types';
 
 // Kos hooks
 export const useKosFeatured = () => {
@@ -62,7 +63,7 @@ export const useLogin = () => {
     mutationFn: ({ username, password }: { username: string; password: string }) =>
       authApi.login(username, password),
     onSuccess: (data) => {
-      if (data.success && data.data.token) {
+      if (data.success && data.data?.token) {
         // Store token in localStorage for the AuthContext to pick up
         localStorage.setItem('auth_token', data.data.token);
         localStorage.setItem('user_data', JSON.stringify(data.data.user));

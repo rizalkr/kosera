@@ -1,42 +1,57 @@
-import { createAuthHeaders, getAuthToken, API_BASE_URL } from './utils';
+import { apiClient } from './client';
 import type { ApiResponse, User } from '@/types';
 
+export interface LoginCredentials {
+  username: string;
+  password: string;
+}
+
+export interface RegisterData {
+  name: string;
+  username: string;
+  contact: string;
+  password: string;
+  role?: 'ADMIN' | 'SELLER' | 'RENTER';
+}
+
 export const authApi = {
+  /**
+   * Authenticate user with username and password
+   */
   login: async (username: string, password: string): Promise<ApiResponse<{ token: string; user: User }>> => {
-    const response = await fetch(`${API_BASE_URL}/api/auth/login`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ username, password }),
-    });
-    return response.json();
+    return apiClient.post('/api/auth/login', { username, password }, { requireAuth: false });
   },
-  register: async (userData: any): Promise<ApiResponse<{ token: string; user: User }>> => {
-    const response = await fetch(`${API_BASE_URL}/api/auth/register`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(userData),
-    });
-    return response.json();
+
+  /**
+   * Register a new user
+   */
+  register: async (userData: RegisterData): Promise<ApiResponse<{ token: string; user: User }>> => {
+    return apiClient.post('/api/auth/register', userData, { requireAuth: false });
   },
+
+  /**
+   * Verify a specific token
+   */
   verify: async (token: string): Promise<ApiResponse<{ user: User }>> => {
-    const response = await fetch(`${API_BASE_URL}/api/auth/verify`, {
-      method: 'GET',
-      headers: { 
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`
-      },
+    return apiClient.get('/api/auth/verify', undefined, {
+      headers: { Authorization: `Bearer ${token}` },
+      requireAuth: false,
     });
-    return response.json();
   },
+
+  /**
+   * Verify current stored token
+   */
   verifyToken: async (): Promise<ApiResponse<{ user: User }>> => {
-    const token = getAuthToken();
-    if (!token) {
-      return { success: false, message: 'No token found', data: { user: null as unknown as User }, error: 'No token found' };
+    try {
+      return await apiClient.get('/api/auth/verify');
+    } catch {
+      return { 
+        success: false, 
+        message: 'No token found or invalid token', 
+        data: { user: null as unknown as User }, 
+        error: 'Authentication failed' 
+      };
     }
-    const response = await fetch(`${API_BASE_URL}/api/auth/verify`, {
-      method: 'GET',
-      headers: createAuthHeaders(),
-    });
-    return response.json();
   },
 };

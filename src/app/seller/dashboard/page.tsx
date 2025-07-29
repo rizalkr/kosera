@@ -1,8 +1,20 @@
 'use client';
 
 import { useSellerDashboard } from '@/hooks/useApi';
-import { SellerKosData } from '@/lib/api/utils';
+import { AdminKosData } from '@/types/kos';
 import { useRouter } from 'next/navigation';
+
+interface SellerStats {
+  totalKos: number;
+  totalBookings: number;
+  totalPendingBookings: number;
+  totalOccupiedRooms: number;
+  totalRooms: number;
+  totalVacantRooms: number;
+  totalRevenue: number;
+  totalViews: number;
+  totalFavorites: number;
+}
 
 const SellerDashboard = () => {
   const { data, isLoading, error, refetch } = useSellerDashboard();
@@ -59,7 +71,8 @@ const SellerDashboard = () => {
     );
   }
 
-  const { kos, overallStats } = data.data;
+  const { kos, stats } = data.data;
+  const overallStats = stats as SellerStats;
 
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('id-ID', {
@@ -98,10 +111,9 @@ const SellerDashboard = () => {
     );
   };
 
-  const KosCard = ({ kosData }: { kosData: SellerKosData }) => {
-    const { statistics } = kosData;
-    const occupancyRate = statistics.totalRooms > 0 
-      ? Math.round((statistics.occupiedRooms / statistics.totalRooms) * 100)
+  const KosCard = ({ kosData }: { kosData: AdminKosData }) => {
+    const occupancyRate = kosData.totalRooms > 0 
+      ? Math.round((kosData.occupiedRooms / kosData.totalRooms) * 100)
       : 0;
 
     return (
@@ -121,7 +133,7 @@ const SellerDashboard = () => {
 
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
             <div className="text-center p-3 bg-blue-50 rounded-lg">
-              <p className="text-xl font-bold text-blue-600">{statistics.totalBookings}</p>
+              <p className="text-xl font-bold text-blue-600">{0}</p>
               <p className="text-xs text-blue-600">Total Booking</p>
             </div>
             <div className="text-center p-3 bg-green-50 rounded-lg">
@@ -129,11 +141,11 @@ const SellerDashboard = () => {
               <p className="text-xs text-green-600">Dilihat</p>
             </div>
             <div className="text-center p-3 bg-yellow-50 rounded-lg">
-              <p className="text-xl font-bold text-yellow-600">{statistics.occupiedRooms}</p>
+              <p className="text-xl font-bold text-yellow-600">{kosData.occupiedRooms}</p>
               <p className="text-xs text-yellow-600">Terisi</p>
             </div>
             <div className="text-center p-3 bg-purple-50 rounded-lg">
-              <p className="text-xl font-bold text-purple-600">{statistics.vacantRooms}</p>
+              <p className="text-xl font-bold text-purple-600">{kosData.totalRooms - kosData.occupiedRooms}</p>
               <p className="text-xs text-purple-600">Kosong</p>
             </div>
           </div>
@@ -153,23 +165,16 @@ const SellerDashboard = () => {
             <div className="flex justify-between items-center pt-2">
               <span className="text-sm text-gray-600">Total Pendapatan</span>
               <span className="text-sm font-semibold text-green-600">
-                {formatCurrency(statistics.totalRevenue)}
+                {formatCurrency(0)}
               </span>
             </div>
             
             <div className="flex justify-between items-center">
               <span className="text-sm text-gray-600">Kamar Tersewa (Historis)</span>
-              <span className="text-sm font-semibold text-gray-500">{statistics.totalRoomsRentedOut}</span>
+              <span className="text-sm font-semibold text-gray-500">{kosData.occupiedRooms}</span>
             </div>
 
-            {statistics.pendingBookings > 0 && (
-              <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3 mt-3">
-                <p className="text-sm text-yellow-800">
-                  <span className="font-semibold text-gray-500">{statistics.pendingBookings}</span> booking menunggu 
-                  perhatian Anda
-                </p>
-              </div>
-            )}
+            {/* Removed pending bookings section as data not available */}
           </div>
 
           <div className="mt-4 pt-4 border-t border-gray-100">
@@ -349,13 +354,13 @@ const SellerDashboard = () => {
                     <div>
                       <p className="text-sm font-medium text-gray-900">{kosData.name}</p>
                       <p className="text-xs text-gray-500">
-                        {kosData.statistics.totalBookings} booking total • {kosData.viewCount} kali dilihat
+                        0 booking total • {kosData.viewCount} kali dilihat
                       </p>
                     </div>
                   </div>
                   <div className="text-right">
                     <p className="text-sm font-semibold text-green-600">
-                      {formatCurrency(kosData.statistics.totalRevenue)}
+                      {formatCurrency(0)}
                     </p>
                     <p className="text-xs text-gray-500">Pendapatan</p>
                   </div>

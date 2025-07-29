@@ -1,11 +1,9 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
 import {
   useDeleteKos,
   useRestoreKos,
-  useToggleFeatured,
   usePermanentDeleteKos,
   useBulkArchiveKos,
   useBulkPermanentDeleteKos,
@@ -33,13 +31,11 @@ export function AdminKosTable({
   limit,
   onActionComplete,
 }: AdminKosTableProps) {
-  const router = useRouter();
   const [selectedKos, setSelectedKos] = useState<number[]>([]);
 
   // Action Hooks
   const { deleteKos, loading: isDeleting } = useDeleteKos();
   const { restoreKos, loading: isRestoring } = useRestoreKos();
-  const { toggleFeatured, loading: isToggling } = useToggleFeatured();
   const { permanentDeleteKos, loading: isPermanentDeleting } = usePermanentDeleteKos();
   const { bulkArchiveKos, loading: isBulkArchiving } = useBulkArchiveKos();
   const { bulkPermanentDeleteKos, loading: isBulkPermanentDeleting } = useBulkPermanentDeleteKos();

@@ -41,7 +41,7 @@ export const serverAuth = (request: NextRequest): ServerAuthResult => {
         role: decoded.role
       }
     };
-  } catch (error) {
+  } catch {
     return {
       isAuthenticated: false,
       user: null,

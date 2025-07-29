@@ -39,7 +39,7 @@ export default function RecommendationCarousel() {
     );
   }
 
-  const recommendations = data?.data?.data || [];
+  const recommendations = data?.data?.results || [];
 
   if (recommendations.length === 0) {
     return (

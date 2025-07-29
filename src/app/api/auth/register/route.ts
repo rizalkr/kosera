@@ -13,7 +13,7 @@ export async function POST(request: NextRequest) {
     // Validate required fields
     if (!name || !username || !contact || !password) {
       return NextResponse.json(
-        { error: 'Name, username, contact, and password are required' },
+        { success: false, error: 'Name, username, contact, and password are required' },
         { status: 400 }
       );
     }
@@ -23,7 +23,7 @@ export async function POST(request: NextRequest) {
     if (!validRoles.includes(role)) {
       console.error('Invalid role provided:', role);
       return NextResponse.json(
-        { error: `Invalid role. Must be one of: ${validRoles.join(', ')}` },
+        { success: false, error: `Invalid role. Must be one of: ${validRoles.join(', ')}` },
         { status: 400 }
       );
     }

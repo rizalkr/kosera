@@ -29,7 +29,7 @@ export const adminApi = {
     return response.json();
   },
   
-  deleteKos: async (kosId: number): Promise<ApiResponse<any>> => {
+  deleteKos: async (kosId: number): Promise<ApiResponse<{ id: number }>> => {
     const response = await fetch(`${API_BASE_URL}/api/admin/kos/${kosId}`, {
       method: 'DELETE',
       headers: createAuthHeaders(),
@@ -37,7 +37,7 @@ export const adminApi = {
     return response.json();
   },
 
-  restoreKos: async (kosId: number): Promise<ApiResponse<any>> => {
+  restoreKos: async (kosId: number): Promise<ApiResponse<{ id: number }>> => {
     const response = await fetch(`${API_BASE_URL}/api/admin/kos/${kosId}/restore`, {
       method: 'PATCH',
       headers: createAuthHeaders(),
@@ -45,7 +45,7 @@ export const adminApi = {
     return response.json();
   },
 
-  permanentDeleteKos: async (kosId: number): Promise<ApiResponse<any>> => {
+  permanentDeleteKos: async (kosId: number): Promise<ApiResponse<{ id: number }>> => {
     const response = await fetch(`${API_BASE_URL}/api/admin/kos/${kosId}/permanent`, {
       method: 'DELETE',
       headers: createAuthHeaders(),
@@ -53,7 +53,7 @@ export const adminApi = {
     return response.json();
   },
 
-  bulkArchiveKos: async (kosIds: number[]): Promise<ApiResponse<any>> => {
+  bulkArchiveKos: async (kosIds: number[]): Promise<ApiResponse<{ count: number }>> => {
     const response = await fetch(`${API_BASE_URL}/api/admin/kos/bulk`, {
       method: 'POST',
       headers: createAuthHeaders(),
@@ -62,7 +62,7 @@ export const adminApi = {
     return response.json();
   },
 
-  bulkPermanentDeleteKos: async (kosIds: number[]): Promise<ApiResponse<any>> => {
+  bulkPermanentDeleteKos: async (kosIds: number[]): Promise<ApiResponse<{ count: number }>> => {
     const response = await fetch(`${API_BASE_URL}/api/admin/kos/bulk`, {
       method: 'DELETE',
       headers: createAuthHeaders(),
@@ -71,7 +71,7 @@ export const adminApi = {
     return response.json();
   },
 
-  bulkCleanupKos: async (): Promise<ApiResponse<any>> => {
+  bulkCleanupKos: async (): Promise<ApiResponse<{ count: number }>> => {
     const response = await fetch(`${API_BASE_URL}/api/admin/kos/cleanup`, {
       method: 'DELETE',
       headers: createAuthHeaders(),

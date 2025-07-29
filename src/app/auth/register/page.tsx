@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useAuth } from '@/contexts/AuthContext';
-import { authApi } from '@/lib/api/utils';
+import { authApi } from '@/lib/api';
 import { showError, showSuccess } from '@/lib/sweetalert';
 
 export default function RegisterPage() {

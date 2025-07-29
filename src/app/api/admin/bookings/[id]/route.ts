@@ -19,8 +19,11 @@ const updateBookingStatusSchema = z.object({
  */
 export async function PATCH(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
+  // Await params since it's now a Promise in Next.js 15
+  const { id } = await params;
+  
   // Admin authentication
   const auth = requireAdmin(req);
   if (!auth.isAuthenticated) {
@@ -30,7 +33,7 @@ export async function PATCH(
     );
   }
 
-  const bookingId = Number(params.id);
+  const bookingId = Number(id);
   if (isNaN(bookingId)) {
     return NextResponse.json(
       { success: false, error: 'Invalid booking ID' },
@@ -42,7 +45,7 @@ export async function PATCH(
   try {
     body = await req.json();
     updateBookingStatusSchema.parse(body);
-  } catch (err) {
+  } catch {
     return NextResponse.json(
       { success: false, error: 'Invalid request body or status value' },
       { status: 400 }

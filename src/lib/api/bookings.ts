@@ -1,27 +1,37 @@
-import { createAuthHeaders, API_BASE_URL } from './utils';
+import { apiClient } from './client';
 import type { ApiResponse, PaginatedResponse, BookingData } from '@/types';
 
+export interface CreateBookingData {
+  kosId: number;
+  checkInDate: string;
+  duration: number;
+  notes?: string;
+}
+
+export interface UpdateBookingData {
+  status: string;
+  notes?: string;
+}
+
 export const bookingsApi = {
+  /**
+   * Get user's bookings with pagination
+   */
   getBookings: async (): Promise<ApiResponse<PaginatedResponse<BookingData>>> => {
-    const response = await fetch(`${API_BASE_URL}/api/bookings`, {
-      headers: createAuthHeaders(),
-    });
-    return response.json();
+    return apiClient.get('/api/bookings');
   },
-  createBooking: async (bookingData: any): Promise<ApiResponse<BookingData>> => {
-    const response = await fetch(`${API_BASE_URL}/api/bookings`, {
-      method: 'POST',
-      headers: createAuthHeaders(),
-      body: JSON.stringify(bookingData),
-    });
-    return response.json();
+
+  /**
+   * Create a new booking
+   */
+  createBooking: async (bookingData: CreateBookingData): Promise<ApiResponse<BookingData>> => {
+    return apiClient.post('/api/bookings', bookingData);
   },
+
+  /**
+   * Update booking status and notes
+   */
   updateBooking: async (id: number, status: string, notes?: string): Promise<ApiResponse<BookingData>> => {
-    const response = await fetch(`${API_BASE_URL}/api/bookings/${id}`, {
-      method: 'PUT',
-      headers: createAuthHeaders(),
-      body: JSON.stringify({ status, notes }),
-    });
-    return response.json();
+    return apiClient.put(`/api/bookings/${id}`, { status, notes });
   },
 };

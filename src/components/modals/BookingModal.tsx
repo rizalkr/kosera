@@ -1,12 +1,12 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { KosData } from '@/lib/api/';
+import { PublicKosData } from '@/types/kos';
 import { useCreateBooking } from '@/hooks/useApi';
 import { showCustomAlert, showError } from '@/lib/sweetalert';
 
 interface BookingModalProps {
-  kos: KosData;
+  kos: PublicKosData;
   isOpen: boolean;
   onClose: () => void;
   onBookingCreated?: () => void;
@@ -220,7 +220,7 @@ Mohon informasi lebih lanjut untuk proses booking. Booking sudah dibuat di siste
               {kos.owner && (
                 <div className="text-right">
                   <p className="text-xs text-gray-500">Pemilik:</p>
-                  <p className="text-sm font-medium text-gray-700">{kos.owner.name}</p>
+                  <p className="text-sm font-medium text-gray-700">{kos.owner.fullName}</p>
                 </div>
               )}
             </div>

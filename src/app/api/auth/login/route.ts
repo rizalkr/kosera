@@ -10,7 +10,7 @@ export async function POST(request: NextRequest) {
       body = await request.json();
     } catch {
       return NextResponse.json(
-        { error: 'Invalid JSON format' },
+        { success: false, error: 'Invalid JSON format' },
         { status: 400 }
       );
     }
@@ -20,7 +20,7 @@ export async function POST(request: NextRequest) {
     // Validate required fields
     if (!username || !password) {
       return NextResponse.json(
-        { error: 'Username and password are required' },
+        { success: false, error: 'Username and password are required' },
         { status: 400 }
       );
     }
@@ -42,7 +42,7 @@ export async function POST(request: NextRequest) {
 
       if (!userByContact) {
         return NextResponse.json(
-          { error: 'Invalid credentials' },
+          { success: false, error: 'Invalid credentials' },
           { status: 401 }
         );
       }
@@ -52,7 +52,7 @@ export async function POST(request: NextRequest) {
       
       if (!isValidPassword) {
         return NextResponse.json(
-          { error: 'Invalid credentials' },
+          { success: false, error: 'Invalid credentials' },
           { status: 401 }
         );
       }
@@ -65,16 +65,19 @@ export async function POST(request: NextRequest) {
       });
 
       return NextResponse.json({
-        message: 'Login successful',
-        user: {
-          id: userByContact.id,
-          name: userByContact.name,
-          username: userByContact.username,
-          contact: userByContact.contact,
-          role: userByContact.role,
-          createdAt: userByContact.createdAt,
+        success: true,
+        data: {
+          user: {
+            id: userByContact.id,
+            name: userByContact.name,
+            username: userByContact.username,
+            contact: userByContact.contact,
+            role: userByContact.role,
+            createdAt: userByContact.createdAt,
+          },
+          token,
         },
-        token,
+        message: 'Login successful',
       });
     }
 
@@ -83,7 +86,7 @@ export async function POST(request: NextRequest) {
 
     if (!isValidPassword) {
       return NextResponse.json(
-        { error: 'Invalid credentials' },
+        { success: false, error: 'Invalid credentials' },
         { status: 401 }
       );
     }
@@ -96,22 +99,25 @@ export async function POST(request: NextRequest) {
     });
 
     return NextResponse.json({
-      message: 'Login successful',
-      user: {
-        id: user.id,
-        name: user.name,
-        username: user.username,
-        contact: user.contact,
-        role: user.role,
-        createdAt: user.createdAt,
+      success: true,
+      data: {
+        user: {
+          id: user.id,
+          name: user.name,
+          username: user.username,
+          contact: user.contact,
+          role: user.role,
+          createdAt: user.createdAt,
+        },
+        token,
       },
-      token,
+      message: 'Login successful',
     });
 
   } catch (error) {
     console.error('Login error:', error);
     return NextResponse.json(
-      { error: 'Internal server error' },
+      { success: false, error: 'Internal server error' },
       { status: 500 }
     );
   }

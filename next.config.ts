@@ -6,6 +6,10 @@ const nextConfig: NextConfig = {
   
   // Docker and production optimizations
   output: process.env.NODE_ENV === 'production' ? 'standalone' : undefined,
+
+  compiler: {
+    removeConsole: process.env.NODE_ENV === 'production', // Remove console logs in production
+  },
   
   // Image optimization for Docker
   images: {

@@ -16,7 +16,7 @@ export function AdminKosFilter({ initialFilters, onFilterChange }: AdminKosFilte
 
   useEffect(() => {
     onFilterChange({ search: debouncedSearchTerm });
-  }, [debouncedSearchTerm]);
+  }, [debouncedSearchTerm, onFilterChange]);
 
   return (
     <div className="bg-white rounded-lg shadow p-6 mb-6">

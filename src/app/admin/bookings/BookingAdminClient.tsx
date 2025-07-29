@@ -3,26 +3,14 @@
 import { useState } from 'react';
 import { useAdminBooking } from '@/hooks/admin/useAdminBooking';
 import { useDebounce } from '@/hooks/useDebounce';
-import { AdminBookingStatus, useAdminUpdateBookingStatus } from '@/hooks/admin/useAdminBookingStatus';
+import { AdminBookingStatus, useAdminUpdateBookingStatus } from '@/hooks/admin/useAdminUpdateBookingStatus';
 import { BookingStatusDropdown } from '@/components/features/dashboard/bookings/BookingStatusDropdown';
 import { clsx } from 'clsx';
-// 1. Impor fungsi showConfirm dan showToast dari sweetalert
 import { showError, showConfirm, showToast } from '@/lib/sweetalert';
+import type { AdminBookingData } from '@/types';
 
-interface BookingSearchParams {
-  page?: string;
-  limit?: string;
-  status?: string;
-  startDate?: string;
-  endDate?: string;
-  searchQuery?: string;
-}
 
-interface BookingAdminClientProps {
-  searchParams: BookingSearchParams;
-}
-
-export default function BookingAdminClient({ searchParams }: BookingAdminClientProps) {
+export default function BookingAdminClient() {
   const [status, setStatus] = useState<string>('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [startDate, setStartDate] = useState('');
@@ -45,6 +33,7 @@ export default function BookingAdminClient({ searchParams }: BookingAdminClientP
     searchQuery: debouncedSearchQuery || undefined,
   });
 
+  // Using unified API client
   const { trigger: updateStatus, isMutating } = useAdminUpdateBookingStatus();
 
   const handleFilterChange = (type: string, value: string) => {
@@ -70,6 +59,7 @@ export default function BookingAdminClient({ searchParams }: BookingAdminClientP
 
     setUpdatingId(bookingId);
     try {
+      // Using unified API client
       await updateStatus({
         bookingId: bookingId,
         status: newStatus,
@@ -199,7 +189,7 @@ export default function BookingAdminClient({ searchParams }: BookingAdminClientP
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
-              {bookings.map((booking) => (
+              {bookings.map((booking: AdminBookingData) => (
                 <tr key={booking.id} className="hover:bg-gray-50">
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">#{booking.id}</td>
                   <td className="px-6 py-4">

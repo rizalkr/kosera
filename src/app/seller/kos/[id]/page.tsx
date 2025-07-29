@@ -128,15 +128,15 @@ export default function SellerKosDetailPage() {
   }
 
   const status = getKosStatus();
-  const statistics = kosData.statistics || {
-    totalBookings: 0,
-    totalViews: 0,
-    totalRevenue: 0,
-    occupiedRooms: 0,
-    vacantRooms: 0,
-    totalRooms: 0,
-    pendingBookings: 0,
-    totalRoomsRentedOut: 0
+  const statistics = {
+    totalBookings: 0, // Not available in AdminKosData
+    totalViews: kosData.viewCount || 0,
+    totalRevenue: 0, // Not available in AdminKosData
+    occupiedRooms: kosData.occupiedRooms,
+    vacantRooms: kosData.totalRooms - kosData.occupiedRooms,
+    totalRooms: kosData.totalRooms,
+    pendingBookings: 0, // Not available in AdminKosData
+    totalRoomsRentedOut: kosData.occupiedRooms
   };
 
   const occupancyRate = statistics.totalRooms > 0 

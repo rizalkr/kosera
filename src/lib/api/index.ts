@@ -2,6 +2,7 @@
 export * from './admin';
 export * from './auth';
 export * from './bookings';
+export * from './client'; // Export unified API client
 export * from './favorites';
 export * from './kos';
 export * from './seller';
@@ -12,13 +13,18 @@ export * from './utils'; // utils.js berisi fungsi createAuthHeaders dan API_BAS
 import { adminApi } from './admin';
 import { authApi } from './auth';
 import { bookingsApi } from './bookings';
+import { apiClient } from './client';
 import { favoritesApi } from './favorites';
 import { kosApi } from './kos';
 import { sellerApi } from './seller';
 import { userApi } from './user';
 
 // Langkah 3: Gabungkan semua modul menjadi satu objek utama.
-const apiClient = {
+const api = {
+  // Unified client for direct usage
+  client: apiClient,
+  
+  // Domain-specific API modules
   admin: adminApi,
   auth: authApi,
   bookings: bookingsApi,
@@ -28,5 +34,5 @@ const apiClient = {
   user: userApi,
 };
 
-// Langkah 4: Ekspor apiClient sebagai default export.
-export default apiClient;
+// Langkah 4: Ekspor api sebagai default export.
+export default api;

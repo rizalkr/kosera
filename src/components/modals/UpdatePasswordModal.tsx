@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { userApi } from '@/lib/api/utils';
+import { userApi } from '@/lib/api';
 import { showSuccess, showError } from '@/lib/sweetalert';
 
 interface UpdatePasswordModalProps {

@@ -1,8 +1,8 @@
 'use client';
 
 import { useState } from 'react';
-import { useAuthGuard } from '../hooks/useAuthGuard';
-import { useAuthToken } from '../hooks/useAuthToken';
+import { useAuthGuard } from '@/hooks/auth/useAuthGuard';
+import { useAuthToken } from '@/hooks/auth/useAuthToken';
 
 interface PhotoUploadFormProps {
   kosId: number;

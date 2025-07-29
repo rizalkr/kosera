@@ -1,40 +1,13 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import { useAuthToken } from '../auth/useAuthToken';
-
-export interface AdminBookingData {
-  id: number;
-  user: {
-    id: number;
-    name: string;
-    username: string;
-    email: string;
-  };
-  kos: {
-    id: number;
-    name: string;
-    city: string;
-  };
-  status: string;
-  checkInDate: string;
-  checkOutDate: string;
-  totalPrice: number;
-  createdAt: string;
-  updatedAt: string;
-}
-
-export interface AdminBookingFilters {
-  page?: number;
-  limit?: number;
-  status?: string;
-  startDate?: string;
-  endDate?: string;
-  searchQuery?: string;
-}
-
+import { adminBookingsApi } from '@/lib/api/admin-bookings';
+import { ApiError } from '@/lib/api/client';
+import type { AdminBookingData, AdminBookingFilters } from '@/types';
+/**
+ * Refactored admin booking hook using unified API client
+ */
 export const useAdminBooking = (filters: AdminBookingFilters = {}) => {
-  const { getToken } = useAuthToken();
   const [data, setData] = useState<AdminBookingData[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -49,26 +22,13 @@ export const useAdminBooking = (filters: AdminBookingFilters = {}) => {
   const fetchAdminBooking = useCallback(async () => {
     try {
       setLoading(true);
-      const token = getToken();
-      if (!token) throw new Error('No authentication token found');
+      setError(null);
 
-      const queryParams = new URLSearchParams();
-      if (filters.page) queryParams.set('page', filters.page.toString());
-      if (filters.limit) queryParams.set('limit', filters.limit.toString());
-      if (filters.status) queryParams.set('status', filters.status);
-      if (filters.startDate) queryParams.set('startDate', filters.startDate);
-      if (filters.endDate) queryParams.set('endDate', filters.endDate);
-      if (filters.searchQuery) queryParams.set('searchQuery', filters.searchQuery);
-
-      const response = await fetch(`/api/admin/bookings?${queryParams}`, {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json',
-        },
-      });
-      if (!response.ok) throw new Error('Failed to fetch bookings data');
-      const result = await response.json();
-      if (result.success === false) throw new Error(result.error || 'Failed to fetch bookings data');
+      const result = await adminBookingsApi.getBookings(filters);
+      
+      if (!result.success) {
+        throw new Error(result.error || 'Failed to fetch bookings data');
+      }
 
       setData(result.data?.bookings || []);
       setPagination({
@@ -78,22 +38,27 @@ export const useAdminBooking = (filters: AdminBookingFilters = {}) => {
         hasNextPage: result.data?.pagination?.hasNext || false,
         hasPrevPage: result.data?.pagination?.hasPrev || false,
       });
-      setError(null);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to load bookings data');
+      const errorMessage = err instanceof ApiError 
+        ? `${err.message} (Status: ${err.status})`
+        : err instanceof Error 
+        ? err.message 
+        : 'Failed to load bookings data';
+      
+      setError(errorMessage);
       setData([]);
     } finally {
       setLoading(false);
     }
-  }, [getToken, filters.page, filters.limit, filters.status, filters.startDate, filters.endDate, filters.searchQuery]);
+  }, [filters]);
 
-  const refetch = () => {
+  const refetch = useCallback(() => {
     fetchAdminBooking();
-  };
+  }, [fetchAdminBooking]);
 
   useEffect(() => {
     fetchAdminBooking();
-  }, [fetchAdminBooking, filters.page, filters.limit, filters.status, filters.startDate, filters.endDate, filters.searchQuery]);
+  }, [fetchAdminBooking]);
 
   return {
     data,

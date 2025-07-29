@@ -48,7 +48,7 @@ export default function FeaturedList() {
     );
   }
 
-  const kosList = data?.data?.data || [];
+  const kosList = data?.data || [];
 
   if (kosList.length === 0) {
     return (

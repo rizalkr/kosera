@@ -1,17 +1,19 @@
-import { createAuthHeaders, API_BASE_URL } from './utils';
+import { apiClient } from './client';
 import type { ApiResponse } from '@/types';
+import type { AdminKosData } from '@/types/kos';
 
 export const sellerApi = {
-  getDashboard: async (): Promise<ApiResponse<any>> => {
-    const response = await fetch(`${API_BASE_URL}/api/seller/dashboard`, {
-      headers: createAuthHeaders(),
-    });
-    return response.json();
+  /**
+   * Get seller dashboard data
+   */
+  getDashboard: async (): Promise<ApiResponse<{ kos: AdminKosData[]; stats: unknown }>> => {
+    return apiClient.get('/api/seller/dashboard');
   },
-  getKosDetail: async (kosId: number): Promise<ApiResponse<any>> => {
-    const response = await fetch(`${API_BASE_URL}/api/seller/kos/${kosId}`, {
-      headers: createAuthHeaders(),
-    });
-    return response.json();
+
+  /**
+   * Get detailed information about a specific kos owned by the seller
+   */
+  getKosDetail: async (kosId: number): Promise<ApiResponse<AdminKosData>> => {
+    return apiClient.get(`/api/seller/kos/${kosId}`);
   },
 };

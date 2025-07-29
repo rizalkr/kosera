@@ -1,27 +1,28 @@
-import { createAuthHeaders, API_BASE_URL } from './utils';
+import { apiClient } from './client';
 import type { ApiResponse, FavoritesResponse } from '@/types';
 
 export const favoritesApi = {
+  /**
+   * Get user's favorite kos listings
+   */
   getFavorites: async (): Promise<FavoritesResponse> => {
-    const response = await fetch(`${API_BASE_URL}/api/user/favorites`, {
-      headers: createAuthHeaders(),
-    });
-    return response.json();
+    return apiClient.get('/api/user/favorites');
   },
-  addFavorite: async (kosId: number): Promise<ApiResponse<any>> => {
-    const response = await fetch(`${API_BASE_URL}/api/user/favorites`, {
-      method: 'POST',
-      headers: createAuthHeaders(),
-      body: JSON.stringify({ kosId }),
-    });
-    return response.json();
+
+  /**
+   * Add a kos to user's favorites
+   */
+  addFavorite: async (kosId: number): Promise<ApiResponse<{ id: number }>> => {
+    return apiClient.post('/api/user/favorites', { kosId });
   },
-  removeFavorite: async (kosId: number): Promise<ApiResponse<any>> => {
-    const response = await fetch(`${API_BASE_URL}/api/user/favorites`, {
-      method: 'DELETE',
-      headers: createAuthHeaders(),
-      body: JSON.stringify({ kosId }),
+
+  /**
+   * Remove a kos from user's favorites
+   */
+  removeFavorite: async (kosId: number): Promise<ApiResponse<{ id: number }>> => {
+    return apiClient.request('/api/user/favorites', { 
+      method: 'DELETE', 
+      body: { kosId } 
     });
-    return response.json();
   },
 };

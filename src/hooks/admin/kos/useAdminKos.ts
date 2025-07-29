@@ -52,7 +52,7 @@ export const useAdminKos = (filters: AdminKosFilters = {}) => {
     } finally {
       setLoading(false);
     }
-  }, [JSON.stringify(filters)]); // Dependency yang jauh lebih bersih dan stabil
+  }, [filters]); // Use filters directly instead of JSON.stringify
 
   const refetch = useCallback(() => {
     fetchAdminKos();

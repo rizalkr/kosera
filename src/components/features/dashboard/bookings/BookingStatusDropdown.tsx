@@ -1,5 +1,5 @@
 import { FC } from 'react';
-import { AdminBookingStatus } from '@/hooks/admin/useAdminBookingStatus';
+import { AdminBookingStatus } from '@/hooks/admin/useAdminUpdateBookingStatus';
 import { clsx } from 'clsx';
 
 export interface BookingStatusDropdownProps {
