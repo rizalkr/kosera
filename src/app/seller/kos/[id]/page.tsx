@@ -123,11 +123,11 @@ export default function SellerKosDetailPage() {
     totalBookings: 0, // Not available in AdminKosData
     totalViews: kosData.viewCount || 0,
     totalRevenue: 0, // Not available in AdminKosData
-    occupiedRooms: kosData.occupiedRooms,
-    vacantRooms: kosData.totalRooms - kosData.occupiedRooms,
-    totalRooms: kosData.totalRooms,
+    occupiedRooms: kosData.occupiedRooms ?? 0,
+    vacantRooms: Math.max((kosData.totalRooms ?? 0) - (kosData.occupiedRooms ?? 0), 0),
+    totalRooms: kosData.totalRooms ?? 0,
     pendingBookings: 0, // Not available in AdminKosData
-    totalRoomsRentedOut: kosData.occupiedRooms
+    totalRoomsRentedOut: kosData.occupiedRooms ?? 0,
   };
 
   const occupancyRate = statistics.totalRooms > 0 

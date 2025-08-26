@@ -22,7 +22,7 @@ export const QuickActionsPanel: React.FC<QuickActionsPanelProps> = ({ hasKos }) 
           <span>Lihat Analitik</span>
         </button>
         <button
-          onClick={() => router.push('/seller/kos/add')}
+          onClick={() => router.push('/seller/kos/new')}
           className="flex items-center justify-center space-x-2 bg-green-50 hover:bg-green-100 text-green-600 p-4 rounded-lg transition-colors"
         >
           <span>➕</span>
