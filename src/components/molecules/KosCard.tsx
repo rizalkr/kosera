@@ -16,9 +16,14 @@ export interface KosCardProps {
  */
 export const KosCard: React.FC<KosCardProps> = ({ kosData, formatCurrency: formatFn = formatCurrency }) => {
   const router = useRouter();
-  const occupancyRate = kosData.totalRooms > 0
-    ? Math.round((kosData.occupiedRooms / kosData.totalRooms) * 100)
-    : 0;
+
+  // --- Safe numeric normalization to prevent NaN rendering ---
+  const totalRooms = Number.isFinite((kosData as any).totalRooms) ? (kosData as any).totalRooms as number : 0;
+  const occupiedRooms = Number.isFinite((kosData as any).occupiedRooms) ? (kosData as any).occupiedRooms as number : 0;
+  const viewCount = Number.isFinite((kosData as any).viewCount) ? (kosData as any).viewCount as number : 0;
+  const vacantRooms = Math.max(0, totalRooms - occupiedRooms);
+  const occupancyRate = totalRooms > 0 ? Math.round((occupiedRooms / totalRooms) * 100) : 0;
+  // -----------------------------------------------------------
 
   return (
     <Card className="border border-gray-200 overflow-hidden" padding="lg">
@@ -29,26 +34,26 @@ export const KosCard: React.FC<KosCardProps> = ({ kosData, formatCurrency: forma
           <p className="text-xs text-gray-500 mt-1">{kosData.address}</p>
         </div>
         <div className="text-right">
-          <p className="text-lg font-bold text-blue-600">{formatFn(kosData.price)}</p>
+          <p className="text-lg font-bold text-blue-600">{formatFn(Number.isFinite((kosData as any).price) ? (kosData as any).price : 0)}</p>
           <p className="text-xs text-gray-500">per month</p>
         </div>
       </div>
 
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
         <div className="text-center p-3 bg-blue-50 rounded-lg">
-          <p className="text-xl font-bold text-blue-600">{0}</p>
+          <p className="text-xl font-bold text-blue-600">0</p>
           <p className="text-xs text-blue-600">Total Booking</p>
         </div>
         <div className="text-center p-3 bg-green-50 rounded-lg">
-          <p className="text-xl font-bold text-green-600">{kosData.viewCount || 0}</p>
+          <p className="text-xl font-bold text-green-600">{viewCount}</p>
           <p className="text-xs text-green-600">Dilihat</p>
         </div>
         <div className="text-center p-3 bg-yellow-50 rounded-lg">
-          <p className="text-xl font-bold text-yellow-600">{kosData.occupiedRooms}</p>
+          <p className="text-xl font-bold text-yellow-600">{occupiedRooms}</p>
           <p className="text-xs text-yellow-600">Terisi</p>
         </div>
         <div className="text-center p-3 bg-purple-50 rounded-lg">
-          <p className="text-xl font-bold text-purple-600">{kosData.totalRooms - kosData.occupiedRooms}</p>
+          <p className="text-xl font-bold text-purple-600">{vacantRooms}</p>
           <p className="text-xs text-purple-600">Kosong</p>
         </div>
       </div>
@@ -74,7 +79,7 @@ export const KosCard: React.FC<KosCardProps> = ({ kosData, formatCurrency: forma
 
         <div className="flex justify-between items-center">
           <span className="text-sm text-gray-600">Kamar Tersewa (Historis)</span>
-          <span className="text-sm font-semibold text-gray-500">{kosData.occupiedRooms}</span>
+          <span className="text-sm font-semibold text-gray-500">{occupiedRooms}</span>
         </div>
       </div>
 
