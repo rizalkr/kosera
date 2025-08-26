@@ -15,15 +15,6 @@ export default function SellerKosDetailPage() {
   const { data: kosResponse, isLoading, error, refetch } = useSellerKosDetail(parseInt(kosId));
   const kosData = kosResponse?.data;
   
-  // Debug logging
-  console.log('🔍 Seller Kos Detail Debug:', {
-    kosId,
-    kosResponse,
-    kosData,
-    isLoading,
-    error
-  });
-  
   const [activeTab, setActiveTab] = useState<'overview' | 'bookings' | 'analytics' | 'settings'>('overview');
   const [isRefreshing, setIsRefreshing] = useState(false);
 

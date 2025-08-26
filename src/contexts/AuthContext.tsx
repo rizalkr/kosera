@@ -2,6 +2,8 @@
 
 import { createContext, useContext, useEffect, useState, useCallback, ReactNode } from 'react';
 import { JWTPayload } from '../lib/auth';
+import { apiClient } from '@/lib/api/client';
+import { z } from 'zod';
 
 export interface User {
   id: number;
@@ -24,6 +26,19 @@ interface AuthContextType {
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
+
+// Zod schema for verify response
+const verifyResponseSchema = z.object({
+  message: z.string().optional(),
+  user: z.object({
+    userId: z.number(),
+    username: z.string(),
+    role: z.string(),
+  }).optional(),
+  error: z.string().optional(),
+}).passthrough();
+
+type VerifyResponse = z.infer<typeof verifyResponseSchema>;
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<JWTPayload | null>(null);
@@ -67,20 +82,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         if (!token) {
           setToken(currentToken);
         }
-
-        // Verify token with server
-        const response = await fetch('/api/auth/verify', {
-          headers: {
-            'Authorization': `Bearer ${currentToken}`
-          }
-        });
-
-        if (response.ok) {
-          const userData = JSON.parse(userDataStr);
+        // Use validated client (pass requireAuth false because we manually attach header below) 
+        const response = await apiClient.getValidated<VerifyResponse>('/api/auth/verify', verifyResponseSchema, undefined, { headers: { Authorization: `Bearer ${currentToken}` } });
+        if (response.user) {
+          const userData = JSON.parse(userDataStr) as JWTPayload;
           setUser(userData);
           setToken(currentToken);
         } else {
-          // Token is invalid, clear localStorage
           logout();
         }
       } else {

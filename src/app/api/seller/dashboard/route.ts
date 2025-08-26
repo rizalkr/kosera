@@ -129,7 +129,7 @@ export async function GET(request: NextRequest) {
     });
 
     // Calculate overall statistics
-    const overallStats = {
+    const stats = { // renamed from overallStats to match frontend schema
       totalKos: sellerKos.length,
       totalBookings: bookingStats.reduce((sum, stat) => sum + stat.totalBookings, 0),
       totalPendingBookings: bookingStats.reduce((sum, stat) => sum + stat.pendingBookings, 0),
@@ -145,7 +145,7 @@ export async function GET(request: NextRequest) {
       success: true,
       data: {
         kos: dashboardData,
-        overallStats,
+        stats, // standardized key (was overallStats)
       }
     });
 

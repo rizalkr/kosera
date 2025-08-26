@@ -6,24 +6,49 @@ import { Card, CardFooter } from '@/components/atoms';
 import type { AdminKosData } from '@/types/kos';
 import { formatCurrency } from '@/utils/format';
 
+// Extended statistics interface (API nested object)
+export interface KosStatistics {
+  totalBookings: number;
+  pendingBookings: number;
+  occupiedRooms: number;
+  vacantRooms: number;
+  totalRooms: number;
+  totalRevenue: number;
+  totalRoomsRentedOut: number;
+}
+
+// Allow kosData to optionally carry a nested statistics block from API
+export interface KosWithStatistics extends AdminKosData {
+  statistics?: KosStatistics;
+}
+
 export interface KosCardProps {
-  kosData: AdminKosData;
+  kosData: KosWithStatistics;
   formatCurrency?: (amount: number) => string; // optional override
 }
 
 /**
  * Molecule: KosCard - summary card for a kos property.
+ * Supports both flattened and nested (statistics) metrics.
  */
 export const KosCard: React.FC<KosCardProps> = ({ kosData, formatCurrency: formatFn = formatCurrency }) => {
   const router = useRouter();
+  const stats = kosData.statistics; // may be undefined if API flattened later
 
-  // --- Safe numeric normalization to prevent NaN rendering ---
-  const totalRooms = Number.isFinite((kosData as any).totalRooms) ? (kosData as any).totalRooms as number : 0;
-  const occupiedRooms = Number.isFinite((kosData as any).occupiedRooms) ? (kosData as any).occupiedRooms as number : 0;
-  const viewCount = Number.isFinite((kosData as any).viewCount) ? (kosData as any).viewCount as number : 0;
-  const vacantRooms = Math.max(0, totalRooms - occupiedRooms);
+  // Helper for safe numeric extraction
+  const num = (value: unknown, fallback = 0) => (typeof value === 'number' && Number.isFinite(value) ? value : fallback);
+
+  // Prefer flattened root (if later we decide to flatten API) then fallback to nested statistics
+  const totalRooms = num((kosData as any).totalRooms ?? stats?.totalRooms);
+  const occupiedRooms = num((kosData as any).occupiedRooms ?? stats?.occupiedRooms);
+  const vacantRooms = num((kosData as any).vacantRooms ?? stats?.vacantRooms ?? (totalRooms - occupiedRooms));
+  const totalBookings = num((kosData as any).totalBookings ?? stats?.totalBookings);
+  const pendingBookings = num((kosData as any).pendingBookings ?? stats?.pendingBookings);
+  const totalRevenue = num((kosData as any).totalRevenue ?? stats?.totalRevenue);
+  const totalRoomsRentedOut = num((kosData as any).totalRoomsRentedOut ?? stats?.totalRoomsRentedOut);
+  const viewCount = num(kosData.viewCount);
+  const price = num(kosData.price);
   const occupancyRate = totalRooms > 0 ? Math.round((occupiedRooms / totalRooms) * 100) : 0;
-  // -----------------------------------------------------------
 
   return (
     <Card className="border border-gray-200 overflow-hidden" padding="lg">
@@ -34,15 +59,18 @@ export const KosCard: React.FC<KosCardProps> = ({ kosData, formatCurrency: forma
           <p className="text-xs text-gray-500 mt-1">{kosData.address}</p>
         </div>
         <div className="text-right">
-          <p className="text-lg font-bold text-blue-600">{formatFn(Number.isFinite((kosData as any).price) ? (kosData as any).price : 0)}</p>
-          <p className="text-xs text-gray-500">per month</p>
+          <p className="text-lg font-bold text-blue-600">{formatFn(price)}</p>
+          <p className="text-xs text-gray-500">per bulan</p>
         </div>
       </div>
 
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
         <div className="text-center p-3 bg-blue-50 rounded-lg">
-          <p className="text-xl font-bold text-blue-600">0</p>
+          <p className="text-xl font-bold text-blue-600">{totalBookings}</p>
           <p className="text-xs text-blue-600">Total Booking</p>
+          {pendingBookings > 0 && (
+            <p className="text-[10px] text-blue-500 mt-1">{pendingBookings} pending</p>
+          )}
         </div>
         <div className="text-center p-3 bg-green-50 rounded-lg">
           <p className="text-xl font-bold text-green-600">{viewCount}</p>
@@ -73,13 +101,13 @@ export const KosCard: React.FC<KosCardProps> = ({ kosData, formatCurrency: forma
         <div className="flex justify-between items-center pt-2">
           <span className="text-sm text-gray-600">Total Pendapatan</span>
           <span className="text-sm font-semibold text-green-600">
-            {formatFn(0)}
+            {formatFn(totalRevenue)}
           </span>
         </div>
 
         <div className="flex justify-between items-center">
           <span className="text-sm text-gray-600">Kamar Tersewa (Historis)</span>
-          <span className="text-sm font-semibold text-gray-500">{occupiedRooms}</span>
+          <span className="text-sm font-semibold text-gray-500">{totalRoomsRentedOut}</span>
         </div>
       </div>
 

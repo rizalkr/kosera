@@ -1,81 +1,193 @@
-import { createAuthHeaders, API_BASE_URL } from './utils';
-import type {
-  AdminKosApiResponse,
-  AdminKosFilters,
-  AdminKosData,
-  ApiResponse,
-} from '@/types';
+import { apiClient } from './client';
+import { z } from 'zod';
+import type { AdminKosApiResponse, AdminKosFilters, AdminKosData, ApiResponse } from '@/types';
+
+// Schemas
+const adminKosDataSchema = z.object({
+  id: z.number(),
+  name: z.string(),
+  description: z.string(),
+  price: z.number(),
+  address: z.string(),
+  city: z.string(),
+  facilities: z.string(),
+  totalRooms: z.number().optional().default(0),
+  occupiedRooms: z.number().optional().default(0),
+  averageRating: z.string(),
+  reviewCount: z.number(),
+  photos: z.array(z.any()).optional(),
+  createdAt: z.string(),
+  updatedAt: z.string(),
+  postId: z.number(),
+  isFeatured: z.boolean(),
+  viewCount: z.number(),
+  favoriteCount: z.number(),
+  photoCount: z.number(),
+  totalPost: z.number(),
+  totalPenjualan: z.number(),
+  owner: z.object({ id: z.number(), username: z.string(), fullName: z.string().optional().or(z.string()), contact: z.string(), role: z.string().optional() })
+});
+
+const adminKosListSchema = z.object({
+  success: z.boolean(),
+  data: z.object({
+    items: z.array(adminKosDataSchema).optional(),
+  }).optional(),
+}).passthrough();
+
+// Analytics schema (simplified based on hook types)
+const analyticsSchema = z.object({
+  overview: z.object({
+    totalKos: z.number(),
+    totalViews: z.number(),
+    totalFavorites: z.number(),
+    averageRating: z.number().or(z.string()),
+    totalReviews: z.number(),
+  }),
+  topPerforming: z.array(z.object({
+    id: z.number(),
+    name: z.string(),
+    city: z.string(),
+    title: z.string(),
+    price: z.number(),
+    viewCount: z.number(),
+    favoriteCount: z.number(),
+    averageRating: z.number().or(z.string()),
+    reviewCount: z.number(),
+    qualityScore: z.number().optional(),
+    owner: z.object({ name: z.string().optional(), username: z.string() }),
+  })),
+  cityDistribution: z.array(z.object({
+    city: z.string(),
+    kosCount: z.number(),
+    averagePrice: z.number(),
+    totalViews: z.number(),
+  })),
+  priceStatistics: z.object({
+    minPrice: z.number(),
+    maxPrice: z.number(),
+    averagePrice: z.number(),
+    medianPrice: z.number(),
+  }),
+  featuredStatistics: z.object({
+    totalFeatured: z.number(),
+    averageFeaturedViews: z.number(),
+    averageFeaturedRating: z.number().or(z.string()),
+  }),
+  recentActivity: z.array(z.object({
+    kosName: z.string(),
+    city: z.string(),
+    viewCount: z.number(),
+    favoriteCount: z.number(),
+    updatedAt: z.string(),
+  })),
+  generatedAt: z.string(),
+});
+
+const analyticsResponseSchema = z.object({ success: z.boolean(), data: analyticsSchema.optional(), error: z.string().optional() });
+
+const usersResponseSchema = z.object({
+  users: z.array(z.object({
+    id: z.number(),
+    name: z.string(),
+    username: z.string(),
+    contact: z.string(),
+    role: z.string(),
+    createdAt: z.string(),
+  }))
+});
+
+const usersOuterResponseSchema = z.object({ success: z.boolean().optional(), data: usersResponseSchema.optional() }).passthrough();
+
+const bookingsResponseSchema = z.object({
+  bookings: z.array(z.object({
+    id: z.number(),
+    status: z.string(),
+    totalPrice: z.number(),
+    createdAt: z.string(),
+    user: z.object({ name: z.string().optional(), username: z.string().optional() }).optional(),
+    kos: z.object({ name: z.string(), city: z.string() }),
+  })),
+  pagination: z.object({
+    total: z.number(),
+    page: z.number(),
+    limit: z.number(),
+    totalPages: z.number(),
+  })
+});
+
+const bookingsOuterResponseSchema = z.object({ success: z.boolean(), data: bookingsResponseSchema.optional(), error: z.string().optional() });
+
+const createUserRequestSchema = z.object({
+  name: z.string().min(1),
+  username: z.string().min(1),
+  contact: z.string().min(1),
+  role: z.enum(['ADMIN', 'SELLER', 'RENTER']),
+  password: z.string().min(6),
+});
+
+const createUserResponseSchema = z.object({
+  success: z.boolean().optional(),
+  data: z.object({ id: z.number().optional() }).partial().optional(),
+  error: z.string().optional(),
+}).passthrough();
+
+// --------- Exported Types (inferred from schemas) ---------
+export type AnalyticsResponse = z.infer<typeof analyticsResponseSchema>;
+export type UsersOuterResponse = z.infer<typeof usersOuterResponseSchema>;
+export type BookingsOuterResponse = z.infer<typeof bookingsOuterResponseSchema>;
+export type CreateUserRequest = z.infer<typeof createUserRequestSchema>;
+export type CreateUserResponse = z.infer<typeof createUserResponseSchema>;
+export type AnalyticsData = NonNullable<AnalyticsResponse['data']>;
+export type UsersData = NonNullable<UsersOuterResponse['data']>;
+export type BookingsData = NonNullable<BookingsOuterResponse['data']>;
 
 export const adminApi = {
+  /** Get all kos (legacy structure support) */
   getAllKos: async (params: AdminKosFilters = {}): Promise<AdminKosApiResponse> => {
-    const searchParams = new URLSearchParams();
-    Object.entries(params).forEach(([key, value]) => {
-      if (value !== undefined && value !== null) {
-        searchParams.append(key, value.toString());
-      }
-    });
-    const response = await fetch(`${API_BASE_URL}/api/admin/kos?${searchParams.toString()}`, {
-      headers: createAuthHeaders(),
-    });
-    return response.json();
+    const query: Record<string, unknown> = { ...params };
+    return apiClient.get<AdminKosApiResponse>('/api/admin/kos', query);
   },
 
   toggleFeatured: async (kosId: number, isFeatured: boolean): Promise<ApiResponse<{ kos: AdminKosData }>> => {
-    const response = await fetch(`${API_BASE_URL}/api/admin/kos/${kosId}/featured`, {
-      method: 'PATCH',
-      headers: createAuthHeaders(),
-      body: JSON.stringify({ isFeatured }),
-    });
-    return response.json();
+    return apiClient.patch(`/api/admin/kos/${kosId}/featured`, { isFeatured });
   },
   
   deleteKos: async (kosId: number): Promise<ApiResponse<{ id: number }>> => {
-    const response = await fetch(`${API_BASE_URL}/api/admin/kos/${kosId}`, {
-      method: 'DELETE',
-      headers: createAuthHeaders(),
-    });
-    return response.json();
+    return apiClient.delete(`/api/admin/kos/${kosId}`);
   },
 
   restoreKos: async (kosId: number): Promise<ApiResponse<{ id: number }>> => {
-    const response = await fetch(`${API_BASE_URL}/api/admin/kos/${kosId}/restore`, {
-      method: 'PATCH',
-      headers: createAuthHeaders(),
-    });
-    return response.json();
+    return apiClient.patch(`/api/admin/kos/${kosId}/restore`);
   },
 
   permanentDeleteKos: async (kosId: number): Promise<ApiResponse<{ id: number }>> => {
-    const response = await fetch(`${API_BASE_URL}/api/admin/kos/${kosId}/permanent`, {
-      method: 'DELETE',
-      headers: createAuthHeaders(),
-    });
-    return response.json();
+    return apiClient.delete(`/api/admin/kos/${kosId}/permanent`);
   },
 
   bulkArchiveKos: async (kosIds: number[]): Promise<ApiResponse<{ count: number }>> => {
-    const response = await fetch(`${API_BASE_URL}/api/admin/kos/bulk`, {
-      method: 'POST',
-      headers: createAuthHeaders(),
-      body: JSON.stringify({ kosIds }),
-    });
-    return response.json();
+    return apiClient.post('/api/admin/kos/bulk', { kosIds });
   },
 
   bulkPermanentDeleteKos: async (kosIds: number[]): Promise<ApiResponse<{ count: number }>> => {
-    const response = await fetch(`${API_BASE_URL}/api/admin/kos/bulk`, {
-      method: 'DELETE',
-      headers: createAuthHeaders(),
-      body: JSON.stringify({ kosIds }),
-    });
-    return response.json();
+    return apiClient.request('/api/admin/kos/bulk', { method: 'DELETE', body: { kosIds } });
   },
 
   bulkCleanupKos: async (): Promise<ApiResponse<{ count: number }>> => {
-    const response = await fetch(`${API_BASE_URL}/api/admin/kos/cleanup`, {
-      method: 'DELETE',
-      headers: createAuthHeaders(),
-    });
-    return response.json();
+    return apiClient.delete('/api/admin/kos/cleanup');
+  },
+
+  // New validated endpoints
+  getAnalytics: async () => {
+    return apiClient.getValidated('/api/admin/analytics', analyticsResponseSchema);
+  },
+  getUsers: async () => {
+    return apiClient.getValidated('/api/admin/users', usersOuterResponseSchema);
+  },
+  getBookings: async (limit = 100) => {
+    return apiClient.getValidated('/api/bookings', bookingsOuterResponseSchema, { limit });
+  },
+  createUser: async (payload: CreateUserRequest) => {
+    return apiClient.postValidated('/api/admin/users', createUserResponseSchema, payload);
   },
 };

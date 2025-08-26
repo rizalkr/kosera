@@ -1,4 +1,5 @@
 import type { ApiResponse } from '@/types';
+import { ZodSchema } from 'zod';
 
 /**
  * Unified API Client Configuration
@@ -185,6 +186,34 @@ export class ApiClient {
   }
 
   /**
+   * Validate arbitrary data against a Zod schema. Throws ApiError on failure.
+   */
+  private validateWithSchema<T>(data: unknown, schema: ZodSchema<T>, endpoint: string): T {
+    const parsed = schema.safeParse(data);
+    if (!parsed.success) {
+      const issues = parsed.error.issues.map(i => `${i.path.join('.')}: ${i.message}`).join('; ');
+      throw new ApiError(
+        422,
+        'Unprocessable Entity',
+        `Validation failed for ${endpoint}: ${issues}`,
+        data
+      );
+    }
+    return parsed.data;
+  }
+
+  /** Core generic validator wrapper */
+  private async requestValidated<T>(
+    endpoint: string,
+    schema: ZodSchema<T>,
+    options: RequestOptions = {},
+    queryParams?: Record<string, unknown>
+  ): Promise<T> {
+    const raw = await this.request<unknown>(endpoint, options, queryParams);
+    return this.validateWithSchema(raw, schema, endpoint);
+  }
+
+  /**
    * Generic request method
    */
   async request<T>(
@@ -249,6 +278,23 @@ export class ApiClient {
     options: Omit<RequestOptions, 'method' | 'body'> = {}
   ): Promise<T> {
     return this.request<T>(endpoint, { ...options, method: 'DELETE' });
+  }
+
+  // ------------------ Convenience validated HTTP verbs ------------------
+  async getValidated<T>(endpoint: string, schema: ZodSchema<T>, queryParams?: Record<string, unknown>, options: Omit<RequestOptions, 'method' | 'body'> = {}): Promise<T> {
+    return this.requestValidated(endpoint, schema, { ...options, method: 'GET' }, queryParams);
+  }
+  async postValidated<T>(endpoint: string, schema: ZodSchema<T>, body?: unknown, options: Omit<RequestOptions, 'method'> = {}): Promise<T> {
+    return this.requestValidated(endpoint, schema, { ...options, method: 'POST', body });
+  }
+  async putValidated<T>(endpoint: string, schema: ZodSchema<T>, body?: unknown, options: Omit<RequestOptions, 'method'> = {}): Promise<T> {
+    return this.requestValidated(endpoint, schema, { ...options, method: 'PUT', body });
+  }
+  async patchValidated<T>(endpoint: string, schema: ZodSchema<T>, body?: unknown, options: Omit<RequestOptions, 'method'> = {}): Promise<T> {
+    return this.requestValidated(endpoint, schema, { ...options, method: 'PATCH', body });
+  }
+  async deleteValidated<T>(endpoint: string, schema: ZodSchema<T>, options: Omit<RequestOptions, 'method' | 'body'> = {}): Promise<T> {
+    return this.requestValidated(endpoint, schema, { ...options, method: 'DELETE' });
   }
 }
 
