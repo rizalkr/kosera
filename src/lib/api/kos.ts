@@ -30,7 +30,10 @@ export type CreateKosResponse = z.infer<typeof createKosResponseSchema>;
  * Uses the shared apiClient + Zod schema to ensure type-safe responses.
  */
 export const createKos = async (payload: CreateKosRequest): Promise<CreateKosResponse> => {
-  return apiClient.postValidated<CreateKosResponse>('/api/kos', createKosResponseSchema, payload);
+  console.debug('[kosApi] createKos - request payload', payload);
+  const response = await apiClient.postValidated<CreateKosResponse>('/api/kos', createKosResponseSchema, payload);
+  console.debug('[kosApi] createKos - raw response', response);
+  return response;
 };
 
 export const kosApi = {

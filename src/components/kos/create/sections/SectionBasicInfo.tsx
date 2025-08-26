@@ -11,6 +11,11 @@ export interface SectionBasicInfoProps {
 }
 
 export const SectionBasicInfo: React.FC<SectionBasicInfoProps> = ({ values, errors, onChange }) => {
+  // Debug render values
+  if (typeof window !== 'undefined') {
+    // Only log when values change (simple ref check)
+    console.debug('[SectionBasicInfo] render values', { totalRooms: values.totalRooms, occupiedRooms: values.occupiedRooms });
+  }
   return (
     <div>
       <h2 className="text-lg font-semibold text-gray-900 mb-4">Informasi Dasar</h2>
@@ -32,12 +37,12 @@ export const SectionBasicInfo: React.FC<SectionBasicInfoProps> = ({ values, erro
         </div>
         <div>
           <label htmlFor="totalRooms" className="block text-sm font-medium text-gray-700 mb-2">Total Kamar *</label>
-          <input type="number" id="totalRooms" name="totalRooms" value={values.totalRooms || ''} onChange={onChange} placeholder="10" min={1} className={`${inputBase} ${errors.totalRooms ? 'border-red-300' : 'border-gray-300'}`} />
+          <input type="number" id="totalRooms" name="totalRooms" value={values.totalRooms || ''} onChange={(e) => { console.debug('[SectionBasicInfo] totalRooms change', { raw: e.target.value }); onChange(e); }} placeholder="10" min={1} className={`${inputBase} ${errors.totalRooms ? 'border-red-300' : 'border-gray-300'}`} />
           {errors.totalRooms && <p className="text-red-500 text-xs mt-1">{errors.totalRooms}</p>}
         </div>
         <div>
           <label htmlFor="occupiedRooms" className="block text-sm font-medium text-gray-700 mb-2">Kamar Terisi (Opsional)</label>
-          <input type="number" id="occupiedRooms" name="occupiedRooms" value={values.occupiedRooms || ''} onChange={onChange} placeholder="2" min={0} max={values.totalRooms || undefined} className={`${inputBase} ${errors.occupiedRooms ? 'border-red-300' : 'border-gray-300'}`} />
+          <input type="number" id="occupiedRooms" name="occupiedRooms" value={values.occupiedRooms || ''} onChange={(e) => { console.debug('[SectionBasicInfo] occupiedRooms change', { raw: e.target.value }); onChange(e); }} placeholder="2" min={0} max={values.totalRooms || undefined} className={`${inputBase} ${errors.occupiedRooms ? 'border-red-300' : 'border-gray-300'}`} />
           {errors.occupiedRooms && <p className="text-red-500 text-xs mt-1">{errors.occupiedRooms}</p>}
           <p className="text-xs text-gray-500 mt-1">Jumlah kamar yang sudah dihuni saat ini</p>
         </div>

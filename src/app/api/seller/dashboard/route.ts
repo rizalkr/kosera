@@ -39,6 +39,8 @@ export async function GET(request: NextRequest) {
         address: kos.address,
         city: kos.city,
         facilities: kos.facilities,
+        totalRooms: kos.totalRooms, // NEW: explicit total rooms from kos table
+        occupiedRoomsDb: kos.occupiedRooms, // NEW: stored occupied rooms (fallback)
         title: posts.title,
         description: posts.description,
         price: posts.price,
@@ -101,21 +103,25 @@ export async function GET(request: NextRequest) {
           kosId,
           totalBookings: totalBookings[0].count || 0,
           pendingBookings: pendingBookings[0].count || 0,
-          occupiedRooms: confirmedBookings[0].count || 0,
+          occupiedRooms: confirmedBookings[0].count || 0, // booking-derived occupancy
           totalRevenue: Number(totalRevenue[0].total || 0),
         };
       })
     );
 
-    // Combine kos data with booking statistics
+    // Combine kos data with booking statistics using kos.totalRooms / kos.occupiedRooms
     const dashboardData = sellerKos.map(kosItem => {
       const stats = bookingStats.find(s => s.kosId === kosItem.id);
-      const totalRooms = kosItem.totalPost || 1; // Use totalPost as total rooms available
-      const occupiedRooms = stats?.occupiedRooms || 0;
+      // Prefer actual kos.totalRooms; fallback to legacy posts.totalPost then 1
+      const totalRooms = kosItem.totalRooms || kosItem.totalPost || 1;
+      // Occupied: prefer booking-derived confirmed count; fallback to stored kos.occupiedRoomsDb; else 0
+      const occupiedRooms = (stats?.occupiedRooms ?? kosItem.occupiedRoomsDb ?? 0);
       const vacantRooms = Math.max(0, totalRooms - occupiedRooms);
 
       return {
         ...kosItem,
+        totalRooms, // surface normalized field
+        occupiedRooms, // surface normalized field
         statistics: {
           totalBookings: stats?.totalBookings || 0,
           pendingBookings: stats?.pendingBookings || 0,
@@ -128,24 +134,24 @@ export async function GET(request: NextRequest) {
       };
     });
 
-    // Calculate overall statistics
-    const stats = { // renamed from overallStats to match frontend schema
+    // Calculate overall statistics based on normalized per-kos statistics
+    const stats = {
       totalKos: sellerKos.length,
       totalBookings: bookingStats.reduce((sum, stat) => sum + stat.totalBookings, 0),
       totalPendingBookings: bookingStats.reduce((sum, stat) => sum + stat.pendingBookings, 0),
-      totalOccupiedRooms: bookingStats.reduce((sum, stat) => sum + stat.occupiedRooms, 0),
-      totalVacantRooms: dashboardData.reduce((sum, kos) => sum + kos.statistics.vacantRooms, 0),
-      totalRooms: dashboardData.reduce((sum, kos) => sum + kos.statistics.totalRooms, 0),
+      totalOccupiedRooms: dashboardData.reduce((sum, k) => sum + k.statistics.occupiedRooms, 0),
+      totalVacantRooms: dashboardData.reduce((sum, k) => sum + k.statistics.vacantRooms, 0),
+      totalRooms: dashboardData.reduce((sum, k) => sum + k.statistics.totalRooms, 0),
       totalRevenue: bookingStats.reduce((sum, stat) => sum + stat.totalRevenue, 0),
-      totalViews: sellerKos.reduce((sum, kos) => sum + kos.viewCount, 0),
-      totalFavorites: sellerKos.reduce((sum, kos) => sum + kos.favoriteCount, 0),
+      totalViews: sellerKos.reduce((sum, k) => sum + k.viewCount, 0),
+      totalFavorites: sellerKos.reduce((sum, k) => sum + k.favoriteCount, 0),
     };
 
     return NextResponse.json({
       success: true,
       data: {
         kos: dashboardData,
-        stats, // standardized key (was overallStats)
+        stats,
       }
     });
 

@@ -63,6 +63,8 @@ export async function GET(
         facilities: kos.facilities,
         latitude: kos.latitude,
         longitude: kos.longitude,
+        totalRooms: kos.totalRooms, // added
+        occupiedRoomsDb: kos.occupiedRooms, // added (raw stored value)
         // Post data
         title: posts.title,
         description: posts.description,
@@ -155,14 +157,16 @@ export async function GET(
     // Calculate statistics
     const totalBookings = totalBookingsResult[0]?.count || 0;
     const pendingBookings = pendingBookingsResult[0]?.count || 0;
-    const occupiedRooms = confirmedBookingsResult[0]?.count || 0;
-    const totalRevenue = Number(totalRevenueResult[0]?.total || 0);
-    const totalRooms = kosData.totalPost || 1; // Use totalPost as total rooms available
+    const occupiedRooms = confirmedBookingsResult[0]?.count || kosData.occupiedRoomsDb || 0; // prefer booking count, fallback to stored
+    const totalRooms = kosData.totalRooms || kosData.totalPost || 1; // prefer kos.totalRooms
     const vacantRooms = Math.max(0, totalRooms - occupiedRooms);
+    const totalRevenue = Number(totalRevenueResult[0]?.total || 0); // add explicit assignment
 
     // Combine data with statistics
     const responseData = {
       ...kosData,
+      totalRooms, // surface normalized
+      occupiedRooms, // surface normalized
       statistics: {
         totalBookings,
         pendingBookings,
@@ -170,9 +174,11 @@ export async function GET(
         vacantRooms,
         totalRooms,
         totalRevenue,
-        totalRoomsRentedOut: kosData.totalPenjualan || 0, // Historical data
+        totalRoomsRentedOut: kosData.totalPenjualan || 0,
       }
     };
+
+    console.debug('[API seller/kos/:id] responseData', responseData);
 
     return NextResponse.json({
       success: true,

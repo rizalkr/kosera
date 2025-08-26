@@ -27,15 +27,19 @@ export const useCreateKosForm = (): UseCreateKosFormResult => {
 
   const handleInputChange: UseCreateKosFormResult['handleInputChange'] = useCallback((e) => {
     const { name, value } = e.target;
+    const numericFields = ['price','totalRooms','occupiedRooms','latitude','longitude'];
+    const parsed = numericFields.includes(name) ? (value === '' ? undefined : parseFloat(value)) : value;
+    console.debug('[CreateKosForm] handleInputChange', { name, rawValue: value, parsed });
     setFormData(prev => ({
       ...prev,
-      [name]: ['price','totalRooms','occupiedRooms','latitude','longitude'].includes(name) ? (value === '' ? undefined : parseFloat(value)) : value,
+      [name]: parsed,
     }));
     setErrors(prev => ({ ...prev, [name]: '' }));
   }, []);
 
   const validateForm = useCallback((): boolean => {
     const validationErrors: Record<string, string> = {};
+    console.debug('[CreateKosForm] validateForm - start', formData);
     try {
       createKosRequestSchema.parse({
         title: formData.title,
@@ -49,11 +53,14 @@ export const useCreateKosForm = (): UseCreateKosFormResult => {
         occupiedRooms: formData.occupiedRooms ? Number(formData.occupiedRooms) : undefined,
       });
     } catch (e) {
-      (e as z.ZodError).issues.forEach(i => { validationErrors[i.path.join('.')] = i.message; });
+      const issues = (e as z.ZodError).issues;
+      console.debug('[CreateKosForm] validateForm - zod issues', issues);
+      issues.forEach(i => { validationErrors[i.path.join('.')] = i.message; });
     }
     if (formData.occupiedRooms && formData.occupiedRooms > (formData.totalRooms || 0)) validationErrors.occupiedRooms = 'Kamar terisi tidak boleh lebih dari total kamar';
     if (formData.occupiedRooms && formData.occupiedRooms < 0) validationErrors.occupiedRooms = 'Kamar terisi tidak boleh negatif';
 
+    console.debug('[CreateKosForm] validateForm - errors', validationErrors);
     setErrors(validationErrors);
     return Object.keys(validationErrors).length === 0;
   }, [formData]);
@@ -70,7 +77,10 @@ export const useCreateKosForm = (): UseCreateKosFormResult => {
       totalRooms: Number(formData.totalRooms),
       occupiedRooms: formData.occupiedRooms ? Number(formData.occupiedRooms) : undefined,
     };
-    return createKos(payload);
+    console.debug('[CreateKosForm] submit - payload', payload);
+    const response = await createKos(payload);
+    console.debug('[CreateKosForm] submit - response', response);
+    return response;
   }, [formData]);
 
   const handleSubmit: UseCreateKosFormResult['handleSubmit'] = useCallback(async (e) => {
@@ -82,10 +92,13 @@ export const useCreateKosForm = (): UseCreateKosFormResult => {
       if (!hasValidToken()) throw new Error('Authentication required');
       const token = getToken();
       if (!token) throw new Error('No valid token available');
+      console.debug('[CreateKosForm] handleSubmit - token present, proceeding');
       const result = await submit();
-      if (result.error) throw new Error(result.error);
+      if ((result as any).error) throw new Error((result as any).error);
       await showSuccess('Kos baru berhasil dibuat! Anda akan dialihkan ke halaman detail kos.', 'Berhasil!');
-      const newKosId = result.data?.id; router.push(newKosId ? `/seller/kos/${newKosId}` : '/seller/kos');
+      const newKosId = (result as any).data?.id; 
+      console.debug('[CreateKosForm] handleSubmit - newKosId', newKosId);
+      router.push(newKosId ? `/seller/kos/${newKosId}` : '/seller/kos');
     } catch (error) {
       const appError = error as AppError;
       console.error('Error creating kos:', appError);

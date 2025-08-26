@@ -13,7 +13,7 @@ export default function SellerKosDetailPage() {
   const kosId = params.id as string;
   
   const { data: kosResponse, isLoading, error, refetch } = useSellerKosDetail(parseInt(kosId));
-  const kosData = kosResponse?.data;
+  const kosData = kosResponse?.data as any;
   
   const [activeTab, setActiveTab] = useState<'overview' | 'bookings' | 'analytics' | 'settings'>('overview');
   const [isRefreshing, setIsRefreshing] = useState(false);
@@ -119,16 +119,28 @@ export default function SellerKosDetailPage() {
   }
 
   const status = getKosStatus();
-  const statistics = {
-    totalBookings: 0, // Not available in AdminKosData
+  // Prefer statistics coming from API response if available
+  const apiStats = kosData?.statistics;
+  const statistics = apiStats ? {
+    totalBookings: apiStats.totalBookings ?? 0,
     totalViews: kosData.viewCount || 0,
-    totalRevenue: 0, // Not available in AdminKosData
-    occupiedRooms: kosData.occupiedRooms ?? 0,
-    vacantRooms: Math.max((kosData.totalRooms ?? 0) - (kosData.occupiedRooms ?? 0), 0),
-    totalRooms: kosData.totalRooms ?? 0,
-    pendingBookings: 0, // Not available in AdminKosData
-    totalRoomsRentedOut: kosData.occupiedRooms ?? 0,
+    totalRevenue: apiStats.totalRevenue ?? 0,
+    occupiedRooms: apiStats.occupiedRooms ?? 0,
+    vacantRooms: apiStats.vacantRooms ?? Math.max((apiStats.totalRooms ?? 0) - (apiStats.occupiedRooms ?? 0), 0),
+    totalRooms: apiStats.totalRooms ?? 0,
+    pendingBookings: apiStats.pendingBookings ?? 0,
+    totalRoomsRentedOut: apiStats.totalRoomsRentedOut ?? kosData.totalPenjualan ?? 0,
+  } : {
+    totalBookings: 0,
+    totalViews: kosData?.viewCount || 0,
+    totalRevenue: 0,
+    occupiedRooms: kosData?.occupiedRooms ?? 0,
+    vacantRooms: Math.max((kosData?.totalRooms ?? 0) - (kosData?.occupiedRooms ?? 0), 0),
+    totalRooms: kosData?.totalRooms ?? 0,
+    pendingBookings: 0,
+    totalRoomsRentedOut: kosData?.occupiedRooms ?? 0,
   };
+  console.debug('[SellerKosDetailPage] statistics computed', { kosId, apiStats, statistics, rawKos: kosData });
 
   const occupancyRate = statistics.totalRooms > 0 
     ? Math.round((statistics.occupiedRooms / statistics.totalRooms) * 100)
