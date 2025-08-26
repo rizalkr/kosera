@@ -1,4 +1,6 @@
 import { PaginatedResponse } from "./common";
+import { z } from 'zod';
+
 // =================================================================
 // BASE TYPES - The single source of truth for core data structures.
 // =================================================================
@@ -146,3 +148,51 @@ export interface AdminKosFilters {
 }
 
 export type AdminKosApiResponse = PaginatedResponse<AdminKosData>;
+
+// Zod Schemas
+export const baseKosPhotoSchema = z.object({
+  id: z.number(),
+  url: z.string().url(),
+  isPrimary: z.boolean(),
+});
+
+export const baseKosOwnerSchema = z.object({
+  id: z.number(),
+  username: z.string(),
+  fullName: z.string(),
+  contact: z.string(),
+});
+
+export const baseKosDataSchema = z.object({
+  id: z.number(),
+  name: z.string(),
+  description: z.string(),
+  price: z.number(),
+  address: z.string(),
+  city: z.string(),
+  facilities: z.string(),
+  totalRooms: z.number(),
+  occupiedRooms: z.number(),
+  latitude: z.number().optional(),
+  longitude: z.number().optional(),
+  owner: baseKosOwnerSchema,
+});
+
+export const publicKosDataSchema = baseKosDataSchema.extend({
+  averageRating: z.string(),
+  reviewCount: z.number(),
+  photos: z.array(baseKosPhotoSchema),
+  createdAt: z.string(),
+  updatedAt: z.string(),
+});
+
+export const adminKosDataSchema = publicKosDataSchema.extend({
+  postId: z.number(),
+  isFeatured: z.boolean(),
+  viewCount: z.number(),
+  favoriteCount: z.number(),
+  photoCount: z.number(),
+  totalPost: z.number(),
+  totalPenjualan: z.number(),
+  owner: baseKosOwnerSchema.extend({ role: z.string() }),
+});
