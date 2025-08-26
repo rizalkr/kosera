@@ -3,7 +3,6 @@
 import React from 'react';
 import { useRouter } from 'next/navigation';
 import { Card, CardFooter } from '@/components/atoms';
-import type { AdminKosData } from '@/types/kos';
 import { formatCurrency } from '@/utils/format';
 
 // Extended statistics interface (API nested object)
@@ -17,13 +16,28 @@ export interface KosStatistics {
   totalRoomsRentedOut: number;
 }
 
-// Allow kosData to optionally carry a nested statistics block from API
-export interface KosWithStatistics extends AdminKosData {
-  statistics?: KosStatistics;
+// Minimal shape required by the card (works for both AdminKosData & SellerDashboardKosItem)
+export interface KosCardBase {
+  id: number;
+  name: string;
+  city: string;
+  address: string;
+  price: number;
+  viewCount: number;
+  createdAt: string;
+  // Optional flattened metrics (some APIs may surface these at root)
+  totalRooms?: number;
+  occupiedRooms?: number;
+  vacantRooms?: number;
+  totalBookings?: number;
+  pendingBookings?: number;
+  totalRevenue?: number;
+  totalRoomsRentedOut?: number;
+  statistics?: KosStatistics; // Nested statistics block (preferred)
 }
 
 export interface KosCardProps {
-  kosData: KosWithStatistics;
+  kosData: KosCardBase;
   formatCurrency?: (amount: number) => string; // optional override
 }
 
@@ -34,18 +48,34 @@ export interface KosCardProps {
 export const KosCard: React.FC<KosCardProps> = ({ kosData, formatCurrency: formatFn = formatCurrency }) => {
   const router = useRouter();
   const stats = kosData.statistics; // may be undefined if API flattened later
+  // Helper for safe numeric extraction (handles number | string | bigint)
+  const num = (value: unknown, fallback = 0): number => {
+    if (typeof value === 'number' && Number.isFinite(value)) return value;
+    if (typeof value === 'bigint') return Number(value);
+    if (typeof value === 'string') {
+      const parsed = Number(value);
+      if (!Number.isNaN(parsed) && Number.isFinite(parsed)) return parsed;
+    }
+    return fallback;
+  };
 
-  // Helper for safe numeric extraction
-  const num = (value: unknown, fallback = 0) => (typeof value === 'number' && Number.isFinite(value) ? value : fallback);
-
-  // Prefer flattened root (if later we decide to flatten API) then fallback to nested statistics
-  const totalRooms = num((kosData as any).totalRooms ?? stats?.totalRooms);
-  const occupiedRooms = num((kosData as any).occupiedRooms ?? stats?.occupiedRooms);
-  const vacantRooms = num((kosData as any).vacantRooms ?? stats?.vacantRooms ?? (totalRooms - occupiedRooms));
-  const totalBookings = num((kosData as any).totalBookings ?? stats?.totalBookings);
-  const pendingBookings = num((kosData as any).pendingBookings ?? stats?.pendingBookings);
-  const totalRevenue = num((kosData as any).totalRevenue ?? stats?.totalRevenue);
-  const totalRoomsRentedOut = num((kosData as any).totalRoomsRentedOut ?? stats?.totalRoomsRentedOut);
+  // Prefer flattened root then fallback to nested statistics
+  const totalRooms = num(kosData.totalRooms ?? stats?.totalRooms);
+  // Ambil nilai terbesar antara root & statistics agar tidak ter-reset ke 0 jika salah satu sumber belum ter-update
+  const occupiedRoomsRawRoot = kosData.occupiedRooms;
+  const occupiedRoomsRawStats = stats?.occupiedRooms;
+  const occupiedRooms = num(
+    occupiedRoomsRawRoot === undefined && occupiedRoomsRawStats === undefined
+      ? 0
+      : Math.max(num(occupiedRoomsRawRoot, 0), num(occupiedRoomsRawStats, 0))
+  );
+  const vacantRooms = num(
+    kosData.vacantRooms ?? stats?.vacantRooms ?? (totalRooms - occupiedRooms)
+  );
+  const totalBookings = num(kosData.totalBookings ?? stats?.totalBookings);
+  const pendingBookings = num(kosData.pendingBookings ?? stats?.pendingBookings);
+  const totalRevenue = num(kosData.totalRevenue ?? stats?.totalRevenue);
+  const totalRoomsRentedOut = num(kosData.totalRoomsRentedOut ?? stats?.totalRoomsRentedOut);
   const viewCount = num(kosData.viewCount);
   const price = num(kosData.price);
   const occupancyRate = totalRooms > 0 ? Math.round((occupiedRooms / totalRooms) * 100) : 0;

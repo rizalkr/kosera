@@ -1,7 +1,6 @@
 'use client';
 
 import { useSellerDashboard } from '@/hooks/useApi';
-import { AdminKosData } from '@/types/kos';
 import { useRouter } from 'next/navigation';
 import { StatCard, KosCard, EmptyState } from '@/components/molecules';
 import { Button } from '@/components/atoms';
@@ -11,6 +10,7 @@ import { PerformanceSummaryPanel } from '@/components/organisms/SellerDashboard/
 import { RecentActivityPanel } from '@/components/organisms/SellerDashboard/RecentActivityPanel';
 import { TipsInsightsPanel } from '@/components/organisms/SellerDashboard/TipsInsightsPanel';
 import { QuickActionsPanel } from '@/components/organisms/SellerDashboard/QuickActionsPanel';
+import type { SellerDashboardKosItem } from '@/types/dashboard';
 
 const SellerDashboard = () => {
   const { data, isLoading, error, refetch } = useSellerDashboard();
@@ -67,7 +67,7 @@ const SellerDashboard = () => {
     );
   }
 
-  const { kos, stats } = data.data; // use stats directly
+  const { kos, stats } = data.data;
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -118,7 +118,7 @@ const SellerDashboard = () => {
             />
           ) : (
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              {kos.map((kosData) => (
+              {kos.map((kosData: SellerDashboardKosItem) => (
                 <KosCard key={kosData.id} kosData={kosData} formatCurrency={formatCurrency} />
               ))}
             </div>
@@ -127,7 +127,7 @@ const SellerDashboard = () => {
 
         <PerformanceSummaryPanel stats={stats} kosCount={kos.length} />
 
-        <RecentActivityPanel kos={kos} />
+        <RecentActivityPanel kos={kos as any} />
 
         <TipsInsightsPanel stats={stats} kosCount={kos.length} />
 

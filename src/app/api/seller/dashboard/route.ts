@@ -38,9 +38,9 @@ export async function GET(request: NextRequest) {
         name: kos.name,
         address: kos.address,
         city: kos.city,
-        facilities: kos.facilities,
-        totalRooms: kos.totalRooms, // NEW: explicit total rooms from kos table
-        occupiedRoomsDb: kos.occupiedRooms, // NEW: stored occupied rooms (fallback)
+        facilities: kos.facilities, // may be null
+        totalRooms: kos.totalRooms,
+        occupiedRoomsDb: kos.occupiedRooms,
         title: posts.title,
         description: posts.description,
         price: posts.price,
@@ -112,16 +112,23 @@ export async function GET(request: NextRequest) {
     // Combine kos data with booking statistics using kos.totalRooms / kos.occupiedRooms
     const dashboardData = sellerKos.map(kosItem => {
       const stats = bookingStats.find(s => s.kosId === kosItem.id);
-      // Prefer actual kos.totalRooms; fallback to legacy posts.totalPost then 1
       const totalRooms = kosItem.totalRooms || kosItem.totalPost || 1;
-      // Occupied: prefer booking-derived confirmed count; fallback to stored kos.occupiedRoomsDb; else 0
-      const occupiedRooms = (stats?.occupiedRooms ?? kosItem.occupiedRoomsDb ?? 0);
+      const bookingOccupied = stats?.occupiedRooms ?? 0;
+      const occupiedRooms = bookingOccupied || kosItem.occupiedRoomsDb || 0;
       const vacantRooms = Math.max(0, totalRooms - occupiedRooms);
-
+      console.debug('[seller/dashboard] merge item', {
+        kosId: kosItem.id,
+        bookingOccupied,
+        storedOccupied: kosItem.occupiedRoomsDb,
+        chosen: occupiedRooms,
+        totalRooms,
+      });
+      const { occupiedRoomsDb, ...rest } = kosItem; // strip internal field
       return {
-        ...kosItem,
-        totalRooms, // surface normalized field
-        occupiedRooms, // surface normalized field
+        ...rest,
+        facilities: kosItem.facilities ?? null,
+        totalRooms,
+        occupiedRooms,
         statistics: {
           totalBookings: stats?.totalBookings || 0,
           pendingBookings: stats?.pendingBookings || 0,
@@ -129,7 +136,7 @@ export async function GET(request: NextRequest) {
           vacantRooms,
           totalRooms,
           totalRevenue: stats?.totalRevenue || 0,
-          totalRoomsRentedOut: kosItem.totalPenjualan || 0, // Historical data
+          totalRoomsRentedOut: kosItem.totalPenjualan || 0,
         }
       };
     });

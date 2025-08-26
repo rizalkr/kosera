@@ -11,14 +11,22 @@ export const sellerApi = {
   getDashboard: async (): Promise<ApiResponse<SellerDashboardResponseData>> => {
     const res = await apiClient.get<ApiResponse<SellerDashboardResponseData>>('/api/seller/dashboard');
     try {
-      if (res.success) {
-        const parsed = sellerDashboardResponseSchema.parse(res.data);
-        return { ...res, data: parsed };
+      if (res.success && res.data) {
+        // Normalize facilities field (undefined -> null) to satisfy schema
+        const normalized = {
+          ...res.data,
+          kos: res.data.kos.map(k => ({
+            ...k,
+            facilities: k.facilities === undefined ? null : k.facilities,
+          })),
+        };
+        const parsedData = sellerDashboardResponseSchema.parse(normalized);
+        return { ...res, data: parsedData };
       }
       return res;
     } catch (e) {
       console.warn('Seller dashboard response validation failed', e);
-      return res;
+      return res; // return raw if parsing fails
     }
   },
 
