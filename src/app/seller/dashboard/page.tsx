@@ -3,18 +3,7 @@
 import { useSellerDashboard } from '@/hooks/useApi';
 import { AdminKosData } from '@/types/kos';
 import { useRouter } from 'next/navigation';
-
-interface SellerStats {
-  totalKos: number;
-  totalBookings: number;
-  totalPendingBookings: number;
-  totalOccupiedRooms: number;
-  totalRooms: number;
-  totalVacantRooms: number;
-  totalRevenue: number;
-  totalViews: number;
-  totalFavorites: number;
-}
+import type { SellerDashboardStats } from '@/types/dashboard';
 
 const SellerDashboard = () => {
   const { data, isLoading, error, refetch } = useSellerDashboard();
@@ -71,8 +60,8 @@ const SellerDashboard = () => {
     );
   }
 
-  const { kos, stats } = data.data;
-  const overallStats = stats as SellerStats;
+  const { kos, stats } = data.data; // destructure stats not overallStats
+  const overallStats: SellerDashboardStats = stats; // alias for existing component usage
 
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('id-ID', {

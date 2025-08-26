@@ -4,3 +4,4 @@ export * from './user';
 export * from './kos';
 export * from './booking';
 export * from './favorites';
+export * from './dashboard';
