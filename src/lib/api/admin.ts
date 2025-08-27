@@ -2,39 +2,6 @@ import { apiClient } from './client';
 import { z } from 'zod';
 import type { AdminKosApiResponse, AdminKosFilters, AdminKosData, ApiResponse } from '@/types';
 
-// Schemas
-const adminKosDataSchema = z.object({
-  id: z.number(),
-  name: z.string(),
-  description: z.string(),
-  price: z.number(),
-  address: z.string(),
-  city: z.string(),
-  facilities: z.string(),
-  totalRooms: z.number().optional().default(0),
-  occupiedRooms: z.number().optional().default(0),
-  averageRating: z.string(),
-  reviewCount: z.number(),
-  photos: z.array(z.any()).optional(),
-  createdAt: z.string(),
-  updatedAt: z.string(),
-  postId: z.number(),
-  isFeatured: z.boolean(),
-  viewCount: z.number(),
-  favoriteCount: z.number(),
-  photoCount: z.number(),
-  totalPost: z.number(),
-  totalPenjualan: z.number(),
-  owner: z.object({ id: z.number(), username: z.string(), fullName: z.string().optional().or(z.string()), contact: z.string(), role: z.string().optional() })
-});
-
-const _adminKosListSchema = z.object({
-  success: z.boolean(),
-  data: z.object({
-    items: z.array(adminKosDataSchema).optional(),
-  }).optional(),
-}).passthrough();
-
 // Analytics schema (simplified based on hook types)
 const analyticsSchema = z.object({
   overview: z.object({
@@ -102,10 +69,7 @@ const userDetailResponseSchema = z.object({
   error: z.string().optional(),
 }).passthrough();
 
-const _userDeleteResponseSchema = z.object({
-  success: z.boolean().optional(),
-  error: z.string().optional(),
-}).passthrough();
+// Removed unused _userDeleteResponseSchema
 
 // New update user response schema (reuse userSchema)
 const updateUserResponseSchema = z.object({
@@ -181,13 +145,14 @@ const bookingsResponseSchema = z.object({
 
 const bookingsOuterResponseSchema = z.object({ success: z.boolean(), data: bookingsResponseSchema.optional(), error: z.string().optional() });
 
-const createUserRequestSchema = z.object({
-  name: z.string().min(1),
-  username: z.string().min(1),
-  contact: z.string().min(1),
-  role: z.enum(['ADMIN', 'SELLER', 'RENTER']),
-  password: z.string().min(6),
-});
+// Removed createUserRequestSchema; define TS type instead
+export interface CreateUserRequest {
+  name: string;
+  username: string;
+  contact: string;
+  role: 'ADMIN' | 'SELLER' | 'RENTER';
+  password: string;
+}
 
 const createUserResponseSchema = z.object({
   success: z.boolean().optional(),
@@ -199,7 +164,6 @@ const createUserResponseSchema = z.object({
 export type AnalyticsResponse = z.infer<typeof analyticsResponseSchema>;
 export type UsersOuterResponse = z.infer<typeof usersOuterResponseSchema>;
 export type BookingsOuterResponse = z.infer<typeof bookingsOuterResponseSchema>;
-export type CreateUserRequest = z.infer<typeof createUserRequestSchema>;
 export type CreateUserResponse = z.infer<typeof createUserResponseSchema>;
 export type AnalyticsData = NonNullable<AnalyticsResponse['data']>;
 export type UsersData = NonNullable<UsersOuterResponse['data']>;

@@ -204,4 +204,5 @@ export const KosDetailPage = () => {
   );
 };
 
-// Named export only (no default export per convention)
+// Provide required default export for Next.js App Router page
+export default KosDetailPage;
