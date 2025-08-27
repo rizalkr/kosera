@@ -8,7 +8,6 @@ export interface KosTableProps {
   selectedIds: number[];
   onToggleSelect: (id: number) => void;
   onToggleSelectAll: () => void;
-  showDeleted: boolean;
   currentPage: number;
   limit: number;
   renderActions: (kos: AdminKosData) => React.ReactNode;
@@ -19,7 +18,6 @@ export const KosTable: React.FC<KosTableProps> = ({
   selectedIds,
   onToggleSelect,
   onToggleSelectAll,
-  showDeleted,
   currentPage,
   limit,
   renderActions,

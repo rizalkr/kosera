@@ -8,7 +8,7 @@ import { SubmitActions } from './sections/SubmitActions';
 import { TipsPanel } from './sections/TipsPanel';
 import { FormErrorAlert } from './FormErrorAlert';
 
-export interface KosFormShellProps {}
+export type KosFormShellProps = Record<string, never>; // placeholder for future props without using empty interface
 
 export const KosFormShell: React.FC<KosFormShellProps> = () => {
   const { formData, errors, isSubmitting, handleInputChange, handleSubmit, addFacility } = useCreateKosForm();

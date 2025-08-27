@@ -11,6 +11,7 @@ import { HeaderSection } from '@/components/features/seller/kos/detail/molecules
 import { TabsNav } from '@/components/features/seller/kos/detail/molecules/TabsNav';
 import { OverviewTab } from '@/components/features/seller/kos/detail/organisms/OverviewTab';
 import { PlaceholderTab } from '@/components/features/seller/kos/detail/organisms/PlaceholderTab';
+import { SellerKosTab } from '@/hooks/seller/kos/useSellerKosDetailView';
 
 export const SellerKosDetailPage = () => {
   const router = useRouter();
@@ -78,7 +79,7 @@ export const SellerKosDetailPage = () => {
                 />
               )}
               {activeTab !== 'overview' && activeTab !== 'settings' && (
-                <PlaceholderTab type={activeTab as any} statistics={statistics} occupancyRate={occupancyRate} viewCount={statistics.totalViews} />
+                <PlaceholderTab type={activeTab as Exclude<SellerKosTab, 'overview'>} statistics={statistics} occupancyRate={occupancyRate} viewCount={statistics.totalViews} />
               )}
               {activeTab === 'settings' && (
                 <PlaceholderTab type="settings" statistics={statistics} occupancyRate={occupancyRate} viewCount={statistics.totalViews} />

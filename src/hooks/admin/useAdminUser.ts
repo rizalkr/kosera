@@ -44,7 +44,7 @@ export const useAdminUser = (id: string | number | undefined): UseAdminUserResul
     try {
       setDeleting(true);
       const resp = await adminApi.deleteUser(id);
-      if ((resp as any)?.error) throw new Error((resp as any).error);
+      if ('error' in resp && resp.error) throw new Error(resp.error);
       return true;
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Gagal menghapus user');

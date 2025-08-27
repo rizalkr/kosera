@@ -107,7 +107,7 @@ export const SubmitButton = ({ loading, children }: SubmitButtonProps) => (
 );
 
 // -------------------- Page Component --------------------
-interface FormState extends LoginSchema {}
+ type FormState = LoginSchema;
 
 interface FormErrors {
   username?: string;

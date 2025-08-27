@@ -19,7 +19,7 @@ export interface UseSellerKosListViewResult {
   kosList: SellerKosListItem[];
   isLoading: boolean;
   error: unknown;
-  refetch: () => Promise<any>;
+  refetch: () => Promise<void>;
   isRefreshing: boolean;
   handleRefresh: () => Promise<void>;
   counts: SellerKosCounts;
@@ -30,10 +30,12 @@ export interface UseSellerKosListViewResult {
 export const useSellerKosListView = (): UseSellerKosListViewResult => {
   const { user } = useAuthGuard();
   const { data: kosResponse, isLoading, error, refetch } = useMyKos();
-  let kosList: SellerKosListItem[] = [];
-  if (kosResponse?.data) {
-    try { kosList = kosListSchema.parse(kosResponse.data); } catch { kosList = kosResponse.data as any; }
-  }
+
+  const kosList = useMemo(() => {
+    if (!kosResponse?.data) return [] as SellerKosListItem[];
+    try { return kosListSchema.parse(kosResponse.data); } catch { return kosResponse.data as SellerKosListItem[]; }
+  }, [kosResponse]);
+
   const [isRefreshing, setIsRefreshing] = useState(false);
 
   const handleRefresh = useCallback(async () => {
@@ -60,5 +62,7 @@ export const useSellerKosListView = (): UseSellerKosListViewResult => {
     return { totalKos, activeKos, pendingKos, totalPrice };
   }, [kosList, getKosStatus]);
 
-  return { user, kosList, isLoading, error, refetch, isRefreshing, handleRefresh, counts, formatPrice, getKosStatus };
+  const wrappedRefetch = useCallback(async () => { await refetch(); }, [refetch]);
+
+  return { user, kosList, isLoading, error, refetch: wrappedRefetch, isRefreshing, handleRefresh, counts, formatPrice, getKosStatus };
 };

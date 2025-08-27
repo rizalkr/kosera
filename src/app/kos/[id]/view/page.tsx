@@ -13,16 +13,15 @@ import { RatingStars } from '@/components/features/kos/detail/atoms/RatingStars'
 import { FavoriteButton } from '@/components/features/kos/detail/atoms/FavoriteButton';
 import { PriceTag } from '@/components/features/kos/detail/atoms/PriceTag';
 import { useKosDetailView } from '@/hooks/kos/useKosDetailView';
+import Link from 'next/link';
+import type { PublicKosData } from '@/types/kos';
 
 // Temporary type until Zod schema for detail response is added
-interface Review {
-  id: number; rating: number; comment: string; createdAt: string; user: { id: number; name: string; username: string };
-}
+interface Review { id: number; rating: number; comment: string; createdAt: string; user: { id: number; name: string; username: string }; }
 
 export const KosDetailPage = () => {
   const {
-    kosId,
-    kos,
+    kos, // kosId removed (unused)
     isLoading,
     error,
     isFavorited,
@@ -67,12 +66,12 @@ export const KosDetailPage = () => {
             <div className="text-red-500 text-6xl mb-4">X</div>
             <h1 className="text-2xl font-bold text-gray-800 mb-2">Kos Tidak Ditemukan</h1>
             <p className="text-gray-600 mb-6">Maaf, kos yang Anda cari tidak dapat ditemukan.</p>
-            <a 
-              href="/" 
+            <Link
+              href="/"
               className="bg-blue-500 text-white px-6 py-2 rounded-lg hover:bg-blue-600 transition-colors"
             >
               Kembali ke Beranda
-            </a>
+            </Link>
           </div>
         </main>
         <Footer />
@@ -83,6 +82,8 @@ export const KosDetailPage = () => {
   const reviewsData = kos.reviews?.data || [];
   const reviewStats = kos.reviews?.statistics;
   const reviewPagination = kos.reviews?.pagination;
+
+  const averageRatingNumber = typeof reviewStats?.averageRating === 'string' ? parseFloat(reviewStats.averageRating) : undefined;
 
   return (
     <div className="min-h-screen bg-[#A9E4DE] pt-20">
@@ -97,11 +98,11 @@ export const KosDetailPage = () => {
                 <h1 className="text-3xl font-bold text-gray-800 mb-2">{kos.name}</h1>
                 <p className="text-gray-600 text-lg mb-2">{kos.address}, {kos.city}</p>
                 <div className="flex items-center gap-4 mb-4">
-                  {reviewStats?.averageRating > 0 && (
+                  {averageRatingNumber !== undefined && averageRatingNumber > 0 && reviewStats?.totalReviews !== undefined && (
                     <div className="flex items-center gap-1">
-                      <RatingStars rating={Math.round(parseFloat(reviewStats.averageRating))} />
+                      <RatingStars rating={Math.round(averageRatingNumber)} />
                       <span className="text-gray-600 ml-2">
-                        {parseFloat(reviewStats.averageRating).toFixed(1)} ({reviewStats.totalReviews} ulasan)
+                        {averageRatingNumber.toFixed(1)} ({reviewStats.totalReviews} ulasan)
                       </span>
                     </div>
                   )}
@@ -132,7 +133,7 @@ export const KosDetailPage = () => {
                   <h2 className="text-xl font-semibold text-gray-800 mb-3">Deskripsi</h2>
                   <p className="text-gray-600 leading-relaxed">{kos.description}</p>
                 </section>
-                <FacilitiesList facilities={kos.facilities} />
+                <FacilitiesList facilities={kos.facilities ?? undefined} />
                 <ReviewsSection
                   totalReviews={reviewStats?.totalReviews || 0}
                   averageRating={reviewStats?.averageRating}
@@ -143,8 +144,8 @@ export const KosDetailPage = () => {
               </div>
               <SidebarPanel
                 owner={kos.owner}
-                latitude={kos.latitude}
-                longitude={kos.longitude}
+                latitude={kos.latitude ?? undefined}
+                longitude={kos.longitude ?? undefined}
                 address={kos.address}
                 city={kos.city}
                 viewCount={kos.viewCount}
@@ -156,12 +157,41 @@ export const KosDetailPage = () => {
         </div>
       </main>
       <Footer />
-      <BookingModal
-        kos={kos}
-        isOpen={showBookingModal}
-        onClose={handlers.onCloseBooking}
-        onBookingCreated={handlers.onBookingCreated}
-      />
+      {/* Build a PublicKosData object for BookingModal without unsafe direct cast */}
+      {(() => {
+        const bookingKos: PublicKosData = {
+          id: kos.id,
+          name: kos.name,
+          description: kos.description,
+          price: kos.price,
+          address: kos.address,
+          city: kos.city,
+          facilities: kos.facilities ?? '',
+          totalRooms: (kos as Partial<PublicKosData>).totalRooms ?? 0,
+          occupiedRooms: (kos as Partial<PublicKosData>).occupiedRooms ?? 0,
+          latitude: kos.latitude ?? undefined,
+          longitude: kos.longitude ?? undefined,
+          owner: {
+            id: kos.owner?.id ?? 0,
+            username: kos.owner?.username ?? 'unknown',
+            fullName: (kos.owner && 'fullName' in kos.owner ? (kos.owner as { fullName?: string }).fullName : undefined) || kos.owner?.name || kos.owner?.username || 'Unknown',
+            contact: kos.owner?.contact || '',
+          },
+          averageRating: (reviewStats?.averageRating ?? '0').toString(),
+          reviewCount: reviewStats?.totalReviews ?? 0,
+          photos: [],
+          createdAt: 'createdAt' in kos ? (kos as { createdAt: string }).createdAt : new Date().toISOString(),
+          updatedAt: 'updatedAt' in kos ? (kos as { updatedAt: string }).updatedAt : new Date().toISOString(),
+        };
+        return (
+          <BookingModal
+            kos={bookingKos}
+            isOpen={showBookingModal}
+            onClose={handlers.onCloseBooking}
+            onBookingCreated={handlers.onBookingCreated}
+          />
+        );
+      })()}
       <ImageModal
         isOpen={showImageModal}
         onClose={handlers.onCloseImageModal}
@@ -174,4 +204,4 @@ export const KosDetailPage = () => {
   );
 };
 
-export default KosDetailPage;
+// Named export only (no default export per convention)

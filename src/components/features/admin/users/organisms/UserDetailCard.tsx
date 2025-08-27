@@ -36,7 +36,7 @@ export const UserDetailCard: React.FC<UserDetailCardProps> = ({ user, onEdit, on
           <UserRoleStatusSection user={user} formattedCreatedAt={createdAt} />
         </div>
         <UserRoleDescription role={user.role} />
-        <UserActionButtons user={user} onEdit={onEdit} onDelete={onDelete} onBack={onBack} deleting={deleting} />
+        <UserActionButtons onEdit={onEdit} onDelete={onDelete} onBack={onBack} deleting={deleting} />
       </div>
     </div>
   );

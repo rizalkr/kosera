@@ -94,9 +94,9 @@ export const useCreateKosForm = (): UseCreateKosFormResult => {
       if (!token) throw new Error('No valid token available');
       console.debug('[CreateKosForm] handleSubmit - token present, proceeding');
       const result = await submit();
-      if ((result as any).error) throw new Error((result as any).error);
+      if ('error' in result && result.error) throw new Error(result.error);
       await showSuccess('Kos baru berhasil dibuat! Anda akan dialihkan ke halaman detail kos.', 'Berhasil!');
-      const newKosId = (result as any).data?.id; 
+      const newKosId = result.data?.id; 
       console.debug('[CreateKosForm] handleSubmit - newKosId', newKosId);
       router.push(newKosId ? `/seller/kos/${newKosId}` : '/seller/kos');
     } catch (error) {

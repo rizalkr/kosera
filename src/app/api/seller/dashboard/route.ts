@@ -40,7 +40,7 @@ export async function GET(request: NextRequest) {
         city: kos.city,
         facilities: kos.facilities, // may be null
         totalRooms: kos.totalRooms,
-        occupiedRoomsDb: kos.occupiedRooms,
+        occupiedRooms: kos.occupiedRooms,
         title: posts.title,
         description: posts.description,
         price: posts.price,
@@ -114,18 +114,17 @@ export async function GET(request: NextRequest) {
       const stats = bookingStats.find(s => s.kosId === kosItem.id);
       const totalRooms = kosItem.totalRooms || kosItem.totalPost || 1;
       const bookingOccupied = stats?.occupiedRooms ?? 0;
-      const occupiedRooms = bookingOccupied || kosItem.occupiedRoomsDb || 0;
+      const occupiedRooms = bookingOccupied || kosItem.occupiedRooms || 0;
       const vacantRooms = Math.max(0, totalRooms - occupiedRooms);
       console.debug('[seller/dashboard] merge item', {
         kosId: kosItem.id,
         bookingOccupied,
-        storedOccupied: kosItem.occupiedRoomsDb,
+        storedOccupied: kosItem.occupiedRooms,
         chosen: occupiedRooms,
         totalRooms,
       });
-      const { occupiedRoomsDb, ...rest } = kosItem; // strip internal field
       return {
-        ...rest,
+        ...kosItem,
         facilities: kosItem.facilities ?? null,
         totalRooms,
         occupiedRooms,

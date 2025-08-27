@@ -2,7 +2,7 @@
 
 import { useSellerDashboard } from '@/hooks/useApi';
 import { useRouter } from 'next/navigation';
-import { StatCard, KosCard, EmptyState } from '@/components/molecules';
+import { KosCard, EmptyState } from '@/components/molecules';
 import { Button } from '@/components/atoms';
 import { formatCurrency } from '@/utils/format';
 import { OverviewStatsPanel } from '@/components/organisms/SellerDashboard/OverviewStatsPanel';
@@ -12,7 +12,7 @@ import { TipsInsightsPanel } from '@/components/organisms/SellerDashboard/TipsIn
 import { QuickActionsPanel } from '@/components/organisms/SellerDashboard/QuickActionsPanel';
 import type { SellerDashboardKosItem } from '@/types/dashboard';
 
-const SellerDashboard = () => {
+export const SellerDashboard = () => {
   const { data, isLoading, error, refetch } = useSellerDashboard();
   const router = useRouter();
 
@@ -127,7 +127,7 @@ const SellerDashboard = () => {
 
         <PerformanceSummaryPanel stats={stats} kosCount={kos.length} />
 
-        <RecentActivityPanel kos={kos as any} />
+        <RecentActivityPanel kos={kos} />
 
         <TipsInsightsPanel stats={stats} kosCount={kos.length} />
 
@@ -136,5 +136,3 @@ const SellerDashboard = () => {
     </div>
   );
 };
-
-export default SellerDashboard;

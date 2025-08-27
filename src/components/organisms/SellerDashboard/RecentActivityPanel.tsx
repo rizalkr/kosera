@@ -1,13 +1,16 @@
 // Seller dashboard organism: RecentActivityPanel
 'use client';
 import React from 'react';
-import { AdminKosData } from '@/types/kos';
-import { formatCurrency } from '@/utils/format';
 import { useRouter } from 'next/navigation';
 import { getActivityIcon } from '@/utils/icons';
+import { formatCurrency } from '@/utils/format';
 
+// Minimal shared fields needed for rendering recent activity
+interface RecentActivityKosItem {
+  id: number; name: string; viewCount: number;
+}
 export interface RecentActivityPanelProps {
-  kos: AdminKosData[];
+  kos: RecentActivityKosItem[];
 }
 
 export const RecentActivityPanel: React.FC<RecentActivityPanelProps> = ({ kos }) => {

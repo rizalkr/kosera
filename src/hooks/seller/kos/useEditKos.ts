@@ -72,7 +72,7 @@ export const useEditKos = (): UseEditKosHook => {
         setIsLoading(true);
         const res = await sellerApi.getKosDetail(kosId);
         if (res.success && res.data) {
-          const d: any = res.data; // TODO add schema for seller kos detail
+          const d = res.data as { title?: string; description?: string; price?: number; name?: string; address?: string; city?: string; facilities?: string; totalRooms?: number; occupiedRooms?: number; latitude?: number; longitude?: number };
           setFormData(prev => ({
             ...prev,
             title: d.title ?? '',

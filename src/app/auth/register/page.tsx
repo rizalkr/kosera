@@ -35,7 +35,7 @@ export const TextInput = ({ id, name, label, value, onChange, disabled, placehol
       type={type}
       autoComplete={autoComplete}
       value={value}
-      onChange={onChange as any}
+      onChange={onChange}
       disabled={disabled}
       placeholder={placeholder}
       className={clsx(
@@ -60,7 +60,7 @@ export const PasswordInput = ({ id, name, label, value, onChange, disabled, plac
         name={name}
         type={show ? 'text' : 'password'}
         value={value}
-        onChange={onChange as any}
+        onChange={onChange}
         disabled={disabled}
         placeholder={placeholder}
         className={clsx(
@@ -99,7 +99,7 @@ export const SelectInput = ({ id, name, label, value, onChange, disabled, option
       id={id}
       name={name}
       value={value}
-      onChange={onChange as any}
+      onChange={onChange}
       disabled={disabled}
       className={clsx(
         'text-gray-500 w-full px-3 py-2 border rounded-lg focus:ring-2 focus:border-transparent transition-colors',
@@ -132,7 +132,7 @@ export const SubmitButton = ({ loading, children }: SubmitButtonProps) => (
 );
 
 // --------------- Page ---------------
-interface FormState extends RegisterSchema {}
+type FormState = RegisterSchema;
 interface FormErrors { [k: string]: string | undefined }
 
 export const RegisterPage = () => {

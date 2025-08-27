@@ -28,7 +28,7 @@ const adminKosDataSchema = z.object({
   owner: z.object({ id: z.number(), username: z.string(), fullName: z.string().optional().or(z.string()), contact: z.string(), role: z.string().optional() })
 });
 
-const adminKosListSchema = z.object({
+const _adminKosListSchema = z.object({
   success: z.boolean(),
   data: z.object({
     items: z.array(adminKosDataSchema).optional(),
@@ -102,7 +102,7 @@ const userDetailResponseSchema = z.object({
   error: z.string().optional(),
 }).passthrough();
 
-const userDeleteResponseSchema = z.object({
+const _userDeleteResponseSchema = z.object({
   success: z.boolean().optional(),
   error: z.string().optional(),
 }).passthrough();

@@ -35,7 +35,13 @@ export default function CreateUserPage() {
       setLoading(true); setError(null);
       const token = getToken();
       if (!token) throw new Error('No authentication token found');
-      const { confirmPassword, ...payload } = formData;
+      const payload: CreateUserRequest = {
+        name: formData.name,
+        username: formData.username,
+        contact: formData.contact,
+        role: formData.role,
+        password: formData.password,
+      };
       const result: CreateUserResponse = await adminApi.createUser(payload);
       if (result.error) throw new Error(result.error);
       router.push('/admin/users');

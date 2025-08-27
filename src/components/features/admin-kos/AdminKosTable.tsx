@@ -39,8 +39,9 @@ export function AdminKosTable({
   const { handleBulk, handleCleanup, isBulkArchiving, isBulkPermanentDeleting, isBulkCleaning } = useKosBulkActions({ showDeleted, onActionComplete });
    
   useEffect(() => {
+    // Clear selection whenever the kos list changes (dependency on clear satisfies lint rule)
     clear();
-  }, [kosList]);
+  }, [kosList, clear]);
  
   const handleSingleDelete = async (kosId: number) => {
     const isPermanent = showDeleted;
@@ -100,7 +101,6 @@ export function AdminKosTable({
         selectedIds={selectedIds}
         onToggleSelect={(id) => toggleSelect(id)}
         onToggleSelectAll={() => toggleSelectAll(kosList.map(k => k.id))}
-        showDeleted={showDeleted}
         currentPage={currentPage}
         limit={limit}
         renderActions={(kos) => (
@@ -111,7 +111,7 @@ export function AdminKosTable({
             isDeleting={isDeleting}
             isPermanentDeleting={isPermanentDeleting}
             onRestore={handleRestore}
-            onDelete={(id, permanent) => handleSingleDelete(id)}
+            onDelete={(id) => handleSingleDelete(id)}
           />
         )}
       />

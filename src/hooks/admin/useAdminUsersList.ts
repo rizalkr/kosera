@@ -30,7 +30,7 @@ export const useAdminUsersList = (initial: UseAdminUsersListParams = { page: 1, 
   const [users, setUsers] = useState<AdminUserListItem[]>([]);
   const [total, setTotal] = useState(0);
   const [page, setPage] = useState(initial.page || 1);
-  const [limit, setLimit] = useState(initial.limit || 10);
+  const [limit] = useState(initial.limit || 10); // setLimit removed (unused)
   const [totalPages, setTotalPages] = useState(1);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);

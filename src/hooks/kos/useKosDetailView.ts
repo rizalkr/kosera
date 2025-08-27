@@ -4,9 +4,28 @@ import { useKosDetails, useTrackView, useAddFavorite, useRemoveFavorite, useFavo
 import { useAuthGuard } from '@/hooks/auth/useAuthGuard';
 import { useKosImages } from '@/hooks/image/useImageWithFallback';
 
+export interface KosReviewSummary { averageRating?: string; totalReviews?: number; }
+export interface KosOwner { id: number; username: string; name?: string; contact?: string; }
+export interface KosPhoto { url: string; isPrimary: boolean; createdAt: string; }
+export interface KosDetailData {
+  id: number;
+  name: string;
+  address: string;
+  city: string;
+  description: string;
+  facilities?: string | null;
+  price: number;
+  viewCount: number;
+  favoriteCount: number;
+  latitude?: number | null;
+  longitude?: number | null;
+  owner?: KosOwner;
+  reviews?: { data?: Array<{ id: number; rating: number; comment: string; createdAt: string; user: { id: number; name: string; username: string } }>; statistics?: { averageRating: string; totalReviews: number }; pagination?: { hasNext: boolean } };
+}
+
 export interface UseKosDetailViewResult {
   kosId: number;
-  kos: any; // TODO replace with typed schema once added
+  kos: KosDetailData | undefined; // previously any
   isLoading: boolean;
   error: unknown;
   isFavorited: boolean;
@@ -49,9 +68,9 @@ export const useKosDetailView = (): UseKosDetailViewResult => {
     }
   }, [kosId, trackView]);
 
-  const kosPhotos = photosData?.success ? photosData.data.photos : [];
-  const sortedPhotos = kosPhotos.length > 0
-    ? [...kosPhotos].sort((a: any, b: any) => {
+  const kosPhotos: KosPhoto[] = photosData?.success ? photosData.data.photos : [];
+  const sortedPhotos: KosPhoto[] = kosPhotos.length > 0
+    ? [...kosPhotos].sort((a, b) => {
         if (a.isPrimary && !b.isPrimary) return -1;
         if (!a.isPrimary && b.isPrimary) return 1;
         return new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
@@ -59,7 +78,7 @@ export const useKosDetailView = (): UseKosDetailViewResult => {
     : [];
   const { images: displayImages } = useKosImages(sortedPhotos);
 
-  const kos = kosData?.success ? kosData.data : undefined;
+  const kos = kosData?.success ? (kosData.data as KosDetailData) : undefined;
   const isFavorited = useMemo(() => (
     (favoritesData?.success && favoritesData?.data?.favorites?.some((fav: { kos: { id: number } }) => fav.kos.id === kosId)) || false
   ), [favoritesData, kosId]);

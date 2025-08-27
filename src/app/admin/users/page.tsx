@@ -27,7 +27,7 @@ export const AdminUsersPageComponent = () => {
   const [showDeleted, setShowDeleted] = useState(false);
   const [selectedUsers, setSelectedUsers] = useState<number[]>([]);
 
-  const { users, total, page, limit, totalPages, loading, error, refetch, setParams } = useAdminUsersList({ page: 1, limit: 10, search: '', role: '', showDeleted });
+  const { users, page, limit, totalPages, loading, error, refetch, setParams } = useAdminUsersList({ page: 1, limit: 10, search: '', role: '', showDeleted });
 
   // sync debounced search & role changes
   // update params when debounced term or role or showDeleted changes
@@ -49,7 +49,7 @@ export const AdminUsersPageComponent = () => {
       await adminApi.deleteUser(userId);
       await showSuccess('User berhasil dihapus dan dipindahkan ke arsip');
       refetch();
-    } catch (e) {
+    } catch {
       await showError('Gagal menghapus user');
     }
   };
@@ -69,8 +69,6 @@ export const AdminUsersPageComponent = () => {
     if (selectedUsers.length === 0) return;
     const result = await showConfirm(`${selectedUsers.length} user yang dipilih akan dihapus dan dipindahkan ke arsip.`, `Hapus ${selectedUsers.length} User?`, 'Ya, Hapus Semua', 'Batal');
     if (!result.isConfirmed) return;
-    // TODO: implement bulk delete endpoint
-    // For now sequential
     for (const id of selectedUsers) {
       try { await adminApi.deleteUser(id); } catch { /* ignore each */ }
     }
