@@ -1,6 +1,6 @@
 import { apiClient } from './client';
 import type { ApiResponse, User } from '@/types';
-import { loginResponseSchema } from '@/lib/validation/authSchemas';
+import { loginResponseSchema, registerResponseSchema } from '@/lib/validation/authSchemas';
 
 export interface LoginCredentials {
   username: string;
@@ -24,10 +24,10 @@ export const authApi = {
   },
 
   /**
-   * Register a new user
+   * Register a new user (validated)
    */
-  register: async (userData: RegisterData): Promise<ApiResponse<{ token: string; user: User }>> => {
-    return apiClient.post('/api/auth/register', userData, { requireAuth: false });
+  register: async (userData: RegisterData) => {
+    return apiClient.postValidated('/api/auth/register', registerResponseSchema, userData, { requireAuth: false });
   },
 
   /**
