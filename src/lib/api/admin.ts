@@ -122,6 +122,31 @@ const updateUserResponseSchema = z.object({
   error: z.string().optional(),
 }).passthrough();
 
+// --------- (ADDED) Extended user list item & list response schemas ---------
+const userListItemSchema = userSchema.extend({
+  deletedAt: z.string().nullable().optional(),
+  createdBy: z.number().nullable().optional(),
+  deletedBy: z.number().nullable().optional(),
+  creatorInfo: z.object({ id: z.number(), name: z.string(), username: z.string(), contact: z.string() }).nullable().optional(),
+  deleterInfo: z.object({ id: z.number(), name: z.string(), username: z.string(), contact: z.string() }).nullable().optional(),
+});
+
+const userListResponseSchema = z.object({
+  message: z.string().optional(),
+  users: z.array(userListItemSchema),
+  total: z.number(),
+  page: z.number(),
+  limit: z.number(),
+  totalPages: z.number(),
+  showDeleted: z.boolean().optional(),
+}).passthrough();
+
+// Unified action response for delete/restore (ADDED)
+const userActionResponseSchema = z.object({
+  message: z.string().optional(),
+  error: z.string().optional(),
+}).passthrough();
+
 const analyticsResponseSchema = z.object({ success: z.boolean(), data: analyticsSchema.optional(), error: z.string().optional() });
 
 const usersResponseSchema = z.object({
@@ -182,6 +207,8 @@ export type BookingsData = NonNullable<BookingsOuterResponse['data']>;
 export type AdminUser = z.infer<typeof userSchema>;
 export type AdminUserDetailResponse = z.infer<typeof userDetailResponseSchema>;
 export type AdminUserUpdateResponse = z.infer<typeof updateUserResponseSchema>;
+export type AdminUserListItem = z.infer<typeof userListItemSchema>;
+export type AdminUserListResponse = z.infer<typeof userListResponseSchema>;
 
 export const adminApi = {
   /** Get all kos (legacy structure support) */
@@ -235,9 +262,15 @@ export const adminApi = {
     return apiClient.getValidated(`/api/admin/users/${id}` as string, userDetailResponseSchema);
   },
   deleteUser: async (id: number | string) => {
-    return apiClient.deleteValidated(`/api/admin/users/${id}` as string, userDeleteResponseSchema);
+    return apiClient.deleteValidated(`/api/admin/users/${id}` as string, userActionResponseSchema);
   },
   updateUser: async (id: number | string, payload: Partial<Pick<AdminUser, 'name' | 'username' | 'contact' | 'role'>> & { password?: string }) => {
     return apiClient.putValidated(`/api/admin/users/${id}` as string, updateUserResponseSchema, payload);
+  },
+  restoreUser: async (id: number | string) => {
+    return apiClient.patchValidated(`/api/admin/users/${id}` as string, userActionResponseSchema);
+  },
+  getUsersList: async (params?: { page?: number; limit?: number; search?: string; role?: string; showDeleted?: boolean }) => {
+    return apiClient.getValidated('/api/admin/users', userListResponseSchema, params as Record<string, unknown>);
   }
 };
