@@ -1,5 +1,6 @@
 import { apiClient } from './client';
 import type { ApiResponse, User } from '@/types';
+import { loginResponseSchema } from '@/lib/validation/authSchemas';
 
 export interface LoginCredentials {
   username: string;
@@ -16,10 +17,10 @@ export interface RegisterData {
 
 export const authApi = {
   /**
-   * Authenticate user with username and password
+   * Authenticate user with username and password using validated schema
    */
-  login: async (username: string, password: string): Promise<ApiResponse<{ token: string; user: User }>> => {
-    return apiClient.post('/api/auth/login', { username, password }, { requireAuth: false });
+  login: async (username: string, password: string) => {
+    return apiClient.postValidated('/api/auth/login', loginResponseSchema, { username, password }, { requireAuth: false });
   },
 
   /**
