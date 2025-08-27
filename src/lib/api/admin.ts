@@ -84,6 +84,44 @@ const analyticsSchema = z.object({
   generatedAt: z.string(),
 });
 
+// New user detail schemas
+const userSchema = z.object({
+  id: z.number(),
+  name: z.string(),
+  username: z.string(),
+  contact: z.string(),
+  role: z.enum(['ADMIN', 'SELLER', 'RENTER']),
+  createdAt: z.string(),
+  updatedAt: z.string().optional(),
+  deletedAt: z.string().nullable().optional(),
+});
+
+const userDetailResponseSchema = z.object({
+  success: z.boolean().optional(),
+  user: userSchema.optional(),
+  error: z.string().optional(),
+}).passthrough();
+
+const userDeleteResponseSchema = z.object({
+  success: z.boolean().optional(),
+  error: z.string().optional(),
+}).passthrough();
+
+// New update user response schema (reuse userSchema)
+const updateUserResponseSchema = z.object({
+  success: z.boolean().optional(),
+  user: z.object({
+    id: z.number(),
+    name: z.string(),
+    username: z.string(),
+    contact: z.string(),
+    role: z.enum(['ADMIN', 'SELLER', 'RENTER']),
+    createdAt: z.string(),
+    updatedAt: z.string().optional(),
+  }).optional(),
+  error: z.string().optional(),
+}).passthrough();
+
 const analyticsResponseSchema = z.object({ success: z.boolean(), data: analyticsSchema.optional(), error: z.string().optional() });
 
 const usersResponseSchema = z.object({
@@ -141,6 +179,9 @@ export type CreateUserResponse = z.infer<typeof createUserResponseSchema>;
 export type AnalyticsData = NonNullable<AnalyticsResponse['data']>;
 export type UsersData = NonNullable<UsersOuterResponse['data']>;
 export type BookingsData = NonNullable<BookingsOuterResponse['data']>;
+export type AdminUser = z.infer<typeof userSchema>;
+export type AdminUserDetailResponse = z.infer<typeof userDetailResponseSchema>;
+export type AdminUserUpdateResponse = z.infer<typeof updateUserResponseSchema>;
 
 export const adminApi = {
   /** Get all kos (legacy structure support) */
@@ -190,4 +231,13 @@ export const adminApi = {
   createUser: async (payload: CreateUserRequest) => {
     return apiClient.postValidated('/api/admin/users', createUserResponseSchema, payload);
   },
+  getUserById: async (id: number | string) => {
+    return apiClient.getValidated(`/api/admin/users/${id}` as string, userDetailResponseSchema);
+  },
+  deleteUser: async (id: number | string) => {
+    return apiClient.deleteValidated(`/api/admin/users/${id}` as string, userDeleteResponseSchema);
+  },
+  updateUser: async (id: number | string, payload: Partial<Pick<AdminUser, 'name' | 'username' | 'contact' | 'role'>> & { password?: string }) => {
+    return apiClient.putValidated(`/api/admin/users/${id}` as string, updateUserResponseSchema, payload);
+  }
 };
