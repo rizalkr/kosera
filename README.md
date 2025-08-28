@@ -6,404 +6,223 @@
 [![PostgreSQL](https://img.shields.io/badge/PostgreSQL-16+-blue)](https://www.postgresql.org/)
 [![Vitest](https://img.shields.io/badge/Tests-Vitest-yellow)](https://vitest.dev/)
 
-**Kosera API** is a robust boarding house (kos) rental platform API built with Next.js, TypeScript, and PostgreSQL 16. This API provides comprehensive endpoints for user management, authentication, property listings, and bookings.
+**Kosera API** adalah platform API pencarian dan manajemen kos (boarding house) berbasis Next.js (App Router) dengan TypeScript, PostgreSQL 16, dan Drizzle ORM. Menyediakan endpoint komprehensif untuk autentikasi, manajemen pengguna, properti (kos), favorit, review, booking, analitik, serta operasi administrasi lanjutan (soft delete, restore, dan permanent delete).
 
-## Documentation
+## Dokumentasi
 
-- **[API Documentation](./blob/docs/api/api-documentation.md)** - Complete API reference with examples
-- **[Database Schema](./blob/docs/api/database-design.md)** - Database design and relationships
-- **[Testing Guide](./blob/docs/testing/testing-guide.md)** - Comprehensive testing documentation
-- **[Deployment Guide](./blob/docs/deployment/deployment-guide.md)** - Production deployment instructions
-- **[Implementation Guide](./blob/docs/implementation/)** - Feature implementation documentation
-- **[Documentation Index](./blob/docs/README.md)** - Complete documentation overview
+- **[API Documentation](./blob/docs/api/api-documentation.md)**
+- **[Database Schema](./blob/docs/api/database-design.md)**
+- **[Testing Guide](./blob/docs/testing/testing-guide.md)**
+- **[Deployment Guide](./blob/docs/deployment/deployment-guide.md)**
+- **[Implementation Guide](./blob/docs/implementation/)**
+- **[Documentation Index](./blob/docs/README.md)**
+
+## Struktur Type & Schema (Terbaru)
+
+Seluruh definisi tipe dan schema Zod telah dipisah agar lebih modular:
+- `src/types/kos.ts` – schema dan tipe publik/admin kos
+- `src/types/seller-kos.ts` – schema detail kos untuk seller (extend admin kos + statistik)
+- `src/lib/api/admin.ts` – hanya menyimpan schema respons admin (duplikasi schema kos dihapus)
+- `src/types/` lainnya – konsolidasi tipe domain
+
+Refactor ini mengurangi duplikasi (`adminKosDataSchema` ganda dihapus), menghilangkan cast tidak aman, dan menghapus variabel tidak terpakai untuk menjaga codebase lint-clean.
 
 ## Quick API Reference
 
 ### Base URL
 ```
-Local Development: http://localhost:3000
+Local: http://localhost:3000
 Production: https://your-domain.com
 ```
 
-### Authentication
-All protected endpoints require JWT token in the Authorization header:
+### Authentication Header
 ```
-Authorization: Bearer <your-jwt-token>
+Authorization: Bearer <jwt-token>
 ```
-- **Carousel**: Swiper.js
 
-### **Backend**
-- **Runtime**: Node.js
-- **API**: Next.js API Routes
-- **Database**: PostgreSQL
-- **ORM**: Drizzle ORM 0.44.2
-- **Authentication**: JWT + bcryptjs
-- **Migration**: Drizzle Kit
+## Ringkasan Endpoint
 
-### **Testing**
-- **Framework**: Vitest 3.2.4
-- **Integration**: Supertest
-- **Coverage**: @vitest/ui
-- **Performance**: Custom load testing
-- **Mocking**: Node mocks HTTP
+### Auth
+| Method | Endpoint | Deskripsi |
+|--------|----------|-----------|
+| POST | /api/auth/register | Registrasi pengguna |
+| POST | /api/auth/login | Login & issue JWT |
+| GET  | /api/auth/verify | Verifikasi token |
 
-### **Development Tools**
-- **Package Manager**: npm
-- **Linting**: ESLint + Prettier
-## API Endpoints Overview
+### Profil & User (Authenticated)
+| Method | Endpoint | Deskripsi |
+|--------|----------|-----------|
+| GET | /api/user/profile | Profil pengguna saat ini |
+| PUT | /api/user/password | Ganti password |
+| GET | /api/user/favorites | List favorit (pagination, filter) |
+| POST | /api/user/favorites | Tambah favorit |
+| DELETE | /api/user/favorites | Hapus favorit |
 
-### Authentication
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| `POST` | `/api/auth/register` | Register new user |
-| `POST` | `/api/auth/login` | User login |
-| `GET` | `/api/auth/verify` | Verify JWT token |
+### Admin - Users
+| Method | Endpoint | Deskripsi |
+|--------|----------|-----------|
+| GET | /api/admin/users | List users (search, role, showDeleted) |
+| POST | /api/admin/users | Buat user baru |
+| GET | /api/admin/users/:id | Detail user |
+| PUT | /api/admin/users/:id | Update user |
+| DELETE | /api/admin/users/:id | Soft delete user |
+| PATCH | /api/admin/users/:id | Restore user |
 
-### User Management
-| Method | Endpoint | Description | Auth Required |
-|--------|----------|-------------|---------------|
-| `GET` | `/api/user/profile` | Get user profile | Yes |
+### Admin - Kos Management
+| Method | Endpoint | Deskripsi |
+|--------|----------|-----------|
+| GET | /api/admin/kos | List kos (filter, sort) |
+| PATCH | /api/admin/kos/:id/featured | Toggle featured |
+| DELETE | /api/admin/kos/:id | Soft delete (archive) |
+| PATCH | /api/admin/kos/:id/restore | Restore dari archive |
+| DELETE | /api/admin/kos/:id/permanent | Permanent delete (hanya archived) |
+| POST | /api/admin/kos/bulk | Bulk soft delete |
+| DELETE | /api/admin/kos/bulk | Bulk permanent delete archived |
+| DELETE | /api/admin/kos/cleanup | Hapus semua archived |
 
-### Admin Operations
-| Method | Endpoint | Description | Auth Required |
-|--------|----------|-------------|---------------|
-| `GET` | `/api/admin/users` | Get all users | Yes Admin |
+### Seller
+| Method | Endpoint | Deskripsi |
+|--------|----------|-----------|
+| GET | /api/seller/dashboard | Statistik agregat seller |
+| GET | /api/seller/kos/:id | Detail kos milik seller (dengan statistik) |
+| GET | /api/kos/my | List kos milik current user (seller/admin) |
+
+### Public Kos & Discovery
+| Method | Endpoint | Deskripsi |
+|--------|----------|-----------|
+| GET | /api/kos | List publik dengan filter harga/kota |
+| GET | /api/kos/:id | Detail kos publik (review + statistik) |
+| GET | /api/kos/:id/availability | Cek ketersediaan |
+| POST | /api/kos/:id/view | Increment view count (rate limited) |
+| GET | /api/kos/featured | Featured kos random |
+| GET | /api/kos/nearby | Nearby kos (geo search) |
+| GET | /api/kos/recommendations | Rekomendasi (filter harga/kota) |
+| GET | /api/kos/search | Pencarian lanjutan (query, rating, sort) |
+
+### Reviews
+| Method | Endpoint | Deskripsi |
+|--------|----------|-----------|
+| GET | /api/kos/:id/reviews | List review |
+| POST | /api/kos/:id/reviews | Tambah review (auth) |
+
+### Photos
+| Method | Endpoint | Deskripsi |
+|--------|----------|-----------|
+| GET | /api/kos/:id/photos | List foto |
+| POST | /api/kos/:id/photos | Tambah foto (auth owner) |
+| DELETE | /api/kos/:id/photos | Hapus foto |
+| PUT | /api/kos/:id/photos/:photoId/primary | Set primary |
+| POST | /api/kos/:id/photos/upload | Upload file (cloud) |
+
+### Bookings
+| Method | Endpoint | Deskripsi |
+|--------|----------|-----------|
+| GET | /api/bookings | List booking (user atau admin) |
+| POST | /api/bookings | Buat booking |
+| GET | /api/bookings/:id | Detail booking |
+| PUT | /api/bookings/:id | Update status booking |
+| DELETE | /api/bookings/:id | Hapus booking (admin) |
+
+### Geocode
+| Method | Endpoint | Deskripsi |
+|--------|----------|-----------|
+| GET | /api/geocode | Resolusi alamat (rate limited) |
 
 ## Tech Stack
 
-- **Framework**: Next.js 15.3.1 (App Router)
-- **Language**: TypeScript 5.x
-- **Database**: PostgreSQL with Drizzle ORM
-- **Authentication**: JWT with bcryptjs
-- **Testing**: Vitest + Supertest
-- **Validation**: Zod schemas
-- **API**: RESTful with Next.js API routes
+- Framework: Next.js 15.3.1 (App Router)
+- Language: TypeScript (strict, tanpa any tidak perlu)
+- Database: PostgreSQL 16 + Drizzle ORM
+- Auth: JWT + bcryptjs
+- Validation: Zod
+- Testing: Vitest + Supertest
+- Styling (frontend pages): Tailwind CSS
 
-## Quick Start
+## Perubahan Terbaru (Agustus 28, 2025)
 
-### Option 1: Docker (Recommended)
+| Kategori | Ringkasan |
+|----------|-----------|
+| Refactor Types | Ekstraksi schema kos & seller ke `src/types` (menghapus duplikasi) |
+| Admin API | Penambahan operasi archive/restore/permanent + bulk + cleanup |
+| User Management | Soft delete + restore, audit fields (createdBy, deletedBy) dalam list |
+| Analytics | Unified analytics response schema typed via Zod |
+| Seller Detail | Schema khusus seller (`sellerKosDetailSchema`) termasuk statistik opsional |
+| Type Safety | Penghapusan cast any tidak aman, variabel & import tidak terpakai dibersihkan |
+| Booking Modal | Transformasi aman ke `PublicKosData` tanpa unsafe cast langsung |
+| Lint | Semua file bebas error/warning ESLint (no-unused-vars, no-explicit-any) |
+| Modularisasi | Pemisahan hooks, features, components, dan types lebih konsisten |
 
-**Prerequisites:**
-- Docker Engine 20.x+
-- Docker Compose 2.x+
-
-```bash
-# Clone repository
-git clone https://github.com/yourusername/kosera.git
-cd kosera
-
-# Copy environment file (already configured)
-cp .env.docker .env
-
-# Start development environment with PostgreSQL 16
-npm run docker:dev
-
-# Access API at http://localhost:3000
-# pgAdmin at http://localhost:5050
-```
-
-**Development Environment Includes:**
-- PostgreSQL 16.9 database running
-- All database tables created and migrated
-- Sample data seeded (125 users, 100 properties)
-- API endpoints tested and working
-- pgAdmin configured for database management
-
-### Option 2: Manual Setup
-
-**Prerequisites:**
-```bash
-# Node.js 18 or higher
-node --version  # v18.0.0+
-
-# PostgreSQL 16 or higher
-psql --version  # PostgreSQL 16+
-```
-
-### 1. Clone Repository
-```bash
-git clone https://github.com/yourusername/kosera.git
-cd kosera
-```
-
-### 2. Install Dependencies
-```bash
-npm install
-```
-
-### 3. Environment Setup
-```bash
-# Copy environment template
-cp .env.example .env
-
-# Edit .env with your configuration
-nano .env
-```
-
-**Required Environment Variables:**
-```env
-# Database Configuration
-DATABASE_URL="postgresql://username:password@localhost:5432/kosera"
-
-# JWT Security
-JWT_SECRET="your-super-secret-jwt-key-change-in-production"
-
-# Application
-NODE_ENV="development"
-PORT=3000
-```
-### 4. Database Setup
-```bash
-# Start PostgreSQL (using Docker)
-docker run -d --name kosera-db \
-  -p 5432:5432 \
-  -e POSTGRES_DB=kosera \
-  -e POSTGRES_USER=kosera \
-  -e POSTGRES_PASSWORD=your-password \
-  postgres:16
-
-# Generate and run migrations
-npm run db:generate
-npm run db:migrate
-
-# (Optional) Seed database with test data
-npm run db:seed
-```
-
-### 5. Start Development Server
-```bash
-# Standard development mode
-npm run dev
-
-# With Turbopack (faster)
-npm run dev --turbo
-
-# Access API at http://localhost:3000
-```
-
-## API Usage Examples
-
-### User Registration
-```bash
-curl -X POST http://localhost:3000/api/auth/register \
-  -H "Content-Type: application/json" \
-  -d '{
-    "name": "John Doe",
-    "username": "johndoe",
-    "contact": "john@example.com",
-    "password": "securepassword123",
-    "role": "RENTER"
-  }'
-```
-
-### User Login
-```bash
-curl -X POST http://localhost:3000/api/auth/login \
-  -H "Content-Type: application/json" \
-  -d '{
-    "username": "johndoe",
-    "password": "securepassword123"
-  }'
-```
-
-### Access Protected Endpoint
-```bash
-curl -X GET http://localhost:3000/api/user/profile \
-  -H "Authorization: Bearer <your-jwt-token>"
-```
-
-## Testing
-
-### Run All Tests
-```bash
-# Complete test suite
-npm test
-
-# Unit tests only
-npm run test:unit
-
-# Integration tests only
-npm run test:integration
-
-# Performance tests
-npm run test:performance
-
-# Test coverage
-npm run test:coverage
-```
-
-### Test Categories
-- **Unit Tests**: Individual function testing
-- **Integration Tests**: End-to-end API testing
-- **Performance Tests**: Load and response time testing
-- **Security Tests**: Authentication and authorization testing
-
-## Database Schema
-
-### Current Tables (PostgreSQL 16)
-- **users**: User accounts and authentication ✅ Seeded (125 users)
-- **posts**: Property listings ✅ Seeded (100 posts)
-- **kos**: Property details ✅ Seeded (100 properties)
-- **reviews**: User reviews and ratings ✅ Seeded (200 reviews)
-- **favorites**: Saved properties ✅ Seeded (349 favorites)
-- **kos_photos**: Property images ✅ Seeded (467 photos)
-- **bookings**: Reservation management ✅ Seeded (50 bookings)
-
-### Test Data Available
-- **5 Admin Users**: admin1-admin5 (password: admin123)
-- **20 Seller Users**: seller1-seller20 (password: seller123)
-- **100 Renter Users**: renter1-renter100 (password: renter123)
-- **Property Data**: Complete kos listings with facilities, pricing, and locations
-- **Sample Photos**: Realistic property images for development
-- **Review System**: Sample reviews with ratings for testing
-
-## Security Features
-
-### Authentication & Authorization
-- JWT-based authentication with 7-day expiry
-- Password hashing using bcryptjs (12 salt rounds)
-- Role-based access control (ADMIN, SELLER, RENTER)
-- Secure token verification middleware
-
-### API Security
-- Input validation on all endpoints
-- SQL injection prevention with parameterized queries
-- Rate limiting (recommended for production)
-- CORS configuration
-- Security headers
-
-## API Response Format
-
-### Success Response
+## Contoh Respons Sukses
 ```json
 {
   "message": "Operation successful",
-  "data": { /* response data */ },
-  "timestamp": "2025-07-03T16:30:00.000Z"
+  "data": { },
+  "timestamp": "2025-08-28T10:00:00.000Z"
 }
 ```
 
-### Error Response
+## Contoh Respons Error
 ```json
 {
-  "error": "Error message description",
-  "status": 400
+  "error": "Resource not found",
+  "status": 404
 }
 ```
 
-### HTTP Status Codes
-- `200` OK - Request successful
-- `201` Created - Resource created
-- `400` Bad Request - Invalid input
-- `401` Unauthorized - Authentication required
-- `403` Forbidden - Insufficient permissions
-- `404` Not Found - Resource not found
-- `409` Conflict - Resource already exists
-- `500` Internal Server Error - Server error
+## Status Code Utama
+- 200 OK
+- 201 Created
+- 400 Bad Request
+- 401 Unauthorized
+- 403 Forbidden
+- 404 Not Found
+- 409 Conflict
+- 500 Internal Server Error
 
-## Deployment
+## Keamanan
 
-### Environment Setup
-```bash
-# Production environment
-NODE_ENV=production
-DATABASE_URL=<production-database-url>
-JWT_SECRET=<secure-production-secret>
-```
+- JWT (7 hari) dengan verifikasi middleware
+- Hash password (bcryptjs 12 salt rounds)
+- Soft delete untuk users & kos (field `deletedAt`) + restore
+- Validasi input Zod sebelum operasi DB
+- Query parameterized via Drizzle (mencegah SQL injection)
+- Rate limiting sederhana (view counter & geocode)
 
-### Deployment Platforms
-- **Vercel** (Recommended): Zero-config deployment
-- **Railway**: Includes PostgreSQL database
-- **Digital Ocean**: App Platform with managed database
-- **AWS**: ECS/Lambda with RDS
+## Testing
 
-### Build Commands
-```bash
-# Build for production
-npm run build
+Gunakan Vitest untuk unit, integrasi, dan performance. Struktur test berada di `src/tests` dengan kategori terpisah (unit, api, integration, performance, dll).
 
-# Start production server
-npm start
-```
+## Kontribusi
 
-## Performance
+1. Fork repository
+2. Buat branch: `git checkout -b feat/nama-fitur`
+3. Commit: `feat(scope): deskripsi singkat` (Conventional Commits)
+4. Push & buka Pull Request
 
-### Response Time Targets
-- Authentication: < 500ms
-- Profile retrieval: < 200ms
-- Admin operations: < 300ms
-
-### Optimization Features
-- Database connection pooling
-- Query optimization with Drizzle ORM
-- JWT token caching
-- Efficient error handling
-
-## Contributing
-
-### Development Workflow
-1. Fork the repository
-2. Create feature branch: `git checkout -b feature/amazing-feature`
-3. Commit changes: `git commit -m 'Add amazing feature'`
-4. Push to branch: `git push origin feature/amazing-feature`
-5. Open a Pull Request
-
-### Code Standards
-- TypeScript for type safety
-- ESLint + Prettier for code formatting
-- Comprehensive test coverage (>85%)
-- API documentation for new endpoints
+Standar kode:
+- TypeScript strict
+- ESLint + Prettier
+- Hindari any
+- Tambah test & dokumentasi untuk endpoint baru
 
 ## Support
 
-### Getting Help
-- 📖 [API Documentation](./blob/docs/api/api-documentation.md)
-- 🗄️ [Database Schema](./blob/docs/api/database-design.md)
-- 🧪 [Testing Guide](./blob/docs/testing/testing-guide.md)
-- 🚀 [Deployment Guide](./blob/docs/deployment/deployment-guide.md)
-- 🏗️ [Implementation Guides](./blob/docs/implementation/)
-- 📋 [All Documentation](./blob/docs/README.md)
+- API Docs: ./blob/docs/api/api-documentation.md
+- Database Schema: ./blob/docs/api/database-design.md
+- Testing Guide: ./blob/docs/testing/testing-guide.md
+- Deployment Guide: ./blob/docs/deployment/deployment-guide.md
+- Implementation Guides: ./blob/docs/implementation/
+- Index: ./blob/docs/README.md
 
-### Issue Reporting
-- Use GitHub Issues for bug reports
-- Include API endpoint and request details
-- Provide error logs and expected behavior
+## Metadata
 
----
-
-**API Version:** 1.0.0  
-**Last Updated:** July 17, 2025  
-**License:** MIT  
-**Node.js:** >= 18.0.0  
-**Database:** PostgreSQL 16+
-
-## 🎉 Latest Updates (July 17, 2025)
-
-### ✅ PostgreSQL 16 Migration Complete
-- **Database**: Successfully upgraded to PostgreSQL 16.9
-- **Docker Setup**: All containers running with PostgreSQL 16-alpine
-- **Database Seeding**: Complete with 125 users, 100 properties, 467 photos, and more
-- **API Testing**: All endpoints verified and working perfectly
-
-### 🐳 Docker Environment Ready
-- **Development**: `npm run docker:dev` - Full development stack
-- **Production**: `npm run docker:prod` - Production-ready deployment
-- **Database**: PostgreSQL 16 with persistent storage
-- **Management**: pgAdmin available at http://localhost:5050
-
-### Ready for Development
-The application is now fully operational with:
-- PostgreSQL 16 database with complete schema
-- Seeded test data for immediate development
-- All API endpoints tested and functional
-- Docker containers optimized and running
-- Development environment ready
+API Version: 1.0.0  
+Last Updated: August 28, 2025  
+License: MIT  
+Node.js: >= 18.0.0  
+Database: PostgreSQL 16+
 
 ---
 
-**API Version:** 1.0.0  
-**Last Updated:** July 17, 2025  
-**License:** MIT  
-**Node.js:** >= 18.0.0  
-**Database:** PostgreSQL 16+
+Untuk detail lebih lanjut silakan lihat dokumentasi lengkap di folder `blob/docs/`.
 
