@@ -2,7 +2,7 @@ import React from 'react';
 import { InputField } from '../atoms/InputField';
 import { TextAreaField } from '../atoms/TextAreaField';
 import { FacilitiesSuggestions } from '../molecules/FacilitiesSuggestions';
-import { UseEditKosHook } from '@/hooks/seller/kos/useEditKos';
+import { UseEditKosHook } from '@/types';
 
 export interface EditKosFormProps extends Pick<UseEditKosHook, 'formData' | 'errors' | 'handleChange' | 'handleSubmit' | 'handleCancel' | 'isSubmitting'> {
   cities: string[];

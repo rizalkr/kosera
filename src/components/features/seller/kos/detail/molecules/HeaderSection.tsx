@@ -1,5 +1,5 @@
 import React from 'react';
-import { SellerKosDetail } from '@/hooks/seller/kos/useSellerKosDetailView';
+import { SellerKosDetail } from '@/types/seller-kos';
 
 export interface HeaderSectionProps {
   kos: SellerKosDetail;

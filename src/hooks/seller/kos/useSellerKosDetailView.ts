@@ -1,23 +1,9 @@
 import { useState, useCallback, useMemo } from 'react';
 import { useParams } from 'next/navigation';
 import { useSellerKosDetail } from '@/hooks/useApi';
-import { adminKosDataSchema } from '@/types/kos';
-import { z } from 'zod';
+import { sellerKosDetailSchema, SellerKosDetail } from '@/types/seller-kos';
 
-// For now reuse adminKosDataSchema (assuming seller detail shares structure). Adjust if seller-specific.
-const sellerKosDetailSchema = adminKosDataSchema.extend({
-  statistics: z.object({
-    totalBookings: z.number().optional(),
-    totalRevenue: z.number().optional(),
-    occupiedRooms: z.number().optional(),
-    totalRooms: z.number().optional(),
-    vacantRooms: z.number().optional(),
-    pendingBookings: z.number().optional(),
-    totalRoomsRentedOut: z.number().optional(),
-  }).optional(),
-}).partial({ owner: true });
-
-export type SellerKosDetail = z.infer<typeof sellerKosDetailSchema>;
+// Removed inline schema; now imported from types/seller-kos
 
 export type SellerKosTab = 'overview' | 'bookings' | 'analytics' | 'settings';
 

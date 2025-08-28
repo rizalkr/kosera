@@ -1,5 +1,6 @@
 import React from 'react';
-import { SellerKosDetail, UseSellerKosDetailViewResult } from '@/hooks/seller/kos/useSellerKosDetailView';
+import type { SellerKosDetail } from '@/types/seller-kos';
+import type { UseSellerKosDetailViewResult } from '@/hooks/seller/kos/useSellerKosDetailView';
 import { StatCard } from '../atoms/StatCard';
 import { RoomStatusPanel } from '../molecules/RoomStatusPanel';
 import { PropertyInfoPanel } from '../molecules/PropertyInfoPanel';
