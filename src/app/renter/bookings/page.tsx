@@ -1,7 +1,7 @@
 'use client';
 
-import { useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useState, useEffect } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import Header from '@/components/layouts/Header';
 import Footer from '@/components/layouts/Footer';
 import ProtectedRoute from '@/components/layouts/ProtectedRoute';
@@ -10,23 +10,52 @@ import { useBookings, useUpdateBooking } from '@/hooks/useApi';
 import { showConfirm } from '@/lib/sweetalert';
 import { cn } from '@/lib/utils';
 import { BookingCard } from '@/components/bookings/BookingCard';
-import type { ApiResponse, BookingListData, BookingStatus, BookingData } from '@/types';
+import { Pagination } from '@/components/ui/Pagination';
+import type { ApiResponse, BookingListData, BookingStatus } from '@/types';
+
+const STATUS_VALUES: (BookingStatus | 'all')[] = ['all','pending','confirmed','completed'];
 
 export default function RenterBookingsPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const pageParam = parseInt(searchParams.get('page') || '1', 10);
+  const statusParam = (searchParams.get('status') as BookingStatus | 'all' | null) || 'all';
+
   const { user } = useAuthGuard();
-  const { data: bookingsData, isLoading, error, refetch } = useBookings();
+  const [selectedStatus, setSelectedStatus] = useState<BookingStatus | 'all'>(statusParam);
+  const [currentPage, setCurrentPage] = useState<number>(pageParam);
+
+  const { data: bookingsData, isLoading, error, refetch } = useBookings({ page: currentPage, status: selectedStatus === 'all' ? undefined : selectedStatus });
   const updateBookingMutation = useUpdateBooking();
-  const [selectedStatus, setSelectedStatus] = useState<BookingStatus | 'all'>('all');
+
+  // Sync when URL search params change
+  useEffect(() => {
+    if (statusParam !== selectedStatus) setSelectedStatus(statusParam);
+    if (pageParam !== currentPage) setCurrentPage(pageParam);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [statusParam, pageParam]);
+
+  // Push state to URL when filters/page change
+  useEffect(() => {
+    const params = new URLSearchParams();
+    if (selectedStatus !== 'all') params.set('status', selectedStatus);
+    if (currentPage > 1) params.set('page', String(currentPage));
+    const qs = params.toString();
+    router.replace(`/renter/bookings${qs ? `?${qs}` : ''}`);
+  }, [selectedStatus, currentPage, router]);
 
   const response = bookingsData as (ApiResponse<BookingListData> | undefined);
-  const bookings: (BookingData & { duration?: number; notes?: string })[] = (response?.data?.bookings as any[]) || [];
-
-  const filtered = selectedStatus === 'all' ? bookings : bookings.filter(b => b.status === selectedStatus);
+  const bookings = response?.data?.bookings || [];
+  const pagination = response?.data?.pagination;
 
   const handleCancel = async (id: number) => {
     const r = await showConfirm('Apakah Anda yakin ingin membatalkan booking ini?', 'Konfirmasi Pembatalan', 'Ya, Batalkan', 'Tidak');
     if (r.isConfirmed) updateBookingMutation.mutate({ id, status: 'cancelled', notes: 'Booking dibatalkan oleh pengguna' });
+  };
+
+  const onPageChange = (p: number) => {
+    if (p < 1 || (pagination && p > pagination.totalPages)) return;
+    setCurrentPage(p);
   };
 
   if (isLoading) {
@@ -80,17 +109,18 @@ export default function RenterBookingsPage() {
             </div>
 
             <div className="mb-6 flex flex-wrap gap-2">
-              {(['all','pending','confirmed','completed'] as const).map(st => {
+              {STATUS_VALUES.map(st => {
+                const count = bookings.filter(b=>b.status===st).length;
                 const labelMap: Record<string,string> = {
-                  all: `Semua (${bookings.length})`,
-                  pending: `Menunggu (${bookings.filter(b=>b.status==='pending').length})`,
-                  confirmed: `Dikonfirmasi (${bookings.filter(b=>b.status==='confirmed').length})`,
-                  completed: `Selesai (${bookings.filter(b=>b.status==='completed').length})`
+                  all: `Semua (${pagination?.totalBookings ?? bookings.length})`,
+                  pending: `Menunggu${st==='pending' ? ` (${count})` : ''}`,
+                  confirmed: `Dikonfirmasi${st==='confirmed' ? ` (${count})` : ''}`,
+                  completed: `Selesai${st==='completed' ? ` (${count})` : ''}`
                 };
                 return (
                   <button
                     key={st}
-                    onClick={() => setSelectedStatus(st)}
+                    onClick={() => { setCurrentPage(1); setSelectedStatus(st); }}
                     className={cn(
                       'px-4 py-2 rounded-lg text-sm font-medium transition-colors',
                       selectedStatus === st
@@ -102,7 +132,7 @@ export default function RenterBookingsPage() {
               })}
             </div>
 
-            {filtered.length === 0 ? (
+            {bookings.length === 0 ? (
               <div className="text-center py-12">
                 <div className="text-gray-400 text-6xl mb-4">📅</div>
                 <h3 className="text-xl font-semibold text-gray-600 mb-2">
@@ -113,20 +143,29 @@ export default function RenterBookingsPage() {
                 </p>
               </div>
             ) : (
-              <div className="space-y-6">
-                {filtered.map(b => (
-                  <BookingCard
-                    key={b.id}
-                    booking={b}
-                    role="RENTER"
-                    isMutating={updateBookingMutation.isPending}
-                    actions={{
-                      onCancel: handleCancel,
-                      onDetail: (id) => router.push(`/renter/bookings/${id}`)
-                    }}
+              <>
+                <div className="space-y-6">
+                  {bookings.map(b => (
+                    <BookingCard
+                      key={b.id}
+                      booking={b}
+                      role="RENTER"
+                      isMutating={updateBookingMutation.isPending}
+                      actions={{
+                        onCancel: handleCancel,
+                        onDetail: (id) => router.push(`/renter/bookings/${id}`)
+                      }}
+                    />
+                  ))}
+                </div>
+                {pagination && (
+                  <Pagination
+                    currentPage={pagination.page}
+                    totalPages={pagination.totalPages}
+                    onPageChange={onPageChange}
                   />
-                ))}
-              </div>
+                )}
+              </>
             )}
           </div>
         </main>

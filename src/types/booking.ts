@@ -3,6 +3,12 @@ import type { KosPhoto } from './kos';
 // Shared Booking Status Type
 export type BookingStatus = 'pending' | 'confirmed' | 'cancelled' | 'completed';
 
+// New: Filtering & pagination helper types
+export interface BookingListQuery {
+  page?: number;
+  status?: BookingStatus | 'all';
+}
+
 // Booking Types
 export interface BookingData {
   id: number;
@@ -81,4 +87,31 @@ export interface BookingPagination {
 export interface BookingListData {
   bookings: BookingData[];
   pagination: BookingPagination;
+}
+
+export interface BookingDetailUser { id: number; username: string; name?: string; contact?: string }
+export interface BookingDetailPost { id: number; title: string; price: number; userId: number }
+export interface BookingDetailKos { id: number; name: string; address: string; city: string; facilities?: string }
+
+export interface BookingDetailData {
+  id: number;
+  checkInDate: string;
+  checkOutDate: string;
+  duration?: number;
+  totalPrice: number;
+  status: BookingStatus;
+  notes?: string;
+  createdAt: string;
+  updatedAt: string;
+  userId: number;
+  kos: BookingDetailKos;
+  post: BookingDetailPost;
+  user: BookingDetailUser;
+}
+
+export interface BookingApiResponse {
+  success: boolean;
+  message?: string;
+  data?: { booking: BookingDetailData };
+  error?: string;
 }
