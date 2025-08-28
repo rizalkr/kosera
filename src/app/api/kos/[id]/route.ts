@@ -5,9 +5,9 @@ import { kos, posts, users, reviews } from '@/db/schema';
 import { eq, desc, count, avg, sql } from 'drizzle-orm';
 
 // GET /api/kos/[id] - Get specific kos by ID with reviews and statistics (public)
-export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+export async function GET(request: NextRequest, { params }: { params: { id: string } }) { // params no longer a Promise for correct Next.js typing
   try {
-    const { id } = await params;
+    const { id } = params; // removed await (params is not a Promise)
     const kosId = parseInt(id);
 
     if (isNaN(kosId)) {
@@ -128,11 +128,11 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
         },
         pagination: {
           page,
-          limit,
-          totalReviews,
-          totalPages,
-          hasNext: page < totalPages,
-          hasPrev: page > 1,
+            limit,
+            totalReviews,
+            totalPages,
+            hasNext: page < totalPages,
+            hasPrev: page > 1,
         },
       },
     };

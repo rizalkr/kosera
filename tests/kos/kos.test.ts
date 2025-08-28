@@ -60,7 +60,8 @@ describe('Kos CRUD API', () => {
         facilities: 'WiFi, AC, Kamar Mandi Dalam',
         title: 'Kos Nyaman di Jakarta Pusat',
         description: 'Kos dengan fasilitas lengkap',
-        price: 1500000
+        price: 1500000,
+        totalRooms: 10
       };
 
       const request = new NextRequest('http://localhost:3000/api/kos', {
@@ -196,7 +197,8 @@ describe('Kos CRUD API', () => {
         facilities: 'WiFi, AC',
         title: 'Test Kos',
         description: 'Test description',
-        price: 1500000
+        price: 1500000,
+        totalRooms: 10
       };
 
       const request = new NextRequest('http://localhost:3000/api/kos', {
@@ -262,7 +264,8 @@ describe('Kos CRUD API', () => {
         facilities: 'WiFi, AC',
         title: 'Test Kos ID',
         description: 'Test description for ID',
-        price: 1500000
+        price: 1500000,
+        totalRooms: 10
       };
 
       const request = new NextRequest('http://localhost:3000/api/kos', {
@@ -328,7 +331,8 @@ describe('Kos CRUD API', () => {
         facilities: 'WiFi, AC',
         title: 'My Test Kos',
         description: 'My test description',
-        price: 1500000
+        price: 1500000,
+        totalRooms: 10
       };
 
       const request = new NextRequest('http://localhost:3000/api/kos', {

@@ -35,7 +35,7 @@ export async function GET(request: NextRequest) {
       .innerJoin(posts, eq(kos.postId, posts.id));
 
     // Build where conditions
-    const conditions = [];
+    const conditions = [] as any[]; // explicitly type as any[] to satisfy drizzle types when empty
     
     if (city) {
       conditions.push(eq(kos.city, city));
