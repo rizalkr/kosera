@@ -36,6 +36,13 @@ export async function GET(request: NextRequest) {
       );
     }
 
+    // Auto-complete: mark confirmed bookings whose checkout date has passed as completed
+    // This is a lightweight approach; consider a scheduled job for large scale.
+    await db
+      .update(bookings)
+      .set({ status: 'completed', updatedAt: new Date() })
+      .where(and(eq(bookings.status, 'confirmed'), lte(bookings.checkOutDate, new Date())));
+
     const { searchParams } = new URL(request.url);
     const page = Math.max(1, parseInt(searchParams.get('page') || '1'));
     const limit = Math.min(50, Math.max(1, parseInt(searchParams.get('limit') || '10')));

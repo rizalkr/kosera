@@ -162,8 +162,10 @@ export const useUpdateBooking = () => {
     mutationFn: ({ id, status, notes }: { id: number; status: string; notes?: string }) =>
       bookingsApi.updateBooking(id, status, notes),
     onSuccess: () => {
-      // Invalidate bookings queries (all pages / filters)
+      // Invalidate bookings list queries (all filters/pages)
       queryClient.invalidateQueries({ queryKey: ['bookings'] });
+      // Invalidate individual booking detail queries
+      queryClient.invalidateQueries({ queryKey: ['booking'] });
     },
   });
 };

@@ -181,20 +181,65 @@ export async function PUT(
 
     const booking = bookingData[0];
 
-    // Check permissions for status updates
+    // ---------------- Permission & Transition Logic ----------------
+    // Centralized allowed transitions (business rules)
+    const allowedTransitions: Record<string, string[]> = {
+      pending: ['confirmed', 'cancelled'],
+      confirmed: ['cancelled'], // seller can cancel confirmed; completion handled separately for admin
+      cancelled: [],
+      completed: [],
+    };
+
+    const currentStatus = booking.status;
+    const nextStatus = validatedData.status;
+
     let canUpdate = false;
-    
+    let invalidTransition = false;
+
     if (payload.role === 'ADMIN') {
-      canUpdate = true;
+      // Admin: can perform any valid business transition; completion only from confirmed
+      if (nextStatus === 'completed') {
+        canUpdate = currentStatus === 'confirmed';
+        if (!canUpdate) invalidTransition = true; // e.g., trying to complete from pending/cancelled/completed
+      } else if (nextStatus === currentStatus) {
+        invalidTransition = true; // no-op not allowed
+      } else if (allowedTransitions[currentStatus]?.includes(nextStatus)) {
+        canUpdate = true;
+      } else {
+        invalidTransition = true;
+      }
     } else if (booking.kosOwnerId === payload.userId) {
-      // Kos owner can confirm or cancel bookings
-      canUpdate = ['confirmed', 'cancelled'].includes(validatedData.status);
+      // Seller (kos owner):
+      // - pending -> confirmed | cancelled
+      // - confirmed -> cancelled
+      const sellerAllowed = allowedTransitions[currentStatus] || [];
+      if (nextStatus === 'completed') {
+        // Explicitly disallow completion by seller
+        invalidTransition = true;
+      } else if (nextStatus === currentStatus) {
+        invalidTransition = true;
+      } else if (sellerAllowed.includes(nextStatus)) {
+        canUpdate = true;
+      } else {
+        invalidTransition = true;
+      }
     } else if (booking.userId === payload.userId) {
-      // User can only cancel their own booking if it's still pending
-      canUpdate = validatedData.status === 'cancelled' && booking.status === 'pending';
+      // Renter:
+      // - pending -> cancelled only
+      if (currentStatus === 'pending' && nextStatus === 'cancelled') {
+        canUpdate = true;
+      } else {
+        invalidTransition = true;
+      }
     }
 
     if (!canUpdate) {
+      if (invalidTransition) {
+        return NextResponse.json(
+          { success: false, error: 'Invalid status transition' },
+          { status: 400 }
+        );
+      }
       return NextResponse.json(
         { success: false, error: 'Unauthorized: You cannot perform this action' },
         { status: 403 }
@@ -205,7 +250,7 @@ export async function PUT(
     const [updatedBooking] = await db
       .update(bookings)
       .set({
-        status: validatedData.status,
+        status: nextStatus,
         notes: validatedData.notes,
         updatedAt: new Date(),
       })
