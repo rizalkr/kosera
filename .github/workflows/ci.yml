@@ -18,13 +18,13 @@ jobs:
     services:
       postgres:
         image: postgres:16-alpine
-        # Static test creds (non-sensitive). Ensure they match your DATABASE_URL secret.
+        # Internal service network hostname will be 'postgres'
         env:
-          POSTGRES_USER: kosera
-          POSTGRES_PASSWORD: password
-          POSTGRES_DB: kosera
+          POSTGRES_USER: ${{ secrets.DB_USER }}
+          POSTGRES_PASSWORD: ${{ secrets.DB_PASSWORD }}
+          POSTGRES_DB: ${{ secrets.DB_NAME }}
         options: >-
-          --health-cmd "pg_isready -U kosera" \
+          --health-cmd "pg_isready -U ${{ secrets.DB_USER }}" \
           --health-interval 5s \
           --health-timeout 5s \
           --health-retries 12
@@ -32,8 +32,11 @@ jobs:
     env:
       NEXT_TELEMETRY_DISABLED: '1'
       CI: 'true'
+      DB_USER: ${{ secrets.DB_USER }}
+      DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
+      DB_NAME: ${{ secrets.DB_NAME }}
       JWT_SECRET: ${{ secrets.JWT_SECRET }}
-      DATABASE_URL: ${{ secrets.DATABASE_URL }}
+      DATABASE_URL: postgresql://${{ secrets.DB_USER }}:${{ secrets.DB_PASSWORD }}@postgres:5432/${{ secrets.DB_NAME }}
 
     steps:
       - name: Checkout
@@ -51,7 +54,7 @@ jobs:
       - name: Wait for Postgres
         run: |
           for i in {1..30}; do
-            if pg_isready -h postgres -p 5432 -U kosera; then
+            if pg_isready -h postgres -p 5432 -U "$DB_USER"; then
               echo "Postgres is ready"; break; fi; sleep 2; done
 
       - name: Apply migrations
