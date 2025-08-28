@@ -22,6 +22,13 @@
       "when": 1753061426826,
       "tag": "0002_milky_nextwave",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1756349795622,
+      "tag": "0003_nifty_hellfire_club",
+      "breakpoints": true
     }
   ]
 }

@@ -136,3 +136,7 @@ export const SellerDashboard = () => {
     </div>
   );
 };
+
+// Provide a default exported page component required by Next.js while keeping named export
+export const SellerDashboardPage: React.FC = () => <SellerDashboard />;
+export default SellerDashboardPage;

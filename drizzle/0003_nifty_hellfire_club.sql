@@ -1,0 +1,1 @@
+ALTER TABLE "kos_photos" ADD COLUMN "cloudinary_public_id" text;

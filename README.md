@@ -138,6 +138,59 @@ Authorization: Bearer <jwt-token>
 - Testing: Vitest + Supertest
 - Styling (frontend pages): Tailwind CSS
 
+## Integrasi Database Neon (Baru)
+
+Dukungan koneksi PostgreSQL serverless via [Neon](https://neon.tech) ditambahkan.
+
+### 1. Buat Project Neon
+1. Login / daftar di Neon
+2. Create Project (PostgreSQL 16)
+3. Catat connection string (format umum):
+```
+postgresql://<USER>:<PASSWORD>@<HOST>/<DBNAME>?sslmode=require
+```
+Contoh:
+```
+postgresql://neon_user:superSecret@ep-wispy-moon-123456.ap-southeast-1.aws.neon.tech/neondb?sslmode=require
+```
+
+### 2. Update Environment
+Tambahkan ke `.env.local` (jangan commit credential sensitif):
+```
+DATABASE_URL=postgresql://neon_user:superSecret@ep-wispy-moon-123456.ap-southeast-1.aws.neon.tech/neondb?sslmode=require
+```
+Jika masih memakai variabel `POSTGRES_*` dari Docker, itu akan diabaikan karena `DATABASE_URL` memiliki prioritas di `src/db/index.ts`.
+
+### 3. Jalankan Migrasi Drizzle
+Pastikan dependency sudah terinstall.
+```
+# generate SQL dari schema (opsional jika sudah ada)
+# npx drizzle-kit generate
+# push migrasi ke Neon
+# npx drizzle-kit push
+```
+(Cukup gunakan perintah migrasi yang sudah dipakai di workflow proyek Anda.)
+
+### 4. Verifikasi Koneksi
+Jalankan aplikasi lalu cek log atau query sederhana:
+- Endpoint health / halaman yang melakukan query
+- Atau gunakan `psql` / Neon SQL Editor untuk melihat tabel sudah terbuat.
+
+### 5. Catatan SSL
+Neon memerlukan TLS. Parameter `?sslmode=require` sudah cukup untuk driver `postgres-js`. Jika ingin eksplisit bisa gunakan opsi dalam kode (tidak wajib karena URL sudah mengatur):
+```ts
+// contoh jika ingin menambahkan secara manual
+// postgres(process.env.DATABASE_URL!, { ssl: 'require' });
+```
+Saat ini kode otomatis memakai `process.env.DATABASE_URL` sehingga cukup set URL dengan query param SSL.
+
+### 6. Pooling / Serverless
+Neon sudah menyediakan pooling layer default. Tidak perlu PgBouncer terpisah. Jika ingin mode serverless native Anda bisa migrasi ke driver `@neondatabase/serverless` di masa depan; sekarang cukup dengan `postgres`.
+
+### 7. Performa & Limits
+- Gunakan indeks sesuai query (lihat schema & tambahkan bila perlu)
+- Pantau kuota connection & throughput di dashboard Neon
+
 ## Perubahan Terbaru (Agustus 28, 2025)
 
 | Kategori | Ringkasan |
@@ -151,6 +204,7 @@ Authorization: Bearer <jwt-token>
 | Booking Modal | Transformasi aman ke `PublicKosData` tanpa unsafe cast langsung |
 | Lint | Semua file bebas error/warning ESLint (no-unused-vars, no-explicit-any) |
 | Modularisasi | Pemisahan hooks, features, components, dan types lebih konsisten |
+| Neon DB | Dokumentasi koneksi Neon + support `sslmode=require` pada `DATABASE_URL` |
 
 ## Contoh Respons Sukses
 ```json
@@ -220,7 +274,7 @@ API Version: 1.0.0
 Last Updated: August 28, 2025  
 License: MIT  
 Node.js: >= 18.0.0  
-Database: PostgreSQL 16+
+Database: PostgreSQL 16+ / Neon Serverless
 
 ---
 
