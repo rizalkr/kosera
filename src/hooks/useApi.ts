@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { kosApi, authApi, favoritesApi, bookingsApi, sellerApi, adminApi } from '../lib/api/';
 import type { SearchParams } from '@/types';
+import type { GetBookingsParams } from '@/lib/api/bookings';
 
 // Kos hooks
 export const useKosFeatured = () => {
@@ -124,10 +125,10 @@ export const useRemoveFavorite = () => {
 };
 
 // Bookings hooks
-export const useBookings = () => {
+export const useBookings = (params: GetBookingsParams = {}) => {
   return useQuery({
-    queryKey: ['bookings'],
-    queryFn: bookingsApi.getBookings,
+    queryKey: ['bookings', params],
+    queryFn: () => bookingsApi.getBookings(params),
   });
 };
 
@@ -161,7 +162,7 @@ export const useUpdateBooking = () => {
     mutationFn: ({ id, status, notes }: { id: number; status: string; notes?: string }) =>
       bookingsApi.updateBooking(id, status, notes),
     onSuccess: () => {
-      // Invalidate bookings queries
+      // Invalidate bookings queries (all pages / filters)
       queryClient.invalidateQueries({ queryKey: ['bookings'] });
     },
   });
