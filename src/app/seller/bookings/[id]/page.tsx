@@ -1,8 +1,8 @@
 'use client';
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import { useRouter, useParams } from 'next/navigation';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import KosImage from '@/components/ui/KosImage';
 import type { BookingApiResponse, BookingDetailData, BookingStatus } from '@/types';
 import { showConfirm } from '@/lib/sweetalert';
@@ -27,6 +27,7 @@ export const SellerBookingDetailPage = () => {
   const params = useParams<{ id: string }>();
   const router = useRouter();
   const bookingId = params?.id as string;
+  const queryClient = useQueryClient();
   const updateMutation = useUpdateBooking();
 
   const { data: booking, isLoading, error, refetch } = useQuery({
@@ -34,6 +35,13 @@ export const SellerBookingDetailPage = () => {
     queryFn: () => fetchBooking(bookingId),
     enabled: !!bookingId,
   });
+
+  useEffect(() => {
+    if (updateMutation.isSuccess) {
+      queryClient.invalidateQueries({ queryKey: ['booking', bookingId] });
+      refetch();
+    }
+  }, [updateMutation.isSuccess, queryClient, bookingId, refetch]);
 
   const handleAction = async (next: BookingStatus, confirmText: string, notes?: string) => {
     if (!booking) return;
@@ -46,8 +54,17 @@ export const SellerBookingDetailPage = () => {
     <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
       <div className="bg-white rounded-2xl shadow-lg p-8">
         <div className="flex items-center justify-between mb-6">
-          <h1 className="text-2xl font-bold text-blue-600">Detail Booking</h1>
-          <button onClick={() => router.back()} className="text-sm text-gray-600 hover:text-gray-800">&larr; Kembali</button>
+          <div className="space-y-1">
+            <h1 className="text-2xl font-bold text-blue-600">Detail Booking</h1>
+            <div className="flex gap-3 text-sm">
+              <button onClick={() => router.push('/seller/dashboard')} className="text-gray-600 hover:text-gray-800">&larr; Dashboard</button>
+              <span className="text-gray-300">|</span>
+              <button onClick={() => router.push('/seller/bookings')} className="text-gray-600 hover:text-gray-800">Daftar Booking</button>
+              <span className="text-gray-300">|</span>
+              <button onClick={() => refetch()} disabled={updateMutation.isPending} className="text-gray-600 hover:text-gray-800 disabled:opacity-50">Reload</button>
+            </div>
+          </div>
+          <button onClick={() => router.back()} className="text-sm text-gray-600 hover:text-gray-800">Kembali</button>
         </div>
 
         {isLoading && (
@@ -122,9 +139,7 @@ export const SellerBookingDetailPage = () => {
                   <button onClick={() => handleAction('cancelled','Batalkan booking ini?','Booking dibatalkan oleh pemilik')} disabled={updateMutation.isPending} className="bg-red-600 text-white px-5 py-2 rounded text-sm hover:bg-red-700 disabled:opacity-50">{updateMutation.isPending ? 'Memproses...' : 'Batalkan'}</button>
                 </>
               )}
-              {booking.status === 'confirmed' && (
-                <button onClick={() => handleAction('completed','Tandai booking sebagai selesai?')} disabled={updateMutation.isPending} className="bg-blue-600 text-white px-5 py-2 rounded text-sm hover:bg-blue-700 disabled:opacity-50">{updateMutation.isPending ? 'Memproses...' : 'Tandai Selesai'}</button>
-              )}
+              {/* Removed manual complete button - completion now automatic after check-out by system */}
             </div>
           </div>
         )}

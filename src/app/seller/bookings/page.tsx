@@ -54,10 +54,7 @@ export const SellerBookingsPage = () => {
     const r = await showConfirm('Batalkan booking ini?', 'Konfirmasi', 'Ya', 'Batal');
     if (r.isConfirmed) updateBookingMutation.mutate({ id, status: 'cancelled', notes: 'Booking dibatalkan oleh pemilik' });
   };
-  const handleComplete = async (id: number) => {
-    const r = await showConfirm('Tandai booking sebagai selesai?', 'Konfirmasi', 'Ya', 'Batal');
-    if (r.isConfirmed) updateBookingMutation.mutate({ id, status: 'completed' });
-  };
+
 
   const onPageChange = (p: number) => {
     if (p < 1 || (pagination && p > pagination.totalPages)) return;
@@ -98,6 +95,10 @@ export const SellerBookingsPage = () => {
             <p className="text-gray-600">Kelola permintaan booking pada kos Anda</p>
           </div>
           <div className="flex gap-2">
+            <button
+              onClick={() => router.push('/seller/dashboard')}
+              className="px-4 py-2 rounded-lg bg-gray-200 text-gray-700 text-sm font-medium hover:bg-gray-300 transition-colors"
+            >Dashboard</button>
             <button
               onClick={() => refetch()}
               className="px-4 py-2 rounded-lg bg-blue-600 text-white text-sm font-medium hover:bg-blue-700 transition-colors"
@@ -152,7 +153,6 @@ export const SellerBookingsPage = () => {
                   actions={{
                     onConfirm: handleConfirm,
                     onCancel: handleCancel,
-                    onComplete: handleComplete,
                     onDetail: (id) => router.push(`/seller/bookings/${id}`)
                   }}
                 />
