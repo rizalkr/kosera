@@ -5,23 +5,10 @@ import { AppError } from '@/types/common';
 import { sellerApi } from '@/lib/api/seller';
 import { apiClient } from '@/lib/api/client';
 import { z } from 'zod';
+import { EditKosRequest, editKosRequestSchema, UseEditKosHook } from '@/types';
 
 // Zod schema for edit kos (reuse createKosRequestSchema with optional fields if needed)
-export const editKosRequestSchema = z.object({
-  title: z.string().min(1),
-  description: z.string().min(1),
-  price: z.number().positive(),
-  name: z.string().min(1),
-  address: z.string().min(1),
-  city: z.string().min(1),
-  facilities: z.string().min(1),
-  totalRooms: z.number().positive(),
-  occupiedRooms: z.number().optional(),
-  latitude: z.number().optional(),
-  longitude: z.number().optional(),
-});
 
-export type EditKosRequest = z.infer<typeof editKosRequestSchema>;
 
 export const editKosResponseSchema = z.object({
   success: z.boolean(),
@@ -31,16 +18,6 @@ export const editKosResponseSchema = z.object({
   error: z.string().optional(),
 }).passthrough();
 
-export interface UseEditKosHook {
-  kosId: number;
-  formData: EditKosRequest;
-  isLoading: boolean;
-  isSubmitting: boolean;
-  errors: Record<string, string>;
-  handleChange: (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => void;
-  handleSubmit: (e: React.FormEvent) => Promise<void>;
-  handleCancel: () => Promise<void>;
-}
 
 const defaultForm: EditKosRequest = {
   title: '',
