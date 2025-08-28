@@ -12,32 +12,13 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  build-test:
+  build:
     name: Lint, Type Check, Test, Build
     runs-on: ubuntu-latest
-    services:
-      postgres:
-        image: postgres:16-alpine
-        ports:
-          - 5432:5432
-        env:
-          POSTGRES_USER: kosera
-          # Gunakan secret untuk password
-          POSTGRES_PASSWORD: ${{ secrets.POSTGRES_PASSWORD }}
-          POSTGRES_DB: kosera
-        # Health check ini sudah cukup untuk memastikan DB siap
-        options: >-
-          --health-cmd "pg_isready -U kosera"
-          --health-interval 5s
-          --health-timeout 5s
-          --health-retries: 12
 
     env:
       NEXT_TELEMETRY_DISABLED: '1'
       CI: 'true'
-      # Gunakan secret untuk password dan kunci lainnya
-      DATABASE_URL: postgresql://kosera:${{ secrets.POSTGRES_PASSWORD }}@localhost:5432/kosera
-      JWT_SECRET: ${{ secrets.JWT_SECRET_CI }}
 
     steps:
       - name: Checkout
@@ -52,11 +33,6 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      # HAPUS STEP "Wait for Postgres" DARI SINI
-
-      - name: Apply migrations
-        run: npx drizzle-kit push
-
       - name: Lint
         run: npm run lint
 
@@ -64,7 +40,7 @@ jobs:
         run: npx tsc --noEmit
 
       - name: Run Tests
-        run: npm run test
+        run: npm test
 
       - name: Build
         run: npm run build
