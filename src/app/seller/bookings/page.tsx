@@ -1,130 +1,157 @@
 'use client';
 
-import React from 'react';
-import { useBookings } from '@/hooks/useApi';
+import React, { useState } from 'react';
+import { useBookings, useUpdateBooking } from '@/hooks/useApi';
 import { useRouter } from 'next/navigation';
+import ProtectedRoute from '@/components/layouts/ProtectedRoute';
+import Header from '@/components/layouts/Header';
+import Footer from '@/components/layouts/Footer';
+import { showConfirm } from '@/lib/sweetalert';
 import { cn } from '@/lib/utils';
-import type { BookingData, PaginatedResponse, ApiResponse } from '@/types';
+import { BookingCard } from '@/components/bookings/BookingCard';
+import type { ApiResponse, BookingListData, BookingStatus, BookingData } from '@/types';
 
-interface StatusBadgeProps { status: string }
-export const StatusBadge: React.FC<StatusBadgeProps> = ({ status }) => {
-  const colors: Record<string, string> = {
-    pending: 'bg-yellow-100 text-yellow-800 border-yellow-200',
-    confirmed: 'bg-green-100 text-green-800 border-green-200',
-    cancelled: 'bg-red-100 text-red-800 border-red-200',
-    completed: 'bg-blue-100 text-blue-800 border-blue-200'
-  };
-  return (
-    <span className={cn('px-2 py-1 rounded text-xs font-medium border inline-block', colors[status] || 'bg-gray-100 text-gray-800 border-gray-200')}>
-      {status.charAt(0).toUpperCase() + status.slice(1)}
-    </span>
-  );
-};
-
-interface BookingRowActionsProps { id: number; status: string }
-export const BookingRowActions: React.FC<BookingRowActionsProps> = ({ id, status }) => {
-  const router = useRouter();
-  return (
-    <div className="flex gap-2 justify-end">
-      <button
-        onClick={() => router.push(`/bookings/${id}`)}
-        className="px-3 py-1.5 text-sm rounded-md bg-white border border-gray-300 hover:bg-gray-50"
-      >
-        Detail
-      </button>
-      {status === 'pending' && (
-        <button
-          onClick={() => router.push(`/bookings/${id}?action=manage`)}
-          className="px-3 py-1.5 text-sm rounded-md bg-indigo-600 text-white hover:bg-indigo-700"
-        >
-          Proses
-        </button>
-      )}
-    </div>
-  );
-};
-
+// ---------------- Page ----------------
 export const SellerBookingsPage = () => {
-  const { data, isLoading, error, refetch } = useBookings(); // TODO: replace with seller-specific endpoint when available
+  const router = useRouter();
+  const { data, isLoading, error, refetch } = useBookings();
+  const updateBookingMutation = useUpdateBooking();
+  const [selectedStatus, setSelectedStatus] = useState<BookingStatus | 'all'>('all');
+
+  // Extract bookings list from API response
+  const response = data as (ApiResponse<BookingListData> | undefined);
+  const bookings: (BookingData & { duration?: number; notes?: string })[] = (response?.data?.bookings as any[]) || [];
+
+  const filtered = selectedStatus === 'all'
+    ? bookings
+    : bookings.filter(b => b.status === selectedStatus);
+
+  const handleConfirm = async (id: number) => {
+    const r = await showConfirm('Konfirmasi booking ini?', 'Konfirmasi', 'Ya', 'Batal');
+    if (r.isConfirmed) updateBookingMutation.mutate({ id, status: 'confirmed' });
+  };
+  const handleCancel = async (id: number) => {
+    const r = await showConfirm('Batalkan booking ini?', 'Konfirmasi', 'Ya', 'Batal');
+    if (r.isConfirmed) updateBookingMutation.mutate({ id, status: 'cancelled', notes: 'Booking dibatalkan oleh pemilik' });
+  };
+  const handleComplete = async (id: number) => {
+    const r = await showConfirm('Tandai booking sebagai selesai?', 'Konfirmasi', 'Ya', 'Batal');
+    if (r.isConfirmed) updateBookingMutation.mutate({ id, status: 'completed' });
+  };
 
   if (isLoading) {
     return (
-      <div className="p-6 animate-pulse space-y-4">
-        {[...Array(6)].map((_, i) => (
-          <div key={i} className="h-16 bg-gray-200 rounded" />
-        ))}
-      </div>
+      <ProtectedRoute requireAuth={true} allowedRoles={['SELLER']}>
+        <div className="min-h-screen bg-[#A9E4DE] pt-20">
+          <Header />
+          <main className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+            <div className="bg-white rounded-2xl shadow-lg p-10">
+              <div className="space-y-4 animate-pulse">
+                {[...Array(4)].map((_, i) => (
+                  <div key={i} className="h-24 bg-gray-200 rounded-lg" />
+                ))}
+              </div>
+            </div>
+          </main>
+          <Footer />
+        </div>
+      </ProtectedRoute>
     );
   }
 
   if (error) {
     return (
-      <div className="p-6">
-        <div className="bg-red-50 border border-red-200 text-red-800 rounded p-4">
-          Gagal memuat data bookings. <button onClick={() => refetch()} className="underline">Coba lagi</button>
+      <ProtectedRoute requireAuth={true} allowedRoles={['SELLER']}>
+        <div className="min-h-screen bg-[#A9E4DE] pt-20">
+          <Header />
+          <main className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+            <div className="bg-white rounded-2xl shadow-lg p-10 text-center text-red-500">
+              Gagal memuat data bookings. <button onClick={() => refetch()} className="underline">Coba lagi</button>
+            </div>
+          </main>
+          <Footer />
         </div>
-      </div>
+      </ProtectedRoute>
     );
   }
 
-  // Adapt to PaginatedResponse shape: assume data.data contains { items, pagination }
-  const paginated = data as (ApiResponse<PaginatedResponse<BookingData>> | undefined);
-  // Current PaginatedResponse<T> shape uses data.kos for array
-  const bookings = (paginated?.data as unknown as PaginatedResponse<BookingData> | undefined)?.data?.kos ?? [];
-
   return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="max-w-7xl mx-auto p-6">
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-6">
-          <div>
-            <h1 className="text-2xl font-bold text-gray-900">Kelola Bookings</h1>
-            <p className="text-gray-600">Pantau dan proses permintaan booking kos Anda</p>
-          </div>
-          <div className="flex gap-3 mt-4 sm:mt-0">
-            <button onClick={() => refetch()} className="px-4 py-2 rounded-lg bg-blue-600 text-white hover:bg-blue-700">Refresh</button>
-          </div>
-        </div>
-
-        {bookings.length === 0 ? (
-          <div className="bg-white border border-gray-200 rounded-lg p-10 text-center">
-            <p className="text-gray-600 mb-4">Belum ada booking yang masuk.</p>
-            <p className="text-sm text-gray-500">Promosikan kos Anda untuk mendapatkan booking pertama.</p>
-          </div>
-        ) : (
-          <div className="bg-white border border-gray-200 rounded-lg overflow-hidden shadow-sm">
-            <div className="overflow-x-auto">
-              <table className="min-w-full divide-y divide-gray-200">
-                <thead className="bg-gray-50">
-                  <tr>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Kos</th>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Check-In</th>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Durasi</th>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                    <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Aksi</th>
-                  </tr>
-                </thead>
-                <tbody className="bg-white divide-y divide-gray-100">
-                  {bookings.map((b: any) => (
-                    <tr key={b.id} className="hover:bg-gray-50">
-                      <td className="px-4 py-3 whitespace-nowrap">
-                        <div className="font-medium text-gray-900">{b.kos?.name || '—'}</div>
-                        <div className="text-xs text-gray-500">#{b.kosId}</div>
-                      </td>
-                      <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-700">
-                        {new Date(b.checkInDate).toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' })}
-                      </td>
-                      <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-700">{b.duration} bulan</td>
-                      <td className="px-4 py-3 whitespace-nowrap"><StatusBadge status={b.status} /></td>
-                      <td className="px-4 py-3 whitespace-nowrap text-sm"><BookingRowActions id={b.id} status={b.status} /></td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+    <ProtectedRoute requireAuth={true} allowedRoles={['SELLER']}>
+      <div className="min-h-screen bg-[#A9E4DE] pt-20">
+        <Header />
+        <main className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+          <div className="bg-white rounded-2xl shadow-lg p-8">
+            {/* Header */}
+            <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-8 gap-4">
+              <div>
+                <h1 className="text-3xl font-bold text-blue-600 mb-2">Bookings Kos Saya</h1>
+                <p className="text-gray-600">Kelola permintaan booking pada kos Anda</p>
+              </div>
+              <div className="flex gap-2">
+                <button
+                  onClick={() => refetch()}
+                  className="px-4 py-2 rounded-lg bg-blue-600 text-white text-sm font-medium hover:bg-blue-700 transition-colors"
+                >Refresh</button>
+              </div>
             </div>
+
+            {/* Status Filters */}
+            <div className="mb-6 flex flex-wrap gap-2">
+              {(['all','pending','confirmed','cancelled','completed'] as const).map(st => {
+                const labelMap: Record<string,string> = {
+                  all: `Semua (${bookings.length})`,
+                  pending: `Menunggu (${bookings.filter(b=>b.status==='pending').length})`,
+                  confirmed: `Dikonfirmasi (${bookings.filter(b=>b.status==='confirmed').length})`,
+                  cancelled: `Dibatalkan (${bookings.filter(b=>b.status==='cancelled').length})`,
+                  completed: `Selesai (${bookings.filter(b=>b.status==='completed').length})`
+                };
+                return (
+                  <button
+                    key={st}
+                    onClick={() => setSelectedStatus(st)}
+                    className={cn(
+                      'px-4 py-2 rounded-lg text-sm font-medium transition-colors',
+                      selectedStatus === st
+                        ? 'bg-blue-600 text-white shadow'
+                        : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                    )}
+                  >{labelMap[st]}</button>
+                );
+              })}
+            </div>
+
+            {/* Empty State */}
+            {filtered.length === 0 ? (
+              <div className="text-center py-16">
+                <div className="text-6xl mb-4">📭</div>
+                <h3 className="text-xl font-semibold text-gray-700 mb-2">
+                  {selectedStatus === 'all' ? 'Belum ada booking' : 'Tidak ada booking untuk status ini'}
+                </h3>
+                <p className="text-gray-500 mb-4">Promosikan kos Anda untuk mendapatkan booking baru.</p>
+              </div>
+            ) : (
+              <div className="space-y-6">
+                {filtered.map(b => (
+                  <BookingCard
+                    key={b.id}
+                    booking={b}
+                    role="SELLER"
+                    isMutating={updateBookingMutation.isPending}
+                    actions={{
+                      onConfirm: handleConfirm,
+                      onCancel: handleCancel,
+                      onComplete: handleComplete,
+                      onDetail: (id) => router.push(`/seller/bookings/${id}`)
+                    }}
+                  />
+                ))}
+              </div>
+            )}
           </div>
-        )}
+        </main>
+        <Footer />
       </div>
-    </div>
+    </ProtectedRoute>
   );
 };
 

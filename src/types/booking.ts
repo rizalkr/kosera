@@ -1,12 +1,15 @@
 import type { KosPhoto } from './kos';
 
+// Shared Booking Status Type
+export type BookingStatus = 'pending' | 'confirmed' | 'cancelled' | 'completed';
+
 // Booking Types
 export interface BookingData {
   id: number;
   checkInDate: string;
   checkOutDate: string;
   totalPrice: number;
-  status: 'pending' | 'confirmed' | 'cancelled' | 'completed';
+  status: BookingStatus;
   kos: {
     id: number;
     name: string;
@@ -64,4 +67,18 @@ export interface BookingSearchParams {
 
 export interface BookingAdminClientProps {
   searchParams: BookingSearchParams;
+}
+
+export interface BookingPagination {
+  page: number;
+  limit: number;
+  totalBookings: number;
+  totalPages: number;
+  hasNext: boolean;
+  hasPrev: boolean;
+}
+
+export interface BookingListData {
+  bookings: BookingData[];
+  pagination: BookingPagination;
 }
