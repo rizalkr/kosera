@@ -228,8 +228,16 @@ export async function POST(request: NextRequest) {
 
     if (conflictingBookings.length > 0) {
       return NextResponse.json(
-        { success: false, error: 'Kos is not available for the selected dates' },
-        { status: 409 }
+        {
+          success: true,
+          message: 'Kos tidak tersedia untuk tanggal yang dipilih',
+          data: {
+            available: false,
+            conflict: true,
+          },
+          info: 'Rentang tanggal yang dipilih bertabrakan dengan pemesanan yang ada. Silakan sesuaikan tanggal Anda.'
+        },
+        { status: 200 }
       );
     }
 

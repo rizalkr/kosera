@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
-import LoginRequired from '@/components/auth/LoginRequired';
+import { LoginRequired } from '@/components/auth/LoginRequired';
 import UpdatePasswordModal from '@/components/modals/UpdatePasswordModal';
 import { showSuccess } from '@/lib/sweetalert';
 

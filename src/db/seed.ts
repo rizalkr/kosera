@@ -1,5 +1,6 @@
 import { db, users, posts, kos, reviews, favorites, kosPhotos, bookings } from './index';
 import { hashPassword } from '@/lib/auth';
+import { eq } from 'drizzle-orm';
 
 async function seed() {
   try {
@@ -62,42 +63,61 @@ async function seed() {
 
     console.log('👥 Created users: 5 admins, 20 sellers, 100 renters');
 
-    // Insert 100 posts
+    // Helper utilities for richer variability
+    const randInt = (min: number, max: number) => Math.floor(Math.random() * (max - min + 1)) + min;
+    const chance = (p: number) => Math.random() < p;
+    const sample = <T,>(arr: T[]) => arr[Math.floor(Math.random() * arr.length)];
+    const uniqueSample = <T,>(arr: T[], n: number): T[] => {
+      const copy = [...arr];
+      const picked: T[] = [];
+      for (let i = 0; i < Math.min(n, arr.length); i++) {
+        const idx = Math.floor(Math.random() * copy.length);
+        picked.push(copy.splice(idx, 1)[0]);
+      }
+      return picked;
+    };
+
+    // Insert 100 posts (diversified)
     const kosNames = [
-      'Kos Putri Mawar', 'Kos Putra Elite', 'Kos Ekonomis', 'Kos Sejahtera', 'Kos Indah',
-      'Kos Nyaman', 'Kos Asri', 'Kos Harmoni', 'Kos Bahagia', 'Kos Tentram',
-      'Kos Damai', 'Kos Cemerlang', 'Kos Mulia', 'Kos Berkah', 'Kos Sentosa',
-      'Kos Indira', 'Kos Cahaya', 'Kos Permata', 'Kos Sari', 'Kos Melati'
+      'Mawar', 'Elite', 'Ekonomis', 'Sejahtera', 'Indah',
+      'Nyaman', 'Asri', 'Harmoni', 'Bahagia', 'Tentram',
+      'Damai', 'Cemerlang', 'Mulia', 'Berkah', 'Sentosa',
+      'Indira', 'Cahaya', 'Permata', 'Sari', 'Melati'
     ];
+    const kosPrefixes = ['Kos', 'Paviliun', 'Rumah Kost', 'Kost', 'Asrama'];
+    const kosSuffixes = ['Residence', 'House', 'Living', 'Home', 'Stay'];
     
     const cities = ['Semarang', 'Jakarta', 'Yogyakarta', 'Bandung', 'Surabaya', 'Malang', 'Solo'];
-    const priceRanges = [300000, 400000, 500000, 600000, 750000, 850000, 1000000];
-    
-    const allPosts = [];
+    const priceRanges = [250000, 300000, 350000, 400000, 500000, 600000, 750000, 850000, 1000000, 1250000];
+
+    const allPosts = [] as (typeof posts.$inferSelect)[];
     for (let i = 1; i <= 100; i++) {
       const sellerIndex = ((i - 1) % sellerUsers.length);
-      const nameIndex = ((i - 1) % kosNames.length);
-      const cityIndex = ((i - 1) % cities.length);
-      const priceIndex = ((i - 1) % priceRanges.length);
-      
+      const baseName = sample(kosNames);
+      const title = `${sample(kosPrefixes)} ${baseName} ${i} - ${sample(cities)} ${chance(0.25) ? sample(kosSuffixes) : ''}`.replace(/  +/g, ' ').trim();
+      const price = sample(priceRanges) + (chance(0.3) ? randInt(0, 2) * 50000 : 0);
+      const viewCount = randInt(40, 900) + (chance(0.15) ? randInt(300, 800) : 0);
+      const favoriteCount = Math.max(5, Math.round(viewCount * (0.02 + Math.random() * 0.05)));
+      const isFeatured = viewCount > 600 || chance(0.18);
+
       const [post] = await db.insert(posts).values({
         userId: sellerUsers[sellerIndex].id,
-        title: `${kosNames[nameIndex]} ${i} - ${cities[cityIndex]}`,
-        description: `Kos dengan fasilitas lengkap di ${cities[cityIndex]}. Lokasi strategis, nyaman dan aman.`,
-        price: priceRanges[priceIndex],
+        title,
+        description: `Hunian ${chance(0.5) ? 'nyaman' : 'strategis'} dengan fasilitas ${chance(0.5) ? 'lengkap' : 'memadai'} di ${sample(cities)}. ${chance(0.4) ? 'Dekat kampus & transportasi umum.' : 'Lingkungan aman & tenang.'}`,
+        price,
         totalPost: 1,
-        totalPenjualan: Math.floor(Math.random() * 5),
-        isFeatured: i <= 20, // First 20 are featured
-        viewCount: Math.floor(Math.random() * 300) + 50,
-        favoriteCount: Math.floor(Math.random() * 50) + 5,
-        averageRating: (3.5 + Math.random() * 1.5).toFixed(1),
-        reviewCount: Math.floor(Math.random() * 20) + 1,
-        photoCount: Math.floor(Math.random() * 8) + 3,
+        totalPenjualan: randInt(0, 12),
+        isFeatured,
+        viewCount,
+        favoriteCount,
+        averageRating: (3.5 + Math.random() * 1.5).toFixed(1), // tentative; will recalc after reviews
+        reviewCount: 0, // will update later
+        photoCount: randInt(3, 10),
       }).returning();
       allPosts.push(post);
     }
 
-    console.log('📝 Created 100 posts');
+    console.log('📝 Created 100 diversified posts');
 
     // Insert 100 kos details
     const addresses = [
@@ -115,32 +135,42 @@ async function seed() {
       'AC, WiFi, Kamar Mandi Dalam, Gym, Rooftop Garden'
     ];
     
-    const allKos = [];
+    const facilitiesPool = [
+      'AC', 'WiFi', 'Kamar Mandi Dalam', 'Kamar Mandi Luar', 'Dapur Bersama', 'Parkir Motor', 'Parkir Mobil', 'Laundry', 'Security 24 Jam', 'TV', 'Kasur Queen', 'Kasur Single', 'Lemari', 'Meja Belajar', 'Balkon', 'Gym', 'Rooftop', 'Dapur Pribadi'
+    ];
+
+    const allKos = [] as (typeof kos.$inferSelect)[];
     for (let i = 0; i < 100; i++) {
-      const addressIndex = i % addresses.length;
-      const areaIndex = i % areas.length;
-      const cityIndex = i % cities.length;
-      const facilityIndex = i % facilitiesOptions.length;
-      
-      // Generate random coordinates around central Indonesia
-      const baseLat = -7.0 + (Math.random() - 0.5) * 0.2; // Around -7.0 ± 0.1
-      const baseLng = 110.4 + (Math.random() - 0.5) * 0.2; // Around 110.4 ± 0.1
-      
+      const city = sample(cities);
+      const addressNum = randInt(1, 250);
+      const area = sample(['Tembalang', 'Tlogosari', 'Pleburan', 'Pedurungan', 'Candisari', 'Gajahmungkur', 'Banyumanik']);
+      const facilitiesList = uniqueSample(facilitiesPool, randInt(5, 9)).join(', ');
+
+      // Coordinates jitter per city (pseudo clustering)
+      const baseLat = -7.0 + (Math.random() - 0.5) * 0.6; 
+      const baseLng = 110.4 + (Math.random() - 0.5) * 0.6; 
+
+      // Rooms & occupancy
+      const totalRooms = randInt(8, 60);
+      const occupiedRooms = randInt(0, totalRooms);
+
       const [kosDetail] = await db.insert(kos).values({
         postId: allPosts[i].id,
-        name: allPosts[i].title.split(' - ')[0], // Extract name from title
-        address: `${addresses[addressIndex]} ${i + 1}, ${areas[areaIndex]}`,
-        city: cities[cityIndex],
-        facilities: facilitiesOptions[facilityIndex],
+        name: allPosts[i].title.split(' - ')[0],
+        address: `Jl. ${sample(['Mawar', 'Anggrek', 'Kenanga', 'Melati', 'Cempaka', 'Bougenville'])} No. ${addressNum}, ${area}`,
+        city,
+        facilities: facilitiesList,
         latitude: parseFloat(baseLat.toFixed(6)),
         longitude: parseFloat(baseLng.toFixed(6)),
+        totalRooms,
+        occupiedRooms,
       }).returning();
       allKos.push(kosDetail);
     }
 
-    console.log('🏠 Created 100 kos details');
+    console.log('🏠 Created 100 kos details with varied facilities & occupancy');
 
-    // Insert sample reviews (multiple reviews for each kos)
+    // Insert sample reviews (multiple reviews for each kos) with distribution & compute aggregates
     const reviewComments = [
       'Kos sangat bagus, bersih dan nyaman. Pemilik ramah. Highly recommended!',
       'Lokasi strategis, fasilitas oke. Hanya wifi kadang lambat di malam hari.',
@@ -151,27 +181,49 @@ async function seed() {
       'Tempat strategis dekat kampus, tapi agak bising di malam hari.',
       'Kos bersih, aman, pemilik baik. Harga sesuai fasilitas.',
       'Lumayan bagus, tapi perlu perbaikan di beberapa bagian.',
-      'Sangat puas dengan pelayanan dan fasilitas yang disediakan.'
+      'Sangat puas dengan pelayanan dan fasilitas yang disediakan.',
+      'Harga kompetitif untuk fasilitas yang ditawarkan.',
+      'Kamar luas dan pencahayaan bagus.',
+      'Lingkungan tenang cocok untuk belajar.',
+      'Akses transport mudah dan dekat minimarket.',
+      'Perawatan rutin membuat kos selalu bersih.'
     ];
 
-    const reviewsToInsert = [];
+    const reviewsToInsert: { kosId: number; userId: number; rating: number; comment: string }[] = [];
+    const ratingSums: Record<number, { sum: number; count: number }> = {};
+
     for (let i = 0; i < allKos.length; i++) {
-      // Each kos gets 1-3 reviews
-      const numReviews = Math.floor(Math.random() * 3) + 1;
+      // Each kos gets 0-5 reviews (some without reviews)
+      const numReviews = randInt(0, 5);
       for (let j = 0; j < numReviews; j++) {
         const renterIndex = Math.floor(Math.random() * renterUsers.length);
+        // Weighted rating: more 4-5
+        const rating = chance(0.6) ? 5 : chance(0.8) ? 4 : chance(0.5) ? 3 : 2;
         const commentIndex = Math.floor(Math.random() * reviewComments.length);
         reviewsToInsert.push({
           kosId: allKos[i].id,
           userId: renterUsers[renterIndex].id,
-          rating: Math.floor(Math.random() * 2) + 4, // 4 or 5 stars
+          rating,
           comment: reviewComments[commentIndex],
         });
+        ratingSums[allKos[i].id] = ratingSums[allKos[i].id] || { sum: 0, count: 0 };
+        ratingSums[allKos[i].id].sum += rating;
+        ratingSums[allKos[i].id].count += 1;
       }
     }
 
     await db.insert(reviews).values(reviewsToInsert);
-    console.log(`⭐ Created ${reviewsToInsert.length} sample reviews`);
+    console.log(`⭐ Created ${reviewsToInsert.length} sample reviews (0–5 per kos)`);
+
+    // Update posts averageRating & reviewCount based on inserted reviews
+    for (const k of allKos) {
+      const agg = ratingSums[k.id];
+      if (agg) {
+        const avg = (agg.sum / agg.count).toFixed(1);
+        await db.update(posts).set({ averageRating: avg, reviewCount: agg.count }).where(eq(posts.id, k.postId));
+      }
+    }
+    console.log('🔄 Updated post aggregates (averageRating & reviewCount)');
 
     // Insert sample favorites
     const favoritesToInsert = [];
@@ -374,6 +426,21 @@ async function seed() {
     console.log(`   - Confirmed: ${statusCounts.confirmed || 0}`);
     console.log(`   - Completed: ${statusCounts.completed || 0}`);
     console.log(`   - Cancelled: ${statusCounts.cancelled || 0}`);
+
+    // After bookings inserted, update occupancy for each kos
+    for (const k of allKos) {
+      const bookingsForKos = bookingsToInsert.filter(b => b.kosId === k.id);
+      const occupied = bookingsForKos.filter(b => b.status === 'confirmed' || b.status === 'completed').length;
+      await db.update(kos).set({ occupiedRooms: occupied }).where(eq(kos.id, k.id));
+    }
+
+    console.log('📊 Updated occupancy for each kos based on bookings');
+
+    // Additional summary metrics
+    const avgOccupancyRate = allKos.reduce((acc, k) => acc + (k.totalRooms > 0 ? (k.occupiedRooms ?? 0) / k.totalRooms : 0), 0) / allKos.length;
+    console.log(`🏨 Average Occupancy Rate: ${(avgOccupancyRate * 100).toFixed(1)}%`);
+    const avgRatingOverall = Object.values(ratingSums).reduce((acc, r) => acc + r.sum, 0) / (Object.values(ratingSums).reduce((acc, r) => acc + r.count, 0) || 1);
+    console.log(`⭐ Overall Average Rating: ${avgRatingOverall.toFixed(2)}`);
 
     console.log('✅ Database seeding completed successfully!');
     console.log(`📊 Summary:
