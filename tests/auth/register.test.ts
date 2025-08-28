@@ -66,10 +66,11 @@ describe('POST /api/auth/register', () => {
 
     expect(result.status).toBe(201);
     expect(result.data).toHaveProperty('message', 'User registered successfully');
-    expect(result.data).toHaveProperty('user');
-    expect(result.data).toHaveProperty('token');
-    expect(result.data.user).toHaveProperty('username', 'newuser');
-    expect(result.data.user).not.toHaveProperty('password');
+    expect(result.data).toHaveProperty('data');
+    expect(result.data.data).toHaveProperty('user');
+    expect(result.data.data).toHaveProperty('token');
+    expect(result.data.data.user).toHaveProperty('username', 'newuser');
+    expect(result.data.data.user).not.toHaveProperty('password');
   });
 
   it('should fail with missing required fields', async () => {
@@ -101,7 +102,7 @@ describe('POST /api/auth/register', () => {
     const result = await parseResponse(response);
 
     expect(result.status).toBe(409);
-    expect(result.data).toHaveProperty('error', 'Username already exists');
+    expect(['Username already exists','Username sudah digunakan']).toContain(result.data.error);
   });
 
   it('should fail with existing contact', async () => {
@@ -121,7 +122,7 @@ describe('POST /api/auth/register', () => {
     const result = await parseResponse(response);
 
     expect(result.status).toBe(409);
-    expect(result.data).toHaveProperty('error', 'Contact already exists');
+    expect(['Contact already exists','Contact sudah digunakan']).toContain(result.data.error);
   });
 
   it('should default to RENTER role when not specified', async () => {
@@ -151,7 +152,7 @@ describe('POST /api/auth/register', () => {
     const result = await parseResponse(response);
 
     expect(result.status).toBe(201);
-    expect(result.data.user).toHaveProperty('role', 'RENTER');
+    expect(result.data.data.user).toHaveProperty('role', 'RENTER');
   });
 
   it('should handle database errors', async () => {

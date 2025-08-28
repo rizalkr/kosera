@@ -58,12 +58,14 @@ describe('API Integration Tests', () => {
 
       expect(response.status).toBe(201);
       expect(response.body).toHaveProperty('message', 'User registered successfully');
-      expect(response.body).toHaveProperty('user');
-      expect(response.body).toHaveProperty('token');
-      expect(response.body.user).toHaveProperty('username', `testuser_${timestamp}`);
-      expect(response.body.user).not.toHaveProperty('password');
+      // Adjust to new response shape { success, message, data: { user, token } }
+      expect(response.body).toHaveProperty('data');
+      expect(response.body.data).toHaveProperty('user');
+      expect(response.body.data).toHaveProperty('token');
+      expect(response.body.data.user).toHaveProperty('username', `testuser_${timestamp}`);
+      expect(response.body.data.user).not.toHaveProperty('password');
       
-      authToken = response.body.token;
+      authToken = response.body.data.token;
     });
 
     it('should login with valid credentials', async () => {
@@ -76,9 +78,10 @@ describe('API Integration Tests', () => {
 
       expect(response.status).toBe(200);
       expect(response.body).toHaveProperty('message', 'Login successful');
-      expect(response.body).toHaveProperty('user');
-      expect(response.body).toHaveProperty('token');
-      expect(response.body.user).toHaveProperty('username', `testuser_${timestamp}`);
+      expect(response.body).toHaveProperty('data');
+      expect(response.body.data).toHaveProperty('user');
+      expect(response.body.data).toHaveProperty('token');
+      expect(response.body.data.user).toHaveProperty('username', `testuser_${timestamp}`);
     });
 
     it('should fail login with invalid credentials', async () => {
@@ -130,8 +133,8 @@ describe('API Integration Tests', () => {
         });
       
       expect(registerResponse.status).toBe(201);
-      expect(registerResponse.body.token).toBeDefined();
-      userToken = registerResponse.body.token;
+      expect(registerResponse.body.data.token).toBeDefined();
+      userToken = registerResponse.body.data.token;
     });
 
     it('should get user profile with valid token', async () => {
@@ -171,8 +174,8 @@ describe('API Integration Tests', () => {
         });
       
       expect(registerResponse.status).toBe(201);
-      expect(registerResponse.body.token).toBeDefined();
-      adminToken = registerResponse.body.token;
+      expect(registerResponse.body.data.token).toBeDefined();
+      adminToken = registerResponse.body.data.token;
     });
 
     it('should get all users as admin', async () => {
@@ -200,11 +203,11 @@ describe('API Integration Tests', () => {
         });
 
       expect(userResponse.status).toBe(201);
-      expect(userResponse.body.token).toBeDefined();
+      expect(userResponse.body.data.token).toBeDefined();
 
       const response = await request(server)
         .get('/api/admin/users')
-        .set('Authorization', `Bearer ${userResponse.body.token}`);
+        .set('Authorization', `Bearer ${userResponse.body.data.token}`);
 
       expect(response.status).toBe(403);
       expect(response.body).toHaveProperty('error', 'Insufficient permissions');
@@ -251,7 +254,8 @@ describe('API Integration Tests', () => {
         });
 
       expect(response.status).toBe(409);
-      expect(response.body).toHaveProperty('error', 'Username already exists');
+      // Updated error now returns localized message; ensure one of expected variants
+      expect(['Username already exists', 'Username sudah digunakan']).toContain(response.body.error);
     });
 
     it('should handle malformed JSON in login', async () => {
