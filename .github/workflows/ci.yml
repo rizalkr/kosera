@@ -22,21 +22,22 @@ jobs:
           - 5432:5432
         env:
           POSTGRES_USER: kosera
-          POSTGRES_PASSWORD: password
+          # Gunakan secret untuk password
+          POSTGRES_PASSWORD: ${{ secrets.POSTGRES_PASSWORD }}
           POSTGRES_DB: kosera
-        # Health check to ensure DB is ready before running tests
+        # Health check ini sudah cukup untuk memastikan DB siap
         options: >-
-          --health-cmd "pg_isready -U kosera" \
-          --health-interval 5s \
-          --health-timeout 5s \
-          --health-retries 12
+          --health-cmd "pg_isready -U kosera"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries: 12
 
     env:
       NEXT_TELEMETRY_DISABLED: '1'
       CI: 'true'
-      # Provide database configuration for tests & build
-      DATABASE_URL: postgresql://kosera:password@localhost:5432/kosera
-      JWT_SECRET: test-secret-key-for-ci
+      # Gunakan secret untuk password dan kunci lainnya
+      DATABASE_URL: postgresql://kosera:${{ secrets.POSTGRES_PASSWORD }}@localhost:5432/kosera
+      JWT_SECRET: ${{ secrets.JWT_SECRET_CI }}
 
     steps:
       - name: Checkout
@@ -51,11 +52,7 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Wait for Postgres
-        run: |
-          for i in {1..30}; do
-            if pg_isready -h localhost -p 5432 -U kosera; then
-              echo "Postgres is ready"; break; fi; sleep 2; done
+      # HAPUS STEP "Wait for Postgres" DARI SINI
 
       - name: Apply migrations
         run: npx drizzle-kit push
@@ -79,24 +76,3 @@ jobs:
           name: next-build
           path: .next
           retention-days: 7
-
-  # Optional release job (disabled by default). Enable when release workflow is defined.
-  # release:
-  #   name: Release
-  #   needs: build-test
-  #   if: startsWith(github.ref, 'refs/tags/v')
-  #   runs-on: ubuntu-latest
-  #   steps:
-  #     - name: Checkout
-  #       uses: actions/checkout@v4
-  #     - name: Setup Node.js
-  #       uses: actions/setup-node@v4
-  #       with:
-  #         node-version: 20.x
-  #         cache: 'npm'
-  #     - name: Install dependencies
-  #       run: npm ci
-  #     - name: Build
-  #       run: npm run build
-  #     - name: Publish (placeholder)
-  #       run: echo "Add publish/release logic here (e.g., docker push, vercel deploy, semantic-release)"
