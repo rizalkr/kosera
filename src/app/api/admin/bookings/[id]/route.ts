@@ -1,9 +1,9 @@
-import { NextRequest, NextResponse } from 'next/server';
 import { requireAdmin } from '@/lib/server-auth';
 import { db } from '@/db';
 import { bookings } from '@/db/schema';
 import { eq } from 'drizzle-orm';
 import { z } from 'zod';
+import { ok, fail } from '@/types/api';
 
 /**
  * Zod schema for validating booking status update payload.
@@ -18,72 +18,69 @@ const updateBookingStatusSchema = z.object({
  * Allows admin to update the status (and notes) of a booking.
  */
 export async function PATCH(
-  req: NextRequest,
+  req: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
   // Await params since it's now a Promise in Next.js 15
   const { id } = await params;
-  
+
   // Admin authentication
-  const auth = requireAdmin(req);
+  const auth = requireAdmin(req as any);
   if (!auth.isAuthenticated) {
-    return NextResponse.json(
-      { success: false, error: `Unauthorized - ${auth.error}` },
-      { status: 401 }
-    );
+    return fail('unauthorized', `Unauthorized - ${auth.error}`, undefined, {
+      status: 401,
+    });
   }
 
   const bookingId = Number(id);
   if (isNaN(bookingId)) {
-    return NextResponse.json(
-      { success: false, error: 'Invalid booking ID' },
-      { status: 400 }
-    );
+    return fail('invalid_id', 'Invalid booking ID', undefined, { status: 400 });
   }
 
-  let body;
+  let body: unknown;
   try {
-    body = await req.json();
+    body = await (req as Request).json();
     updateBookingStatusSchema.parse(body);
-  } catch {
-    return NextResponse.json(
-      { success: false, error: 'Invalid request body or status value' },
-      { status: 400 }
-    );
+  } catch (e) {
+    if (e instanceof z.ZodError) {
+      return fail(
+        'validation_error',
+        'Invalid request body or status value',
+        e.format(),
+        { status: 400 }
+      );
+    }
+    return fail('invalid_body', 'Invalid request body', undefined, {
+      status: 400,
+    });
   }
 
   try {
+    const payload = body as z.infer<typeof updateBookingStatusSchema>;
     const [updatedBooking] = await db
       .update(bookings)
       .set({
-        status: body.status,
-        notes: body.notes,
+        status: payload.status,
+        notes: payload.notes,
         updatedAt: new Date(),
       })
       .where(eq(bookings.id, bookingId))
       .returning();
 
     if (!updatedBooking) {
-      return NextResponse.json(
-        { success: false, error: 'Booking not found' },
-        { status: 404 }
-      );
+      return fail('not_found', 'Booking not found', undefined, { status: 404 });
     }
 
-    return NextResponse.json({
-      success: true,
-      data: {
-        id: updatedBooking.id,
-        status: updatedBooking.status,
-        notes: updatedBooking.notes,
-        updatedAt: updatedBooking.updatedAt,
-      },
+    return ok('Booking status updated', {
+      id: updatedBooking.id,
+      status: updatedBooking.status,
+      notes: updatedBooking.notes,
+      updatedAt: updatedBooking.updatedAt,
     });
   } catch (error) {
     console.error('Admin update booking status error:', error);
-    return NextResponse.json(
-      { success: false, error: 'Failed to update booking status' },
-      { status: 500 }
-    );
+    return fail('update_failed', 'Failed to update booking status', undefined, {
+      status: 500,
+    });
   }
 }
