@@ -1,42 +1,41 @@
-import { NextResponse } from 'next/server';
 import { withAdmin, AuthenticatedRequest } from '@/lib/middleware';
 import { db, kos, posts } from '@/db';
 import { eq, sql } from 'drizzle-orm';
+import { ok, fail } from '@/types/api';
+import { z } from 'zod';
 
 // Soft delete kos (move to archive)
 async function deleteKosHandler(request: AuthenticatedRequest) {
   try {
     const url = new URL(request.url);
     const pathSegments = url.pathname.split('/');
-    const kosId = parseInt(pathSegments[pathSegments.length - 1]);
-    const currentUserId = request.user?.userId;
-
-    if (isNaN(kosId)) {
-      return NextResponse.json(
-        { error: 'Invalid kos ID' },
-        { status: 400 }
-      );
+    const kosIdRaw = pathSegments[pathSegments.length - 1];
+    const idSchema = z.coerce.number().int().positive();
+    const parseResult = idSchema.safeParse(kosIdRaw);
+    if (!parseResult.success) {
+      return fail('invalid_id', 'Invalid kos ID', parseResult.error.format(), { status: 400 });
     }
+    const kosId = parseResult.data;
+    const currentUserId = request.user?.userId;
 
     // Check if kos exists and not already deleted
     const existingKos = await db
-      .select()
+      .select({ id: kos.id, postId: kos.postId })
       .from(kos)
       .where(sql`${kos.id} = ${kosId} AND ${kos.deletedAt} IS NULL`)
       .limit(1);
 
     if (existingKos.length === 0) {
-      return NextResponse.json(
-        { error: 'Kos not found or already deleted' },
-        { status: 404 }
-      );
+      return fail('not_found', 'Kos not found or already deleted', undefined, { status: 404 });
     }
+
+    const now = new Date();
 
     // Soft delete kos
     await db
       .update(kos)
       .set({
-        deletedAt: new Date(),
+        deletedAt: now,
         deletedBy: currentUserId,
       })
       .where(eq(kos.id, kosId));
@@ -45,21 +44,15 @@ async function deleteKosHandler(request: AuthenticatedRequest) {
     await db
       .update(posts)
       .set({
-        deletedAt: new Date(),
+        deletedAt: now,
         deletedBy: currentUserId,
       })
       .where(eq(posts.id, existingKos[0].postId));
 
-    return NextResponse.json({
-      success: true,
-      message: 'Kos moved to archive successfully',
-    });
+    return ok('Kos moved to archive successfully', { kosId, archivedAt: now });
   } catch (error) {
     console.error('Soft delete kos error:', error);
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    );
+    return fail('internal_error', 'Failed to archive kos', undefined, { status: 500 });
   }
 }
 
