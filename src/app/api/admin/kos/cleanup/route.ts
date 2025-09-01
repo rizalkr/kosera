@@ -1,7 +1,8 @@
-import { NextResponse } from 'next/server';
 import { withAdmin } from '@/lib/middleware';
 import { db, kos, posts } from '@/db';
 import { sql, inArray } from 'drizzle-orm';
+import { ok, fail } from '@/types/api';
+
 
 // Bulk cleanup - permanently delete all archived kos
 async function bulkCleanupHandler() {
@@ -13,10 +14,7 @@ async function bulkCleanupHandler() {
       .where(sql`${kos.deletedAt} IS NOT NULL`);
 
     if (deletedKos.length === 0) {
-      return NextResponse.json({
-        message: 'No archived kos found to cleanup',
-        deletedCount: 0,
-      });
+      return ok('No archived kos found to cleanup', { deletedCount: 0 });
     }
 
     // Get post IDs to delete
@@ -34,16 +32,10 @@ async function bulkCleanupHandler() {
       .delete(kos)
       .where(sql`${kos.deletedAt} IS NOT NULL`);
 
-    return NextResponse.json({
-      message: 'All archived kos have been permanently deleted',
-      deletedCount: deletedKos.length,
-    });
+    return ok('All archived kos have been permanently deleted', { deletedCount: deletedKos.length });
   } catch (error) {
     console.error('Bulk cleanup error:', error);
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    );
+    return fail('internal_error', 'Failed to cleanup archived kos', undefined, { status: 500 });
   }
 }
 
