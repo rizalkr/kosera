@@ -1,7 +1,8 @@
-import { NextResponse } from 'next/server';
 import { withAdmin, AuthenticatedRequest } from '@/lib/middleware';
 import { db, kos, posts, users } from '@/db';
 import { eq, like, and, or, sql, count, desc, asc, isNull } from 'drizzle-orm';
+import type { SQL } from 'drizzle-orm';
+import { ok, fail } from '@/types/api';
 
 async function getAdminKosHandler(request: AuthenticatedRequest) {
   try {
@@ -18,7 +19,7 @@ async function getAdminKosHandler(request: AuthenticatedRequest) {
     const offset = (page - 1) * limit;
 
     // Build conditions
-    const conditions = [];
+    const conditions: SQL[] = [];
 
     // Show only active kos by default, or only deleted kos if showDeleted=true
     if (showDeleted) {
@@ -29,15 +30,18 @@ async function getAdminKosHandler(request: AuthenticatedRequest) {
 
     // Search in name, title, description, address, city
     if (search) {
-      conditions.push(
-        or(
-          like(kos.name, `%${search}%`),
-          like(posts.title, `%${search}%`),
-          like(posts.description, `%${search}%`),
-          like(kos.address, `%${search}%`),
-          like(kos.city, `%${search}%`)
-        )
-      );
+      const searchConditions: SQL[] = [
+        like(kos.name, `%${search}%`),
+        like(posts.title, `%${search}%`),
+        like(posts.description, `%${search}%`),
+        like(kos.address, `%${search}%`),
+        like(kos.city, `%${search}%`),
+      ];
+      let searchOr: SQL = searchConditions[0];
+      for (let i = 1; i < searchConditions.length; i++) {
+        searchOr = or(searchOr, searchConditions[i]) as SQL;
+      }
+      conditions.push(searchOr);
     }
 
     // Filter by city
@@ -75,7 +79,7 @@ async function getAdminKosHandler(request: AuthenticatedRequest) {
         break;
     }
 
-    const whereCondition = conditions.length > 0 ? and(...conditions) : undefined;
+    const whereCondition: SQL | undefined = conditions.length > 0 ? and(...conditions) : undefined;
 
     // Get total count
     const totalResult = await db
@@ -131,34 +135,28 @@ async function getAdminKosHandler(request: AuthenticatedRequest) {
       .limit(limit)
       .offset(offset);
 
-    return NextResponse.json({
-      success: true,
-      message: 'Admin kos data retrieved successfully',
-      data: {
-        kos: kosResults,
-        pagination: {
-          page,
-          limit,
-          total,
-          totalPages: Math.ceil(total / limit),
-          hasNext: page < Math.ceil(total / limit),
-          hasPrev: page > 1,
-        },
-        filters: {
-          search,
-          city,
-          status,
-          ownerType,
-          sortBy,
-        },
+    return ok('Admin kos data retrieved successfully', {
+      kos: kosResults,
+      pagination: {
+        page,
+        limit,
+        total,
+        totalPages: Math.ceil(total / limit),
+        hasNext: page < Math.ceil(total / limit),
+        hasPrev: page > 1,
+      },
+      filters: {
+        search,
+        city,
+        status,
+        ownerType,
+        sortBy,
+        showDeleted,
       },
     });
   } catch (error) {
     console.error('Admin get kos error:', error);
-    return NextResponse.json(
-      { success: false, error: 'Internal server error' },
-      { status: 500 }
-    );
+    return fail('Internal server error');
   }
 }
 
