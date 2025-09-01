@@ -1,70 +1,41 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest } from 'next/server';
 import { db, users } from '@/db';
 import { eq } from 'drizzle-orm';
 import { hashPassword, generateToken } from '@/lib/auth';
+import { z } from 'zod';
+import { ok, fail } from '@/types/api';
+
+const registerSchema = z.object({
+  name: z.string().min(1),
+  username: z.string().min(3),
+  contact: z.string().min(3),
+  password: z.string().min(6),
+  role: z.enum(['ADMIN', 'SELLER', 'RENTER']).optional().default('RENTER'),
+});
 
 export async function POST(request: NextRequest) {
   try {
-    const body = await request.json();
-    const { name, username, contact, password, role = 'RENTER' } = body;
+    const json = await request.json().catch(() => null);
+    if (!json) return fail('Invalid JSON format', undefined, undefined, { status: 400 });
 
-    console.log('Registration attempt:', { name, username, contact, role, passwordLength: password?.length });
-
-    // Validate required fields
-    if (!name || !username || !contact || !password) {
-      return NextResponse.json(
-        { success: false, error: 'Name, username, contact, and password are required' },
-        { status: 400 }
-      );
+    const parsed = registerSchema.safeParse(json);
+    if (!parsed.success) {
+      return fail('Validation error', 'Invalid input', parsed.error.flatten(), { status: 400 });
     }
+    const { name, username, contact, password, role } = parsed.data;
 
-    // Validate role
-    const validRoles = ['ADMIN', 'SELLER', 'RENTER'];
-    if (!validRoles.includes(role)) {
-      console.error('Invalid role provided:', role);
-      return NextResponse.json(
-        { success: false, error: `Invalid role. Must be one of: ${validRoles.join(', ')}` },
-        { status: 400 }
-      );
-    }
-
-    // Use database transaction to ensure atomicity
     const result = await db.transaction(async (tx) => {
-      // Check if username already exists
-      const existingUser = await tx
-        .select()
-        .from(users)
-        .where(eq(users.username, username))
-        .limit(1);
+      const existingUser = await tx.select({ id: users.id }).from(users).where(eq(users.username, username)).limit(1);
+      if (existingUser.length > 0) throw new Error('USERNAME_EXISTS');
 
-      if (existingUser.length > 0) {
-        throw new Error('Username already exists');
-      }
+      const existingContact = await tx.select({ id: users.id }).from(users).where(eq(users.contact, contact)).limit(1);
+      if (existingContact.length > 0) throw new Error('CONTACT_EXISTS');
 
-      // Check if contact already exists
-      const existingContact = await tx
-        .select()
-        .from(users)
-        .where(eq(users.contact, contact))
-        .limit(1);
-
-      if (existingContact.length > 0) {
-        throw new Error('Contact already exists');
-      }
-
-      // Hash password
       const hashedPassword = await hashPassword(password);
 
-      // Create user within transaction
       const [newUser] = await tx
         .insert(users)
-        .values({
-          name,
-          username,
-          contact,
-          password: hashedPassword,
-          role: role as 'ADMIN' | 'SELLER' | 'RENTER',
-        })
+        .values({ name, username, contact, password: hashedPassword, role })
         .returning({
           id: users.id,
           name: users.name,
@@ -74,90 +45,21 @@ export async function POST(request: NextRequest) {
           createdAt: users.createdAt,
         });
 
-      // Generate JWT token
-      const token = generateToken({
-        userId: newUser.id,
-        username: newUser.username,
-        role: newUser.role,
-      });
-
+      const token = generateToken({ userId: newUser.id, username: newUser.username, role: newUser.role });
       return { user: newUser, token };
     });
 
-    console.log('Registration successful:', { userId: result.user.id, username: result.user.username });
-
-    return NextResponse.json({
-      success: true,
-      message: 'User registered successfully',
-      data: {
-        user: result.user,
-        token: result.token,
-      }
-    }, { status: 201 });
-
-  } catch (error: unknown) {
+    return ok('User registered successfully', { user: result.user, token: result.token });
+  } catch (error) {
     console.error('Registration error:', error);
-    
-    // Type guard for database error
-    const isDatabaseError = (err: unknown): err is { code: string; constraint?: string; message: string } => {
-      return typeof err === 'object' && err !== null && 'code' in err;
-    };
-    
-    // Handle specific database errors
-    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-    if (errorMessage === 'Username already exists') {
-      return NextResponse.json(
-        { 
-          success: false,
-          error: 'Username sudah digunakan',
-          message: 'Username yang Anda pilih sudah digunakan oleh user lain'
-        },
-        { status: 409 }
-      );
-    }
-    
-    if (errorMessage === 'Contact already exists') {
-      return NextResponse.json(
-        { 
-          success: false,
-          error: 'Contact sudah digunakan',
-          message: 'Nomor HP/Email yang Anda masukkan sudah terdaftar'
-        },
-        { status: 409 }
-      );
-    }
-
-    // Handle PostgreSQL unique constraint violations
-    if (isDatabaseError(error) && error.code === '23505') {
-      if (error.constraint?.includes('username')) {
-        return NextResponse.json(
-          { 
-            success: false,
-            error: 'Username sudah digunakan',
-            message: 'Username yang Anda pilih sudah digunakan oleh user lain'
-          },
-          { status: 409 }
-        );
+    if (error instanceof Error) {
+      if (error.message === 'USERNAME_EXISTS') {
+        return fail('Username already exists', 'Username yang Anda pilih sudah digunakan oleh user lain', undefined, { status: 409 });
       }
-      if (error.constraint?.includes('contact')) {
-        return NextResponse.json(
-          { 
-            success: false,
-            error: 'Contact sudah digunakan', 
-            message: 'Nomor HP/Email yang Anda masukkan sudah terdaftar'
-          },
-          { status: 409 }
-        );
+      if (error.message === 'CONTACT_EXISTS') {
+        return fail('Contact already exists', 'Nomor HP/Email yang Anda masukkan sudah terdaftar', undefined, { status: 409 });
       }
     }
-
-    return NextResponse.json(
-      { 
-        success: false,
-        error: 'Internal server error',
-        message: 'Terjadi kesalahan server, silakan coba lagi'
-      },
-      { status: 500 }
-    );
+    return fail('Internal server error', 'Terjadi kesalahan server, silakan coba lagi');
   }
 }
