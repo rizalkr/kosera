@@ -1,8 +1,8 @@
-import { NextResponse } from 'next/server';
 import { withSellerOrAdmin, AuthenticatedRequest } from '@/lib/middleware';
 import { db } from '@/db';
 import { kos, posts } from '@/db/schema';
 import { eq } from 'drizzle-orm';
+import { ok, fail } from '@/types/api';
 
 // GET /api/kos/my - Get kos owned by current user (SELLER/ADMIN only)
 export const GET = withSellerOrAdmin(async (request: AuthenticatedRequest) => {
@@ -25,19 +25,11 @@ export const GET = withSellerOrAdmin(async (request: AuthenticatedRequest) => {
       })
       .from(kos)
       .innerJoin(posts, eq(kos.postId, posts.id))
-      .where(eq(posts.userId, request.user!.userId))
-      .execute();
+      .where(eq(posts.userId, request.user!.userId));
 
-    return NextResponse.json({
-      message: 'Your kos retrieved successfully',
-      data: result
-    });
-
+    return ok('Your kos retrieved successfully', { kos: result, count: result.length });
   } catch (error) {
-    console.error('Error retrieving user kos:', error);
-    return NextResponse.json(
-      { error: 'Failed to retrieve your kos' },
-      { status: 500 }
-    );
+    console.error('kos.my.GET error', error);
+    return fail('internal_error', 'Failed to retrieve your kos', undefined, { status: 500 });
   }
 });

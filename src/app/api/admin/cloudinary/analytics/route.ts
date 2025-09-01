@@ -1,10 +1,10 @@
-import { NextRequest, NextResponse } from 'next/server';
 import { v2 as cloudinary } from 'cloudinary';
 import { extractTokenFromHeader, verifyToken } from '@/lib/auth';
 import { db } from '@/db';
 import { kosPhotos } from '@/db/schema';
 import { sql, isNotNull } from 'drizzle-orm';
 import type { CloudinaryResource, CloudinaryResourcesResponse } from '@/types/cloudinary';
+import { ok, fail } from '@/types/api';
 
 // Configure Cloudinary
 cloudinary.config({
@@ -13,64 +13,18 @@ cloudinary.config({
   api_secret: process.env.CLOUDINARY_API_SECRET,
 });
 
-interface CloudinaryAnalytics {
-  recentUploads: Array<{
-    publicId: string;
-    url: string;
-    bytes: number;
-    format: string;
-    uploadedAt: string;
-    dimensions: { width: number; height: number };
-  }>;
-  formatAnalysis: Record<string, { count: number; totalBytes: number }>;
-  sizeAnalysis: {
-    small: number; // < 500KB
-    medium: number; // 500KB - 2MB
-    large: number; // 2MB - 5MB
-    xlarge: number; // > 5MB
-  };
-  optimizationSuggestions: Array<{
-    type: 'format' | 'size' | 'compression';
-    title: string;
-    description: string;
-    impact: 'high' | 'medium' | 'low';
-    savings: string;
-  }>;
-  transformationUsage: {
-    autoOptimization: number;
-    formatConversion: number;
-    resizing: number;
-    qualityAdjustment: number;
-  };
-  databaseSync: {
-    totalDbPhotos: number;
-    photosWithCloudinaryId: number;
-    orphanedPhotos: number;
-    syncPercentage: number;
-  };
-}
-
 /**
  * GET /api/admin/cloudinary/analytics - Get comprehensive Cloudinary analytics
  */
-export async function GET(request: NextRequest) {
+export async function GET(request: Request): Promise<Response> {
   try {
     const authHeader = request.headers.get('authorization');
     const token = extractTokenFromHeader(authHeader);
-
-    if (!token) {
-      return NextResponse.json(
-        { success: false, error: 'Authentication required' },
-        { status: 401 }
-      );
-    }
+    if (!token) return fail('unauthorized', 'Authentication required', undefined, { status: 401 });
 
     const payload = verifyToken(token);
     if (!payload || payload.role !== 'ADMIN') {
-      return NextResponse.json(
-        { success: false, error: 'Admin access required' },
-        { status: 403 }
-      );
+      return fail('forbidden', 'Admin access required', undefined, { status: 403 });
     }
 
     // Get recent uploads from Cloudinary
@@ -78,22 +32,16 @@ export async function GET(request: NextRequest) {
       type: 'upload',
       max_results: 20,
       sort_by: [['created_at', 'desc']],
-      metadata: true
+      metadata: true,
     }) as CloudinaryResourcesResponse;
 
     // Get all resources for analysis
     let allResources: CloudinaryResource[] = [];
-    let nextCursor: string | undefined = undefined;
+    let nextCursor: string | undefined;
     let batchCount = 0;
     const maxBatches = 10; // Limit to prevent timeout
-
     do {
-      const batch = await cloudinary.api.resources({
-        type: 'upload',
-        max_results: 500,
-        next_cursor: nextCursor
-      }) as CloudinaryResourcesResponse;
-      
+      const batch = await cloudinary.api.resources({ type: 'upload', max_results: 500, next_cursor: nextCursor }) as CloudinaryResourcesResponse;
       allResources = [...allResources, ...batch.resources];
       nextCursor = batch.next_cursor;
       batchCount++;
@@ -102,59 +50,34 @@ export async function GET(request: NextRequest) {
     // Format analysis
     const formatAnalysis: Record<string, { count: number; totalBytes: number }> = {};
     const sizeAnalysis = { small: 0, medium: 0, large: 0, xlarge: 0 };
-    
-    allResources.forEach(resource => {
+    allResources.forEach(r => {
       // Format analysis
-      const format = resource.format || 'unknown';
-      if (!formatAnalysis[format]) {
-        formatAnalysis[format] = { count: 0, totalBytes: 0 };
-      }
+      const format = r.format || 'unknown';
+      if (!formatAnalysis[format]) formatAnalysis[format] = { count: 0, totalBytes: 0 };
       formatAnalysis[format].count++;
-      formatAnalysis[format].totalBytes += resource.bytes || 0;
+      formatAnalysis[format].totalBytes += r.bytes || 0;
 
       // Size analysis
-      const sizeInMB = (resource.bytes || 0) / (1024 * 1024);
-      if (sizeInMB < 0.5) sizeAnalysis.small++;
-      else if (sizeInMB < 2) sizeAnalysis.medium++;
-      else if (sizeInMB < 5) sizeAnalysis.large++;
+      const sizeMB = (r.bytes || 0) / 1024 / 1024;
+      if (sizeMB < 0.5) sizeAnalysis.small++;
+      else if (sizeMB < 2) sizeAnalysis.medium++;
+      else if (sizeMB < 5) sizeAnalysis.large++;
       else sizeAnalysis.xlarge++;
     });
 
     // Generate optimization suggestions
-    const optimizationSuggestions = [];
-    
-    // Check for large images
-    if (sizeAnalysis.xlarge > 0) {
-      optimizationSuggestions.push({
-        type: 'size' as const,
-        title: 'Large Images Detected',
-        description: `${sizeAnalysis.xlarge} images are larger than 5MB. Consider resizing or compression.`,
-        impact: 'high' as const,
-        savings: `~${Math.round(sizeAnalysis.xlarge * 2.5)}MB potential savings`
-      });
-    }
-
-    // Check for non-optimized formats
+    const optimizationSuggestions = [] as Array<{ type: 'format' | 'size' | 'compression'; title: string; description: string; impact: 'high' | 'medium' | 'low'; savings: string }>;
     const jpegCount = formatAnalysis.jpg?.count || 0;
     const pngCount = formatAnalysis.png?.count || 0;
     const webpCount = formatAnalysis.webp?.count || 0;
-    
-    if ((jpegCount + pngCount) > webpCount * 2) {
-      optimizationSuggestions.push({
-        type: 'format' as const,
-        title: 'Format Optimization Available',
-        description: 'Consider using WebP format for better compression and quality.',
-        impact: 'medium' as const,
-        savings: '~20-30% file size reduction'
-      });
-    }
+    // Check for large images
+    if (sizeAnalysis.xlarge > 0) optimizationSuggestions.push({ type: 'size', title: 'Large Images Detected', description: `${sizeAnalysis.xlarge} images are larger than 5MB. Consider resizing or compression.`, impact: 'high', savings: `~${Math.round(sizeAnalysis.xlarge * 2.5)}MB potential savings` });
+    // Check for non-optimized formats
+    if (jpegCount + pngCount > webpCount * 2) optimizationSuggestions.push({ type: 'format', title: 'Format Optimization Available', description: 'Consider using WebP format for better compression and quality.', impact: 'medium', savings: '~20-30% file size reduction' });
 
     // Database sync analysis
     const totalDbPhotos = await db.select({ count: sql<number>`count(*)` }).from(kosPhotos);
-    const photosWithCloudinaryId = await db.select({ count: sql<number>`count(*)` })
-      .from(kosPhotos)
-      .where(isNotNull(kosPhotos.cloudinaryPublicId));
-
+    const photosWithCloudinaryId = await db.select({ count: sql<number>`count(*)` }).from(kosPhotos).where(isNotNull(kosPhotos.cloudinaryPublicId));
     const dbPhotoCount = totalDbPhotos[0]?.count || 0;
     const cloudinaryPhotoCount = photosWithCloudinaryId[0]?.count || 0;
     const orphanedPhotos = Math.max(0, dbPhotoCount - cloudinaryPhotoCount);
@@ -162,20 +85,20 @@ export async function GET(request: NextRequest) {
 
     // Transformation usage (mock data - would need to be tracked in real implementation)
     const transformationUsage = {
-      autoOptimization: Math.round(cloudinaryPhotoCount * 0.8), // 80% use auto optimization
-      formatConversion: Math.round(cloudinaryPhotoCount * 0.6), // 60% converted formats
-      resizing: Math.round(cloudinaryPhotoCount * 0.9), // 90% resized
-      qualityAdjustment: Math.round(cloudinaryPhotoCount * 0.7) // 70% quality adjusted
+      autoOptimization: Math.round(cloudinaryPhotoCount * 0.8),
+      formatConversion: Math.round(cloudinaryPhotoCount * 0.6),
+      resizing: Math.round(cloudinaryPhotoCount * 0.9),
+      qualityAdjustment: Math.round(cloudinaryPhotoCount * 0.7),
     };
 
-    const analytics: CloudinaryAnalytics = {
-      recentUploads: recentResources.resources.slice(0, 10).map((resource: CloudinaryResource) => ({
-        publicId: resource.public_id,
-        url: resource.secure_url,
-        bytes: resource.bytes,
-        format: resource.format,
-        uploadedAt: resource.created_at,
-        dimensions: { width: resource.width, height: resource.height }
+    const analytics = {
+      recentUploads: recentResources.resources.slice(0, 10).map(r => ({
+        publicId: r.public_id,
+        url: r.secure_url,
+        bytes: r.bytes,
+        format: r.format,
+        uploadedAt: r.created_at,
+        dimensions: { width: r.width, height: r.height },
       })),
       formatAnalysis,
       sizeAnalysis,
@@ -185,21 +108,13 @@ export async function GET(request: NextRequest) {
         totalDbPhotos: dbPhotoCount,
         photosWithCloudinaryId: cloudinaryPhotoCount,
         orphanedPhotos,
-        syncPercentage: Math.round(syncPercentage * 100) / 100
-      }
+        syncPercentage: Math.round(syncPercentage * 100) / 100,
+      },
     };
 
-    return NextResponse.json({
-      success: true,
-      message: 'Cloudinary analytics retrieved successfully',
-      data: analytics
-    });
-
+    return ok('Cloudinary analytics retrieved successfully', analytics);
   } catch (error) {
     console.error('Cloudinary analytics API error:', error);
-    return NextResponse.json(
-      { success: false, error: 'Failed to retrieve Cloudinary analytics' },
-      { status: 500 }
-    );
+    return fail('internal_error', 'Failed to retrieve Cloudinary analytics', undefined, { status: 500 });
   }
 }

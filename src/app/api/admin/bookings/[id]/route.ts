@@ -1,9 +1,11 @@
 import { requireAdmin } from '@/lib/server-auth';
+import type { ServerAuthResult } from '@/lib/server-auth';
 import { db } from '@/db';
 import { bookings } from '@/db/schema';
 import { eq } from 'drizzle-orm';
 import { z } from 'zod';
 import { ok, fail } from '@/types/api';
+import { NextRequest } from 'next/server';
 
 /**
  * Zod schema for validating booking status update payload.
@@ -21,15 +23,11 @@ export async function PATCH(
   req: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  // Await params since it's now a Promise in Next.js 15
   const { id } = await params;
 
-  // Admin authentication
-  const auth = requireAdmin(req as any);
+  const auth: ServerAuthResult = requireAdmin(req as unknown as NextRequest);
   if (!auth.isAuthenticated) {
-    return fail('unauthorized', `Unauthorized - ${auth.error}`, undefined, {
-      status: 401,
-    });
+    return fail('unauthorized', `Unauthorized - ${auth.error}`, undefined, { status: 401 });
   }
 
   const bookingId = Number(id);

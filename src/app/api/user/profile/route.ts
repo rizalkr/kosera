@@ -1,4 +1,3 @@
-import { NextResponse } from 'next/server';
 import { withAnyRole, AuthenticatedRequest } from '@/lib/middleware';
 import { ok } from '@/types/api';
 

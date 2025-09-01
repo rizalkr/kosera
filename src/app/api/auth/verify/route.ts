@@ -1,41 +1,34 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { verifyToken, extractTokenFromHeader } from '@/lib/auth';
+import { extractTokenFromHeader, verifyToken } from '@/lib/auth';
+import { ok, fail } from '@/types/api';
 
-export async function GET(request: NextRequest) {
+/**
+ * GET /api/auth/verify
+ * Verifies a bearer JWT and returns the decoded user payload.
+ * Response envelope standardized via ok/fail helpers.
+ */
+export async function GET(request: Request): Promise<Response> {
   try {
     const authHeader = request.headers.get('authorization');
     const token = extractTokenFromHeader(authHeader);
 
     if (!token) {
-      return NextResponse.json(
-        { error: 'No token provided' },
-        { status: 401 }
-      );
+      return fail('unauthorized', 'No token provided', undefined, { status: 401 });
     }
 
     const payload = verifyToken(token);
-
     if (!payload) {
-      return NextResponse.json(
-        { error: 'Invalid or expired token' },
-        { status: 401 }
-      );
+      return fail('invalid_token', 'Invalid or expired token', undefined, { status: 401 });
     }
 
-    return NextResponse.json({
-      message: 'Token is valid',
+    return ok('Token is valid', {
       user: {
         userId: payload.userId,
         username: payload.username,
         role: payload.role,
       },
     });
-
   } catch (error) {
     console.error('Token verification error:', error);
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    );
+    return fail('internal_error', 'Internal server error', undefined, { status: 500 });
   }
 }

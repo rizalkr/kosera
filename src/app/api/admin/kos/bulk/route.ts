@@ -1,4 +1,3 @@
-import { NextResponse } from 'next/server';
 import { db } from '@/db';
 import { kos, posts } from '@/db/schema';
 import { inArray, and, isNull, isNotNull } from 'drizzle-orm';

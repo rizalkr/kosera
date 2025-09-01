@@ -1,58 +1,36 @@
-import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/db';
 import { kos, posts, bookings, users } from '@/db/schema';
 import { eq, and, count, sum } from 'drizzle-orm';
 import { verifyToken } from '@/lib/auth';
+import { ok, fail } from '@/types/api';
 
 export async function GET(
-  request: NextRequest,
+  request: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const { id } = await params;
-    const kosId = parseInt(id);
-
-    if (isNaN(kosId)) {
-      return NextResponse.json(
-        { success: false, error: 'ID kos tidak valid' },
-        { status: 400 }
-      );
+    const kosId = parseInt(id, 10);
+    if (Number.isNaN(kosId)) {
+      return fail('invalid_kos_id', 'ID kos tidak valid', undefined, { status: 400 });
     }
 
-    // Get authorization header
     const authHeader = request.headers.get('authorization');
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
-      return NextResponse.json(
-        { success: false, error: 'Token otorisasi diperlukan' },
-        { status: 401 }
-      );
+      return fail('unauthorized', 'Token otorisasi diperlukan', undefined, { status: 401 });
     }
 
     const token = authHeader.substring(7);
     const decoded = verifyToken(token);
-    
     if (!decoded || !decoded.userId) {
-      return NextResponse.json(
-        { success: false, error: 'Token tidak valid' },
-        { status: 401 }
-      );
+      return fail('invalid_token', 'Token tidak valid', undefined, { status: 401 });
     }
 
-    // Verify user is a seller
-    const user = await db
-      .select()
-      .from(users)
-      .where(eq(users.id, decoded.userId))
-      .limit(1);
-
+    const user = await db.select().from(users).where(eq(users.id, decoded.userId)).limit(1);
     if (!user.length || user[0].role !== 'SELLER') {
-      return NextResponse.json(
-        { success: false, error: 'Akses ditolak. Diperlukan role seller.' },
-        { status: 403 }
-      );
+      return fail('forbidden', 'Akses ditolak. Diperlukan role seller.', undefined, { status: 403 });
     }
 
-    // Get kos data and verify ownership
     const kosResult = await db
       .select({
         id: kos.id,
@@ -63,9 +41,8 @@ export async function GET(
         facilities: kos.facilities,
         latitude: kos.latitude,
         longitude: kos.longitude,
-        totalRooms: kos.totalRooms, // added
-        occupiedRoomsDb: kos.occupiedRooms, // added (raw stored value)
-        // Post data
+        totalRooms: kos.totalRooms,
+        occupiedRoomsDb: kos.occupiedRooms,
         title: posts.title,
         description: posts.description,
         price: posts.price,
@@ -80,13 +57,7 @@ export async function GET(
         createdAt: posts.createdAt,
         updatedAt: posts.updatedAt,
         userId: posts.userId,
-        // Owner data
-        owner: {
-          id: users.id,
-          name: users.name,
-          username: users.username,
-          contact: users.contact,
-        },
+        owner: { id: users.id, name: users.name, username: users.username, contact: users.contact },
       })
       .from(kos)
       .innerJoin(posts, eq(kos.postId, posts.id))
@@ -95,78 +66,35 @@ export async function GET(
       .limit(1);
 
     if (kosResult.length === 0) {
-      return NextResponse.json(
-        { success: false, error: 'Kos tidak ditemukan' },
-        { status: 404 }
-      );
+      return fail('kos_not_found', 'Kos tidak ditemukan', undefined, { status: 404 });
     }
 
     const kosData = kosResult[0];
-
-    // Check ownership (seller can only access their own kos)
     if (kosData.userId !== decoded.userId) {
-      return NextResponse.json(
-        { success: false, error: 'Anda hanya dapat mengakses kos milik Anda sendiri' },
-        { status: 403 }
-      );
+      return fail('forbidden', 'Anda hanya dapat mengakses kos milik Anda sendiri', undefined, { status: 403 });
     }
 
-    // Get booking statistics for this specific kos
-    const [
-      totalBookingsResult,
-      pendingBookingsResult,
-      confirmedBookingsResult,
-      totalRevenueResult
-    ] = await Promise.all([
-      // Total bookings
+    const [totalBookingsResult, pendingBookingsResult, confirmedBookingsResult, totalRevenueResult] = await Promise.all([
+      db.select({ count: count() }).from(bookings).where(eq(bookings.kosId, kosId)),
+      db.select({ count: count() }).from(bookings).where(and(eq(bookings.kosId, kosId), eq(bookings.status, 'pending'))),
+      db.select({ count: count() }).from(bookings).where(and(eq(bookings.kosId, kosId), eq(bookings.status, 'confirmed'))),
       db
-        .select({ count: count() })
+        .select({ total: sum(bookings.totalPrice) })
         .from(bookings)
-        .where(eq(bookings.kosId, kosId)),
-
-      // Pending bookings
-      db
-        .select({ count: count() })
-        .from(bookings)
-        .where(and(
-          eq(bookings.kosId, kosId),
-          eq(bookings.status, 'pending')
-        )),
-
-      // Confirmed bookings (occupied rooms)
-      db
-        .select({ count: count() })
-        .from(bookings)
-        .where(and(
-          eq(bookings.kosId, kosId),
-          eq(bookings.status, 'confirmed')
-        )),
-
-      // Total revenue
-      db
-        .select({ 
-          total: sum(bookings.totalPrice) 
-        })
-        .from(bookings)
-        .where(and(
-          eq(bookings.kosId, kosId),
-          eq(bookings.status, 'confirmed')
-        ))
+        .where(and(eq(bookings.kosId, kosId), eq(bookings.status, 'confirmed'))),
     ]);
 
-    // Calculate statistics
     const totalBookings = totalBookingsResult[0]?.count || 0;
     const pendingBookings = pendingBookingsResult[0]?.count || 0;
-    const occupiedRooms = confirmedBookingsResult[0]?.count || kosData.occupiedRoomsDb || 0; // prefer booking count, fallback to stored
-    const totalRooms = kosData.totalRooms || kosData.totalPost || 1; // prefer kos.totalRooms
+    const occupiedRooms = confirmedBookingsResult[0]?.count || kosData.occupiedRoomsDb || 0;
+    const totalRooms = kosData.totalRooms || kosData.totalPost || 1;
     const vacantRooms = Math.max(0, totalRooms - occupiedRooms);
-    const totalRevenue = Number(totalRevenueResult[0]?.total || 0); // add explicit assignment
+    const totalRevenue = Number(totalRevenueResult[0]?.total || 0);
 
-    // Combine data with statistics
     const responseData = {
       ...kosData,
-      totalRooms, // surface normalized
-      occupiedRooms, // surface normalized
+      totalRooms,
+      occupiedRooms,
       statistics: {
         totalBookings,
         pendingBookings,
@@ -175,22 +103,14 @@ export async function GET(
         totalRooms,
         totalRevenue,
         totalRoomsRentedOut: kosData.totalPenjualan || 0,
-      }
+      },
     };
 
-    console.debug('[API seller/kos/:id] responseData', responseData);
-
-    return NextResponse.json({
-      success: true,
-      message: 'Detail kos seller berhasil diambil',
-      data: responseData
-    });
-
+    return ok('Detail kos seller berhasil diambil', responseData);
   } catch (error) {
     console.error('Error retrieving seller kos detail:', error);
-    return NextResponse.json(
-      { success: false, error: 'Gagal mengambil detail kos seller' },
-      { status: 500 }
-    );
+    return fail('seller_kos_detail_failed', 'Gagal mengambil detail kos seller', undefined, { status: 500 });
   }
 }
+
+// TODO: Add caching for frequently accessed seller stats and role-based field filtering.

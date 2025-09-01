@@ -1,36 +1,19 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { withRole, AuthenticatedRequest } from '@/lib/middleware';
 import { db } from '@/db';
 import { kos, posts, bookings, users } from '@/db/schema';
 import { eq, and, count, sum } from 'drizzle-orm';
-import { verifyToken } from '@/lib/auth';
+import { ok, fail } from '@/types/api';
 
-export async function GET(request: NextRequest) {
+// Only SELLER role (admins might have another endpoint for global view)
+export const GET = withRole(['SELLER'])(async (request: AuthenticatedRequest) => {
   try {
-    // Get authorization header
-    const authHeader = request.headers.get('authorization');
-    if (!authHeader || !authHeader.startsWith('Bearer ')) {
-      return NextResponse.json({ error: 'Token otorisasi diperlukan' }, { status: 401 });
+    // Fetch seller user to confirm (middleware already checked role but we also need id exists)
+    const sellerId = request.user!.userId;
+    const userRow = await db.select({ id: users.id, role: users.role }).from(users).where(eq(users.id, sellerId)).limit(1);
+    if (userRow.length === 0 || userRow[0].role !== 'SELLER') {
+      return fail('forbidden', 'Access denied. Seller role required.', undefined, { status: 403 });
     }
 
-    const token = authHeader.substring(7);
-    const decoded = verifyToken(token);
-    
-    if (!decoded || !decoded.userId) {
-      return NextResponse.json({ error: 'Token tidak valid' }, { status: 401 });
-    }
-
-    // Verify user is a seller
-    const user = await db
-      .select()
-      .from(users)
-      .where(eq(users.id, decoded.userId))
-      .limit(1);
-
-    if (!user.length || user[0].role !== 'SELLER') {
-      return NextResponse.json({ error: 'Akses ditolak. Diperlukan role seller.' }, { status: 403 });
-    }
-
-    // Get all kos owned by the seller with aggregated statistics
     const sellerKos = await db
       .select({
         id: kos.id,
@@ -38,7 +21,7 @@ export async function GET(request: NextRequest) {
         name: kos.name,
         address: kos.address,
         city: kos.city,
-        facilities: kos.facilities, // may be null
+        facilities: kos.facilities,
         totalRooms: kos.totalRooms,
         occupiedRooms: kos.occupiedRooms,
         title: posts.title,
@@ -57,115 +40,81 @@ export async function GET(request: NextRequest) {
       })
       .from(kos)
       .innerJoin(posts, eq(kos.postId, posts.id))
-      .where(eq(posts.userId, decoded.userId));
+      .where(eq(posts.userId, sellerId));
 
-    // Get booking statistics for each kos
-    const kosIds = sellerKos.map(k => k.id);
-    
+    const kosIds = sellerKos.map((k) => k.id);
+
     const bookingStats = await Promise.all(
       kosIds.map(async (kosId) => {
-        // Total bookings for this kos
-        const totalBookings = await db
-          .select({ count: count() })
-          .from(bookings)
-          .where(eq(bookings.kosId, kosId));
-
-        // Pending bookings
-        const pendingBookings = await db
-          .select({ count: count() })
-          .from(bookings)
-          .where(and(
-            eq(bookings.kosId, kosId),
-            eq(bookings.status, 'pending')
-          ));
-
-        // Confirmed bookings (occupied rooms)
-        const confirmedBookings = await db
-          .select({ count: count() })
-          .from(bookings)
-          .where(and(
-            eq(bookings.kosId, kosId),
-            eq(bookings.status, 'confirmed')
-          ));
-
-        // Total revenue from this kos
-        const totalRevenue = await db
-          .select({ 
-            total: sum(bookings.totalPrice) 
-          })
-          .from(bookings)
-          .where(and(
-            eq(bookings.kosId, kosId),
-            eq(bookings.status, 'confirmed')
-          ));
-
+        const [totalBookings, pendingBookings, confirmedBookings, totalRevenue] = await Promise.all([
+          db.select({ count: count() }).from(bookings).where(eq(bookings.kosId, kosId)),
+          db.select({ count: count() }).from(bookings).where(and(eq(bookings.kosId, kosId), eq(bookings.status, 'pending'))),
+          db.select({ count: count() }).from(bookings).where(and(eq(bookings.kosId, kosId), eq(bookings.status, 'confirmed'))),
+          db
+            .select({ total: sum(bookings.totalPrice) })
+            .from(bookings)
+            .where(and(eq(bookings.kosId, kosId), eq(bookings.status, 'confirmed'))),
+        ]);
         return {
           kosId,
-          totalBookings: totalBookings[0].count || 0,
-          pendingBookings: pendingBookings[0].count || 0,
-          occupiedRooms: confirmedBookings[0].count || 0, // booking-derived occupancy
-          totalRevenue: Number(totalRevenue[0].total || 0),
+            totalBookings: Number(totalBookings[0].count || 0),
+            pendingBookings: Number(pendingBookings[0].count || 0),
+            occupiedRooms: Number(confirmedBookings[0].count || 0),
+            totalRevenue: Number(totalRevenue[0].total || 0),
         };
       })
     );
 
-    // Combine kos data with booking statistics using kos.totalRooms / kos.occupiedRooms
-    const dashboardData = sellerKos.map(kosItem => {
-      const stats = bookingStats.find(s => s.kosId === kosItem.id);
-      const totalRooms = kosItem.totalRooms || kosItem.totalPost || 1;
-      const bookingOccupied = stats?.occupiedRooms ?? 0;
-      const occupiedRooms = bookingOccupied || kosItem.occupiedRooms || 0;
-      const vacantRooms = Math.max(0, totalRooms - occupiedRooms);
-      console.debug('[seller/dashboard] merge item', {
-        kosId: kosItem.id,
-        bookingOccupied,
-        storedOccupied: kosItem.occupiedRooms,
-        chosen: occupiedRooms,
-        totalRooms,
-      });
+    const dashboardData = sellerKos.map((item) => {
+      const stats = bookingStats.find((s) => s.kosId === item.id);
+      const totalRoomsValue = item.totalRooms || item.totalPost || 1;
+      const occupiedRoomsCalc = stats?.occupiedRooms ?? item.occupiedRooms ?? 0;
+      const vacantRooms = Math.max(0, totalRoomsValue - occupiedRoomsCalc);
       return {
-        ...kosItem,
-        facilities: kosItem.facilities ?? null,
-        totalRooms,
-        occupiedRooms,
+        ...item,
+        facilities: item.facilities ?? null,
+        totalRooms: totalRoomsValue,
+        occupiedRooms: occupiedRoomsCalc,
         statistics: {
           totalBookings: stats?.totalBookings || 0,
           pendingBookings: stats?.pendingBookings || 0,
-          occupiedRooms,
+          occupiedRooms: occupiedRoomsCalc,
           vacantRooms,
-          totalRooms,
+          totalRooms: totalRoomsValue,
           totalRevenue: stats?.totalRevenue || 0,
-          totalRoomsRentedOut: kosItem.totalPenjualan || 0,
-        }
+          totalRoomsRentedOut: item.totalPenjualan || 0,
+        },
       };
     });
 
-    // Calculate overall statistics based on normalized per-kos statistics
-    const stats = {
-      totalKos: sellerKos.length,
-      totalBookings: bookingStats.reduce((sum, stat) => sum + stat.totalBookings, 0),
-      totalPendingBookings: bookingStats.reduce((sum, stat) => sum + stat.pendingBookings, 0),
-      totalOccupiedRooms: dashboardData.reduce((sum, k) => sum + k.statistics.occupiedRooms, 0),
-      totalVacantRooms: dashboardData.reduce((sum, k) => sum + k.statistics.vacantRooms, 0),
-      totalRooms: dashboardData.reduce((sum, k) => sum + k.statistics.totalRooms, 0),
-      totalRevenue: bookingStats.reduce((sum, stat) => sum + stat.totalRevenue, 0),
-      totalViews: sellerKos.reduce((sum, k) => sum + k.viewCount, 0),
-      totalFavorites: sellerKos.reduce((sum, k) => sum + k.favoriteCount, 0),
-    };
-
-    return NextResponse.json({
-      success: true,
-      data: {
-        kos: dashboardData,
-        stats,
+    const aggregate = dashboardData.reduce(
+      (acc, k) => {
+        acc.totalBookings += k.statistics.totalBookings;
+        acc.totalPendingBookings += k.statistics.pendingBookings;
+        acc.totalOccupiedRooms += k.statistics.occupiedRooms;
+        acc.totalVacantRooms += k.statistics.vacantRooms;
+        acc.totalRooms += k.statistics.totalRooms;
+        acc.totalRevenue += k.statistics.totalRevenue;
+        acc.totalViews += k.viewCount;
+        acc.totalFavorites += k.favoriteCount;
+        return acc;
+      },
+      {
+        totalKos: dashboardData.length,
+        totalBookings: 0,
+        totalPendingBookings: 0,
+        totalOccupiedRooms: 0,
+        totalVacantRooms: 0,
+        totalRooms: 0,
+        totalRevenue: 0,
+        totalViews: 0,
+        totalFavorites: 0,
       }
-    });
-
-  } catch (error) {
-    console.error('Seller dashboard API error:', error);
-    return NextResponse.json(
-      { error: 'Terjadi kesalahan server internal' },
-      { status: 500 }
     );
+
+    return ok('Seller dashboard retrieved successfully', { kos: dashboardData, stats: aggregate });
+  } catch (error) {
+    console.error('seller.dashboard.GET error', error);
+    return fail('internal_error', 'Internal server error', undefined, { status: 500 });
   }
-}
+});

@@ -1,4 +1,3 @@
-import { NextRequest, NextResponse } from 'next/server';
 import { withAdmin, AuthenticatedRequest } from '@/lib/middleware';
 import { db, kos, posts } from '@/db';
 import { eq } from 'drizzle-orm';
@@ -53,5 +52,8 @@ async function toggleFeaturedHandler(request: AuthenticatedRequest, context: Rou
 
 export const PATCH = async (request: Request, context: { params: Promise<{ id: string }> }) => {
   const params = await context.params;
-  return withAdmin((req: AuthenticatedRequest) => toggleFeaturedHandler(req, { params }))(request as any);
+  const handler = withAdmin((req: AuthenticatedRequest) => toggleFeaturedHandler(req, { params }));
+  return handler(request as unknown as AuthenticatedRequest);
 };
+
+// Replaced any types with explicit zod inferred types where applicable

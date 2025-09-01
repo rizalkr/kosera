@@ -1,134 +1,101 @@
-import { NextResponse } from 'next/server';
-import { withAuth, AuthenticatedRequest } from '@/lib/middleware';
+import { withAdmin, AuthenticatedRequest } from '@/lib/middleware';
+import { ok, fail } from '@/types/api';
+import { z } from 'zod';
 
-// Geocoding interface
-interface GeocodingResult {
+// Nominatim geocoding result interface
+interface NominatimResult {
   lat: string;
   lon: string;
   display_name: string;
 }
 
-interface GeocodingResponse {
+// Geocoding response data interface
+interface GeocodingData {
   latitude: number;
   longitude: number;
   address: string;
 }
 
-// Simple rate limiting (in-memory store)
-const rateLimitStore = new Map<string, { count: number; resetTime: number }>();
-const RATE_LIMIT_WINDOW = 60 * 1000; // 1 minute
-const RATE_LIMIT_MAX_REQUESTS = 10; // 10 requests per minute
+// Simple in-memory rate limiting store (per user)
+interface RateEntry {
+  count: number;
+  resetTime: number;
+}
+const rateLimitStore = new Map<string, RateEntry>();
+const RATE_LIMIT_WINDOW_MS = 60_000; // 1 minute
+const RATE_LIMIT_MAX = 10; // 10 requests per window
 
+// Check and update rate limit for a client
 function checkRateLimit(clientId: string): boolean {
   const now = Date.now();
-  const clientData = rateLimitStore.get(clientId);
-
-  if (!clientData || now > clientData.resetTime) {
-    rateLimitStore.set(clientId, { count: 1, resetTime: now + RATE_LIMIT_WINDOW });
+  const entry = rateLimitStore.get(clientId);
+  if (!entry || now > entry.resetTime) {
+    rateLimitStore.set(clientId, { count: 1, resetTime: now + RATE_LIMIT_WINDOW_MS });
     return true;
   }
-
-  if (clientData.count >= RATE_LIMIT_MAX_REQUESTS) {
-    return false;
-  }
-
-  clientData.count++;
+  if (entry.count >= RATE_LIMIT_MAX) return false;
+  entry.count += 1;
   return true;
 }
 
-export const GET = withAuth(async (request: AuthenticatedRequest) => {
+// Zod schema for query validation
+const querySchema = z.object({ address: z.string().min(1, 'Address parameter is required') });
+
+export const GET = withAdmin(async (request: AuthenticatedRequest) => {
   try {
     const { searchParams } = new URL(request.url);
-    const address = searchParams.get('address');
-
-    // Check if user has admin role
-    if (request.user?.role !== 'ADMIN') {
-      return NextResponse.json(
-        { success: false, error: 'Access denied. Admin role required for geocoding.' },
-        { status: 403 }
-      );
+    const addressRaw = searchParams.get('address') || '';
+    const parsed = querySchema.safeParse({ address: addressRaw });
+    if (!parsed.success) {
+      return fail('validation_error', 'Invalid query', parsed.error.flatten(), { status: 400 });
     }
+    const { address } = parsed.data;
 
-    if (!address || address.trim().length === 0) {
-      return NextResponse.json(
-        { success: false, error: 'Address parameter is required' },
-        { status: 400 }
-      );
-    }
-
+    const clientId = request.user!.userId.toString();
     // Rate limiting
-    const clientId = request.user.userId.toString();
     if (!checkRateLimit(clientId)) {
-      return NextResponse.json(
-        { success: false, error: 'Rate limit exceeded. Please try again later.' },
-        { status: 429 }
-      );
+      return fail('rate_limited', 'Rate limit exceeded. Try again later.', undefined, { status: 429 });
     }
 
-    // Call Nominatim API for geocoding
+    // Call to Nominatim API for geocoding
     const nominatimUrl = new URL('https://nominatim.openstreetmap.org/search');
     nominatimUrl.searchParams.set('q', address.trim());
     nominatimUrl.searchParams.set('format', 'json');
     nominatimUrl.searchParams.set('limit', '1');
     nominatimUrl.searchParams.set('addressdetails', '1');
 
-    const geocodingResponse = await fetch(nominatimUrl.toString(), {
+    const response = await fetch(nominatimUrl, {
       headers: {
         'User-Agent': 'Kosera/1.0 (contact@kosera.com)', // Required by Nominatim
       },
     });
 
-    if (!geocodingResponse.ok) {
-      console.error('Nominatim API error:', geocodingResponse.status, geocodingResponse.statusText);
-      return NextResponse.json(
-        { success: false, error: 'Geocoding service temporarily unavailable' },
-        { status: 503 }
-      );
+    if (!response.ok) {
+      console.error('Nominatim error', response.status, response.statusText);
+      return fail('upstream_unavailable', 'Geocoding service temporarily unavailable', undefined, { status: 503 });
     }
 
-    const results: GeocodingResult[] = await geocodingResponse.json();
-
+    const results: NominatimResult[] = await response.json();
     if (results.length === 0) {
-      return NextResponse.json(
-        { success: false, error: 'Address not found' },
-        { status: 404 }
-      );
+      return fail('not_found', 'Address not found', undefined, { status: 404 });
     }
 
-    const result = results[0];
-    const response: GeocodingResponse = {
-      latitude: parseFloat(result.lat),
-      longitude: parseFloat(result.lon),
-      address: result.display_name,
-    };
-
+    const first = results[0];
+    const latitude = Number.parseFloat(first.lat);
+    const longitude = Number.parseFloat(first.lon);
     // Validate coordinates
-    if (isNaN(response.latitude) || isNaN(response.longitude)) {
-      return NextResponse.json(
-        { success: false, error: 'Invalid coordinates received from geocoding service' },
-        { status: 500 }
-      );
+    if (Number.isNaN(latitude) || Number.isNaN(longitude)) {
+      return fail('invalid_coordinates', 'Invalid coordinates received from service', undefined, { status: 500 });
     }
 
-    return NextResponse.json({
-      success: true,
-      message: 'Geocoding successful',
-      data: response,
-    });
+    const data: GeocodingData = { latitude, longitude, address: first.display_name };
+    return ok('Geocoding successful', data);
   } catch (error) {
-    console.error('Geocoding error:', error);
-    
-    // Handle specific fetch errors
-    if (error instanceof TypeError && error.message.includes('fetch')) {
-      return NextResponse.json(
-        { success: false, error: 'Unable to connect to geocoding service' },
-        { status: 503 }
-      );
+    console.error('geocode.GET error', error);
+    // Handle specific fetch/network errors
+    if (error instanceof TypeError && (error.message.includes('fetch') || error.message.includes('network'))) {
+      return fail('network_error', 'Unable to connect to geocoding service', undefined, { status: 503 });
     }
-
-    return NextResponse.json(
-      { success: false, error: 'Internal server error during geocoding' },
-      { status: 500 }
-    );
+    return fail('internal_error', 'Internal server error during geocoding', undefined, { status: 500 });
   }
 });

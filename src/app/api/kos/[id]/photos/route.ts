@@ -1,12 +1,11 @@
-import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/db';
 import { kosPhotos, kos, posts } from '@/db/schema';
 import { eq, and, sql } from 'drizzle-orm';
 import { extractTokenFromHeader, verifyToken } from '@/lib/auth';
 import { deleteFromCloudinary, extractPublicIdFromUrl } from '@/lib/cloudinary';
 import { z } from 'zod';
+import { ok, fail } from '@/types/api';
 
-// Schema for photo upload
 const uploadPhotoSchema = z.object({
   url: z.string().url('Invalid URL format'),
   caption: z.string().optional(),
@@ -15,280 +14,169 @@ const uploadPhotoSchema = z.object({
 
 // GET /api/kos/[id]/photos - Get all photos for a kos
 export async function GET(
-  request: NextRequest,
+  request: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const { id } = await params;
-    const kosId = parseInt(id);
-
-    if (isNaN(kosId)) {
-      return NextResponse.json(
-        { success: false, error: 'Invalid kos ID' },
-        { status: 400 }
-      );
+    const kosId = parseInt(id, 10);
+    if (Number.isNaN(kosId)) {
+      return fail('invalid_kos_id', 'Invalid kos ID', undefined, { status: 400 });
     }
 
-    // Check if kos exists
-    const kosExists = await db
-      .select({ id: kos.id })
-      .from(kos)
-      .where(eq(kos.id, kosId))
-      .limit(1);
-
+    const kosExists = await db.select({ id: kos.id }).from(kos).where(eq(kos.id, kosId)).limit(1);
     if (kosExists.length === 0) {
-      return NextResponse.json(
-        { success: false, error: 'Kos not found' },
-        { status: 404 }
-      );
+      return fail('kos_not_found', 'Kos not found', undefined, { status: 404 });
     }
 
-    // Get photos
     const photos = await db
-      .select({
-        id: kosPhotos.id,
-        url: kosPhotos.url,
-        caption: kosPhotos.caption,
-        isPrimary: kosPhotos.isPrimary,
-        createdAt: kosPhotos.createdAt,
-      })
+      .select({ id: kosPhotos.id, url: kosPhotos.url, caption: kosPhotos.caption, isPrimary: kosPhotos.isPrimary, createdAt: kosPhotos.createdAt })
       .from(kosPhotos)
       .where(eq(kosPhotos.kosId, kosId))
       .orderBy(kosPhotos.isPrimary, kosPhotos.createdAt);
 
-    return NextResponse.json({
-      success: true,
-      message: 'Photos retrieved successfully',
-      data: { photos },
-    });
-
+    return ok('Photos retrieved successfully', { photos });
   } catch (error) {
     console.error('Error retrieving photos:', error);
-    return NextResponse.json(
-      { success: false, error: 'Failed to retrieve photos' },
-      { status: 500 }
-    );
+    return fail('photos_retrieve_failed', 'Failed to retrieve photos', undefined, { status: 500 });
   }
 }
 
 // POST /api/kos/[id]/photos - Upload a new photo
 export async function POST(
-  request: NextRequest,
+  request: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const authHeader = request.headers.get('authorization');
     const token = extractTokenFromHeader(authHeader);
-
     if (!token) {
-      return NextResponse.json(
-        { success: false, error: 'Authentication required' },
-        { status: 401 }
-      );
+      return fail('unauthorized', 'Authentication required', undefined, { status: 401 });
     }
-
     const payload = verifyToken(token);
     if (!payload) {
-      return NextResponse.json(
-        { success: false, error: 'Invalid or expired token' },
-        { status: 401 }
-      );
+      return fail('invalid_token', 'Invalid or expired token', undefined, { status: 401 });
     }
 
     const { id } = await params;
-    const kosId = parseInt(id);
-
-    if (isNaN(kosId)) {
-      return NextResponse.json(
-        { success: false, error: 'Invalid kos ID' },
-        { status: 400 }
-      );
+    const kosId = parseInt(id, 10);
+    if (Number.isNaN(kosId)) {
+      return fail('invalid_kos_id', 'Invalid kos ID', undefined, { status: 400 });
     }
 
-    const body = await request.json();
-    const validatedData = uploadPhotoSchema.parse(body);
+    const body = await request.json().catch(() => null);
+    if (!body) {
+      return fail('invalid_json', 'Invalid JSON body', undefined, { status: 400 });
+    }
+    const parsed = uploadPhotoSchema.safeParse(body);
+    if (!parsed.success) {
+      return fail('validation_error', 'Invalid input data', parsed.error.flatten(), { status: 400 });
+    }
 
-    // Check if kos exists and user owns it
     const kosData = await db
-      .select({
-        id: kos.id,
-        postId: kos.postId,
-        userId: posts.userId,
-      })
+      .select({ id: kos.id, postId: kos.postId, userId: posts.userId })
       .from(kos)
       .innerJoin(posts, eq(kos.postId, posts.id))
       .where(eq(kos.id, kosId))
       .limit(1);
 
     if (kosData.length === 0) {
-      return NextResponse.json(
-        { success: false, error: 'Kos not found' },
-        { status: 404 }
-      );
+      return fail('kos_not_found', 'Kos not found', undefined, { status: 404 });
     }
 
-    // Check ownership (user must own the kos or be admin)
     if (kosData[0].userId !== payload.userId && payload.role !== 'ADMIN') {
-      return NextResponse.json(
-        { success: false, error: 'Unauthorized: You can only upload photos to your own kos' },
-        { status: 403 }
-      );
+      return fail('forbidden', 'You can only upload photos to your own kos', undefined, { status: 403 });
     }
 
-    // If setting as primary, unset other primary photos
-    if (validatedData.isPrimary) {
-      await db
-        .update(kosPhotos)
-        .set({ isPrimary: false })
-        .where(eq(kosPhotos.kosId, kosId));
+    if (parsed.data.isPrimary) {
+      await db.update(kosPhotos).set({ isPrimary: false }).where(eq(kosPhotos.kosId, kosId));
     }
 
-    // Create photo record
     const [newPhoto] = await db
       .insert(kosPhotos)
-      .values({
-        kosId,
-        url: validatedData.url,
-        caption: validatedData.caption,
-        isPrimary: validatedData.isPrimary,
-      })
+      .values({ kosId, url: parsed.data.url, caption: parsed.data.caption, isPrimary: parsed.data.isPrimary })
       .returning();
 
-    // Update photo count in posts
     await db
       .update(posts)
-      .set({
-        photoCount: sql`${posts.photoCount} + 1`,
-        updatedAt: new Date(),
-      })
+      .set({ photoCount: sql`${posts.photoCount} + 1`, updatedAt: new Date() })
       .where(eq(posts.id, kosData[0].postId));
 
-    return NextResponse.json({
-      success: true,
-      message: 'Photo uploaded successfully',
-      data: { photo: newPhoto },
-    });
-
+    return ok('Photo uploaded successfully', { photo: newPhoto });
   } catch (error) {
     if (error instanceof z.ZodError) {
-      return NextResponse.json(
-        { success: false, error: 'Invalid input data', details: error.errors },
-        { status: 400 }
-      );
+      return fail('validation_error', 'Invalid input data', error.flatten(), { status: 400 });
     }
     console.error('Error uploading photo:', error);
-    return NextResponse.json(
-      { success: false, error: 'Failed to upload photo' },
-      { status: 500 }
-    );
+    return fail('photo_upload_failed', 'Failed to upload photo', undefined, { status: 500 });
   }
 }
 
 // DELETE /api/kos/[id]/photos - Delete a photo
 export async function DELETE(
-  request: NextRequest,
+  request: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const authHeader = request.headers.get('authorization');
     const token = extractTokenFromHeader(authHeader);
-
     if (!token) {
-      return NextResponse.json(
-        { success: false, error: 'Authentication required' },
-        { status: 401 }
-      );
+      return fail('unauthorized', 'Authentication required', undefined, { status: 401 });
     }
-
     const payload = verifyToken(token);
     if (!payload) {
-      return NextResponse.json(
-        { success: false, error: 'Invalid or expired token' },
-        { status: 401 }
-      );
+      return fail('invalid_token', 'Invalid or expired token', undefined, { status: 401 });
     }
 
     const { id } = await params;
-    const kosId = parseInt(id);
-
-    if (isNaN(kosId)) {
-      return NextResponse.json(
-        { success: false, error: 'Invalid kos ID' },
-        { status: 400 }
-      );
+    const kosId = parseInt(id, 10);
+    if (Number.isNaN(kosId)) {
+      return fail('invalid_kos_id', 'Invalid kos ID', undefined, { status: 400 });
     }
 
-    const { photoId } = await request.json();
-
-    if (!photoId || isNaN(parseInt(photoId))) {
-      return NextResponse.json(
-        { success: false, error: 'Valid photo ID is required' },
-        { status: 400 }
-      );
+    const body = await request.json().catch(() => null);
+    if (!body || !('photoId' in body)) {
+      return fail('invalid_json', 'Valid photo ID is required', undefined, { status: 400 });
     }
 
-    const parsedPhotoId = parseInt(photoId);
+    const parsedPhotoId = parseInt(String(body.photoId), 10);
+    if (Number.isNaN(parsedPhotoId)) {
+      return fail('invalid_photo_id', 'Valid photo ID is required', undefined, { status: 400 });
+    }
 
-    // Check if kos exists and user owns it
     const kosData = await db
-      .select({
-        id: kos.id,
-        postId: kos.postId,
-        userId: posts.userId,
-      })
+      .select({ id: kos.id, postId: kos.postId, userId: posts.userId })
       .from(kos)
       .innerJoin(posts, eq(kos.postId, posts.id))
       .where(eq(kos.id, kosId))
       .limit(1);
 
     if (kosData.length === 0) {
-      return NextResponse.json(
-        { success: false, error: 'Kos not found' },
-        { status: 404 }
-      );
+      return fail('kos_not_found', 'Kos not found', undefined, { status: 404 });
     }
 
-    // Check ownership
     if (kosData[0].userId !== payload.userId && payload.role !== 'ADMIN') {
-      return NextResponse.json(
-        { success: false, error: 'Unauthorized: You can only delete photos from your own kos' },
-        { status: 403 }
-      );
+      return fail('forbidden', 'You can only delete photos from your own kos', undefined, { status: 403 });
     }
 
-    // Get photo info before deleting (to get Cloudinary public ID)
     const photoToDelete = await db
-      .select({
-        id: kosPhotos.id,
-        url: kosPhotos.url,
-        cloudinaryPublicId: kosPhotos.cloudinaryPublicId,
-      })
+      .select({ id: kosPhotos.id, url: kosPhotos.url, cloudinaryPublicId: kosPhotos.cloudinaryPublicId })
       .from(kosPhotos)
-      .where(and(
-        eq(kosPhotos.id, parsedPhotoId),
-        eq(kosPhotos.kosId, kosId)
-      ))
+      .where(and(eq(kosPhotos.id, parsedPhotoId), eq(kosPhotos.kosId, kosId)))
       .limit(1);
 
     if (photoToDelete.length === 0) {
-      return NextResponse.json(
-        { success: false, error: 'Photo not found' },
-        { status: 404 }
-      );
+      return fail('photo_not_found', 'Photo not found', undefined, { status: 404 });
     }
 
     const photo = photoToDelete[0];
-
-    // Delete from Cloudinary if it's a Cloudinary image
     if (photo.cloudinaryPublicId) {
       try {
         await deleteFromCloudinary(photo.cloudinaryPublicId);
       } catch (cloudinaryError) {
         console.warn('Failed to delete from Cloudinary:', cloudinaryError);
-        // Continue with database deletion even if Cloudinary deletion fails
       }
     } else if (photo.url.includes('cloudinary.com')) {
-      // Try to extract public ID from URL if cloudinaryPublicId is not stored
       const publicId = extractPublicIdFromUrl(photo.url);
       if (publicId) {
         try {
@@ -299,33 +187,18 @@ export async function DELETE(
       }
     }
 
-    // Delete photo from database
-    await db
-      .delete(kosPhotos)
-      .where(and(
-        eq(kosPhotos.id, parsedPhotoId),
-        eq(kosPhotos.kosId, kosId)
-      ));
+    await db.delete(kosPhotos).where(and(eq(kosPhotos.id, parsedPhotoId), eq(kosPhotos.kosId, kosId)));
 
-    // Update photo count in posts
     await db
       .update(posts)
-      .set({
-        photoCount: sql`GREATEST(0, ${posts.photoCount} - 1)`,
-        updatedAt: new Date(),
-      })
+      .set({ photoCount: sql`GREATEST(0, ${posts.photoCount} - 1)`, updatedAt: new Date() })
       .where(eq(posts.id, kosData[0].postId));
 
-    return NextResponse.json({
-      success: true,
-      message: 'Photo deleted successfully',
-    });
-
+    return ok('Photo deleted successfully', {});
   } catch (error) {
     console.error('Error deleting photo:', error);
-    return NextResponse.json(
-      { success: false, error: 'Failed to delete photo' },
-      { status: 500 }
-    );
+    return fail('photo_delete_failed', 'Failed to delete photo', undefined, { status: 500 });
   }
 }
+
+// TODO: Add pagination for large photo collections and soft-delete functionality.

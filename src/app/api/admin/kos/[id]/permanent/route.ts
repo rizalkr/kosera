@@ -1,4 +1,3 @@
-import { NextResponse } from 'next/server';
 import { withAdmin, AuthenticatedRequest } from '@/lib/middleware';
 import { db, kos, posts } from '@/db';
 import { eq, sql } from 'drizzle-orm';

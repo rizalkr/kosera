@@ -1,24 +1,38 @@
-import { NextResponse } from 'next/server';
 import { withAdmin, AuthenticatedRequest } from '@/lib/middleware';
 import { db, users } from '@/db';
 import { eq, sql } from 'drizzle-orm';
 import bcrypt from 'bcryptjs';
+import { z } from 'zod';
+import { ok, fail } from '@/types/api';
 
-type UserRole = 'ADMIN' | 'SELLER' | 'RENTER';
+// Shared types
+const userIdParam = z.number().int().positive();
+
+const updateUserSchema = z.object({
+  name: z.string().min(1),
+  username: z.string().min(3),
+  contact: z.string().min(3),
+  role: z.enum(['ADMIN', 'SELLER', 'RENTER']),
+  password: z.string().min(6).optional(),
+});
+
+function extractUserId(url: string): number | null {
+  try {
+    const u = new URL(url);
+    const seg = u.pathname.split('/').filter(Boolean);
+    const maybe = Number(seg[seg.length - 1]);
+    return Number.isInteger(maybe) ? maybe : null;
+  } catch {
+    return null;
+  }
+}
 
 async function getUserHandler(request: AuthenticatedRequest) {
+  const userId = extractUserId(request.url);
+  if (!userId || !userIdParam.safeParse(userId).success) {
+    return fail('invalid_user_id', 'Invalid user ID', undefined, { status: 400 });
+  }
   try {
-    const url = new URL(request.url);
-    const pathSegments = url.pathname.split('/');
-    const userId = parseInt(pathSegments[pathSegments.length - 1]);
-    
-    if (isNaN(userId)) {
-      return NextResponse.json(
-        { error: 'Invalid user ID' },
-        { status: 400 }
-      );
-    }
-
     const user = await db
       .select({
         id: users.id,
@@ -36,113 +50,58 @@ async function getUserHandler(request: AuthenticatedRequest) {
       .limit(1);
 
     if (user.length === 0) {
-      return NextResponse.json(
-        { error: 'User not found' },
-        { status: 404 }
-      );
+      return fail('not_found', 'User not found', undefined, { status: 404 });
     }
 
-    return NextResponse.json({
-      message: 'User retrieved successfully',
-      user: user[0],
-    });
+    return ok('User retrieved successfully', { user: user[0] });
   } catch (error) {
     console.error('Get user error:', error);
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    );
+    return fail('internal_error', 'Internal server error', undefined, { status: 500 });
   }
 }
 
 async function updateUserHandler(request: AuthenticatedRequest) {
+  const userId = extractUserId(request.url);
+  if (!userId || !userIdParam.safeParse(userId).success) {
+    return fail('invalid_user_id', 'Invalid user ID', undefined, { status: 400 });
+  }
   try {
-    const url = new URL(request.url);
-    const pathSegments = url.pathname.split('/');
-    const userId = parseInt(pathSegments[pathSegments.length - 1]);
-    
-    if (isNaN(userId)) {
-      return NextResponse.json(
-        { error: 'Invalid user ID' },
-        { status: 400 }
-      );
-    }
-
-    const body = await request.json();
-    const { name, username, contact, role, password } = body;
-
-    // Check if user exists
-    const existingUser = await db
-      .select()
-      .from(users)
-      .where(eq(users.id, userId))
-      .limit(1);
-
+    const existingUser = await db.select().from(users).where(eq(users.id, userId)).limit(1);
     if (existingUser.length === 0) {
-      return NextResponse.json(
-        { error: 'User not found' },
-        { status: 404 }
-      );
+      return fail('not_found', 'User not found', undefined, { status: 404 });
     }
 
-    // Validation
-    if (!name || !username || !contact || !role) {
-      return NextResponse.json(
-        { error: 'Name, username, contact, and role are required' },
-        { status: 400 }
-      );
+    const body = await request.json().catch(() => null);
+    if (!body) {
+      return fail('invalid_json', 'Invalid JSON body', undefined, { status: 400 });
     }
 
-    if (!['ADMIN', 'SELLER', 'RENTER'].includes(role)) {
-      return NextResponse.json(
-        { error: 'Invalid role' },
-        { status: 400 }
-      );
+    const parsed = updateUserSchema.safeParse(body);
+    if (!parsed.success) {
+      return fail('validation_error', 'Invalid input', parsed.error.flatten(), { status: 400 });
     }
+    const { name, username, contact, role, password } = parsed.data;
 
-    // Check if username is taken by another user
     if (username !== existingUser[0].username) {
-      const usernameCheck = await db
-        .select()
-        .from(users)
-        .where(eq(users.username, username))
-        .limit(1);
-
+      const usernameCheck = await db.select().from(users).where(eq(users.username, username)).limit(1);
       if (usernameCheck.length > 0) {
-        return NextResponse.json(
-          { error: 'Username already exists' },
-          { status: 400 }
-        );
+        return fail('username_taken', 'Username already exists', undefined, { status: 400 });
       }
     }
 
-    // Prepare update data
-    const updateData: {
+    const updateData: Partial<{
       name: string;
       username: string;
       contact: string;
-      role: UserRole;
-      password?: string;
-    } = {
-      name,
-      username,
-      contact,
-      role: role as UserRole,
-    };
+      role: 'ADMIN' | 'SELLER' | 'RENTER';
+      password: string;
+    }> = { name, username, contact, role };
 
-    // Update password if provided
-    if (password && password.trim() !== '') {
-      if (password.length < 6) {
-        return NextResponse.json(
-          { error: 'Password must be at least 6 characters' },
-          { status: 400 }
-        );
-      }
+    if (password) {
       updateData.password = await bcrypt.hash(password, 10);
     }
 
-    // Update user
-    const updatedUser = await db
+    const updated = await db
       .update(users)
       .set(updateData)
       .where(eq(users.id, userId))
@@ -155,36 +114,20 @@ async function updateUserHandler(request: AuthenticatedRequest) {
         createdAt: users.createdAt,
       });
 
-    return NextResponse.json({
-      message: 'User updated successfully',
-      user: updatedUser[0],
-    });
+    return ok('User updated successfully', { user: updated[0] });
   } catch (error) {
     console.error('Update user error:', error);
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    );
+    return fail('internal_error', 'Internal server error', undefined, { status: 500 });
   }
 }
 
 async function deleteUserHandler(request: AuthenticatedRequest) {
+  const userId = extractUserId(request.url);
+  if (!userId || !userIdParam.safeParse(userId).success) {
+    return fail('invalid_user_id', 'Invalid user ID', undefined, { status: 400 });
+  }
   try {
-    const url = new URL(request.url);
-    const pathSegments = url.pathname.split('/');
-    const userId = parseInt(pathSegments[pathSegments.length - 1]);
-    
-    if (isNaN(userId)) {
-      return NextResponse.json(
-        { error: 'Invalid user ID' },
-        { status: 400 }
-      );
-    }
-
-    // Get current admin user ID
     const currentUserId = request.user?.userId;
-
-    // Check if user exists and not already deleted
     const existingUser = await db
       .select()
       .from(users)
@@ -192,57 +135,31 @@ async function deleteUserHandler(request: AuthenticatedRequest) {
       .limit(1);
 
     if (existingUser.length === 0) {
-      return NextResponse.json(
-        { error: 'User not found or already deleted' },
-        { status: 404 }
-      );
+      return fail('not_found', 'User not found or already deleted', undefined, { status: 404 });
     }
 
-    // Prevent deleting the current admin user if we have user info
-    if (request.user && typeof request.user === 'object' && 'userId' in request.user) {
-      if (existingUser[0].id === request.user.userId) {
-        return NextResponse.json(
-          { error: 'Cannot delete your own account' },
-          { status: 400 }
-        );
-      }
+    if (existingUser[0].id === currentUserId) {
+      return fail('cannot_delete_self', 'Cannot delete your own account', undefined, { status: 400 });
     }
 
-    // Soft delete user
     await db
       .update(users)
-      .set({
-        deletedAt: new Date(),
-        deletedBy: currentUserId,
-      })
+      .set({ deletedAt: new Date(), deletedBy: currentUserId })
       .where(eq(users.id, userId));
 
-    return NextResponse.json({
-      message: 'User deleted successfully',
-    });
+    return ok('User deleted successfully', {});
   } catch (error) {
     console.error('Delete user error:', error);
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    );
+    return fail('internal_error', 'Internal server error', undefined, { status: 500 });
   }
 }
 
 async function restoreUserHandler(request: AuthenticatedRequest) {
+  const userId = extractUserId(request.url);
+  if (!userId || !userIdParam.safeParse(userId).success) {
+    return fail('invalid_user_id', 'Invalid user ID', undefined, { status: 400 });
+  }
   try {
-    const url = new URL(request.url);
-    const pathSegments = url.pathname.split('/');
-    const userId = parseInt(pathSegments[pathSegments.length - 1]);
-    
-    if (isNaN(userId)) {
-      return NextResponse.json(
-        { error: 'Invalid user ID' },
-        { status: 400 }
-      );
-    }
-
-    // Check if user exists and is deleted
     const existingUser = await db
       .select()
       .from(users)
@@ -250,30 +167,15 @@ async function restoreUserHandler(request: AuthenticatedRequest) {
       .limit(1);
 
     if (existingUser.length === 0) {
-      return NextResponse.json(
-        { error: 'User not found or not deleted' },
-        { status: 404 }
-      );
+      return fail('not_found', 'User not found or not deleted', undefined, { status: 404 });
     }
 
-    // Restore user (remove soft delete)
-    await db
-      .update(users)
-      .set({
-        deletedAt: null,
-        deletedBy: null,
-      })
-      .where(eq(users.id, userId));
+    await db.update(users).set({ deletedAt: null, deletedBy: null }).where(eq(users.id, userId));
 
-    return NextResponse.json({
-      message: 'User restored successfully',
-    });
+    return ok('User restored successfully', {});
   } catch (error) {
     console.error('Restore user error:', error);
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    );
+    return fail('internal_error', 'Internal server error', undefined, { status: 500 });
   }
 }
 
@@ -281,3 +183,5 @@ export const GET = withAdmin(getUserHandler);
 export const PUT = withAdmin(updateUserHandler);
 export const DELETE = withAdmin(deleteUserHandler);
 export const PATCH = withAdmin(restoreUserHandler);
+
+// TODO: Add audit logging for user update/delete/restore actions.
