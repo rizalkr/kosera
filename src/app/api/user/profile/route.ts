@@ -1,11 +1,10 @@
 import { NextResponse } from 'next/server';
 import { withAnyRole, AuthenticatedRequest } from '@/lib/middleware';
+import { ok } from '@/types/api';
 
 async function getProfileHandler(request: AuthenticatedRequest) {
   const user = request.user!;
-  
-  return NextResponse.json({
-    message: 'Profile retrieved successfully',
+  return ok('Profile retrieved successfully', {
     user: {
       userId: user.userId,
       username: user.username,
