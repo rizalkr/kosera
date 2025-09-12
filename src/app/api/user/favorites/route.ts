@@ -5,14 +5,15 @@ import { extractTokenFromHeader, verifyToken } from '@/lib/auth';
 import { ok, fail } from '@/types/api';
 import { parsePagination, buildPaginationMeta } from '@/lib/pagination';
 import { z } from 'zod';
+import { ERROR_CODES } from '@/types/error-codes';
 
 // GET /api/user/favorites - Get user's favorite kos
 export async function GET(request: Request) {
   try {
     const token = extractTokenFromHeader(request.headers.get('authorization'));
-    if (!token) return fail('unauthorized', 'Authentication required', undefined, { status: 401 });
+    if (!token) return fail(ERROR_CODES.unauthorized, 'Authentication required', undefined, { status: 401 });
     const payload = verifyToken(token);
-    if (!payload) return fail('invalid_token', 'Invalid or expired token', undefined, { status: 401 });
+    if (!payload) return fail(ERROR_CODES.invalid_token, 'Invalid or expired token', undefined, { status: 401 });
 
     const { searchParams } = new URL(request.url);
     const { page, limit, offset } = parsePagination(searchParams, { limit: 10 });
@@ -46,33 +47,33 @@ export async function GET(request: Request) {
     });
   } catch (error) {
     console.error('Error retrieving favorites:', error);
-    return fail('internal_error', 'Failed to retrieve favorites', undefined, { status: 500 });
+    return fail(ERROR_CODES.internal_error, 'Failed to retrieve favorites', undefined, { status: 500 });
   }
 }
 
-const favoriteBodySchema = z.object({ kosId: z.coerce.number().int().positive() });
+const favoriteBodySchema = z.object({ kosId: z.coerce.number().int().positive({ message: 'kosId must be a positive integer' }) });
 
 export async function POST(request: Request) {
   try {
     const token = extractTokenFromHeader(request.headers.get('authorization'));
-    if (!token) return fail('unauthorized', 'Authentication required', undefined, { status: 401 });
+    if (!token) return fail(ERROR_CODES.unauthorized, 'Authentication required', undefined, { status: 401 });
     const payload = verifyToken(token);
-    if (!payload) return fail('invalid_token', 'Invalid or expired token', undefined, { status: 401 });
+    if (!payload) return fail(ERROR_CODES.invalid_token, 'Invalid or expired token', undefined, { status: 401 });
 
     const json = await request.json().catch(() => ({}));
     const parsed = favoriteBodySchema.safeParse(json);
-    if (!parsed.success) return fail('validation_error', 'Valid kos ID is required', parsed.error.format(), { status: 400 });
+    if (!parsed.success) return fail(ERROR_CODES.validation_error, 'Valid kos ID is required', parsed.error.format(), { status: 400 });
     const kosId = parsed.data.kosId;
 
     const kosExists = await db.select({ id: kos.id }).from(kos).where(eq(kos.id, kosId)).limit(1);
-    if (kosExists.length === 0) return fail('not_found', 'Kos not found', undefined, { status: 404 });
+    if (kosExists.length === 0) return fail(ERROR_CODES.not_found, 'Kos not found', undefined, { status: 404 });
 
     const existingFavorite = await db
       .select({ id: favorites.id })
       .from(favorites)
       .where(and(eq(favorites.userId, payload.userId), eq(favorites.kosId, kosId)))
       .limit(1);
-    if (existingFavorite.length > 0) return fail('conflict', 'Kos is already in favorites', undefined, { status: 409 });
+    if (existingFavorite.length > 0) return fail(ERROR_CODES.conflict, 'Kos is already in favorites', undefined, { status: 409 });
 
     const [newFavorite] = await db.insert(favorites).values({ userId: payload.userId, kosId }).returning();
 
@@ -89,27 +90,27 @@ export async function POST(request: Request) {
     return ok('Kos added to favorites successfully', { favorite: newFavorite });
   } catch (error) {
     console.error('Error adding to favorites:', error);
-    return fail('internal_error', 'Failed to add to favorites', undefined, { status: 500 });
+    return fail(ERROR_CODES.internal_error, 'Failed to add to favorites', undefined, { status: 500 });
   }
 }
 
 export async function DELETE(request: Request) {
   try {
     const token = extractTokenFromHeader(request.headers.get('authorization'));
-    if (!token) return fail('unauthorized', 'Authentication required', undefined, { status: 401 });
+    if (!token) return fail(ERROR_CODES.unauthorized, 'Authentication required', undefined, { status: 401 });
     const payload = verifyToken(token);
-    if (!payload) return fail('invalid_token', 'Invalid or expired token', undefined, { status: 401 });
+    if (!payload) return fail(ERROR_CODES.invalid_token, 'Invalid or expired token', undefined, { status: 401 });
 
     const json = await request.json().catch(() => ({}));
     const parsed = favoriteBodySchema.safeParse(json);
-    if (!parsed.success) return fail('validation_error', 'Valid kos ID is required', parsed.error.format(), { status: 400 });
+    if (!parsed.success) return fail(ERROR_CODES.validation_error, 'Valid kos ID is required', parsed.error.format(), { status: 400 });
     const kosId = parsed.data.kosId;
 
     const deletedFavorite = await db
       .delete(favorites)
       .where(and(eq(favorites.userId, payload.userId), eq(favorites.kosId, kosId)))
       .returning();
-    if (deletedFavorite.length === 0) return fail('not_found', 'Favorite not found', undefined, { status: 404 });
+    if (deletedFavorite.length === 0) return fail(ERROR_CODES.not_found, 'Favorite not found', undefined, { status: 404 });
 
     const postToUpdate = await db
       .select({ id: posts.id })
@@ -127,6 +128,6 @@ export async function DELETE(request: Request) {
     return ok('Kos removed from favorites successfully', { kosId });
   } catch (error) {
     console.error('Error removing from favorites:', error);
-    return fail('internal_error', 'Failed to remove from favorites', undefined, { status: 500 });
+    return fail(ERROR_CODES.internal_error, 'Failed to remove from favorites', undefined, { status: 500 });
   }
 }

@@ -1,6 +1,7 @@
 /** Envelope assertion utilities aligned with src/types/api.ts */
 import { expect } from 'vitest';
 import type { ApiError, ApiSuccess } from '../../src/types/api';
+import type { ErrorCode } from '@/types/error-codes';
 
 export interface ParsedResponse<T = unknown> {
   status: number;
@@ -24,7 +25,7 @@ export function expectSuccess<T = unknown>(parsed: ParsedResponse): asserts pars
   expect(body).toHaveProperty('data');
 }
 
-export function expectError(parsed: ParsedResponse, code?: string): asserts parsed is ParsedResponse<ApiError> {
+export function expectError(parsed: ParsedResponse, code?: ErrorCode): asserts parsed is ParsedResponse<ApiError> {
   expect(typeof parsed.body).toBe('object');
   const body = parsed.body as Record<string, unknown>;
   expect(body.success).toBe(false);

@@ -23,7 +23,7 @@ async function seed() {
     const renterPassword = await hashPassword('renter123');
 
     // Create 5 admins
-    const adminUsers = [];
+    const adminUsers: (typeof users.$inferSelect)[] = []; // retained for possible future relational seeding
     for (let i = 1; i <= 5; i++) {
       const [admin] = await db.insert(users).values({
         name: `Admin User ${i}`,
@@ -36,7 +36,7 @@ async function seed() {
     }
 
     // Create 20 sellers
-    const sellerUsers = [];
+    const sellerUsers: (typeof users.$inferSelect)[] = []; // retained for future relational seeds
     for (let i = 1; i <= 20; i++) {
       const [seller] = await db.insert(users).values({
         name: `Seller User ${i}`,
@@ -49,7 +49,7 @@ async function seed() {
     }
 
     // Create 100 renters
-    const renterUsers = [];
+    const renterUsers: (typeof users.$inferSelect)[] = []; // retained for review/favorite/bookings generation
     for (let i = 1; i <= 100; i++) {
       const [renter] = await db.insert(users).values({
         name: `Renter User ${i}`,

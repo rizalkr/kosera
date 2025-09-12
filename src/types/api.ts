@@ -7,6 +7,8 @@
  *  Error:   { success: false, error: string, message?: string, details?: unknown }
  */
 
+import type { ErrorCode } from '@/types/error-codes';
+
 export interface ApiSuccess<T> {
   success: true;
   message: string;
@@ -73,6 +75,6 @@ export function ok<T>(message: string, data: T, init?: ResponseInit): Response {
 }
 
 /** Helper to quickly send error */
-export function fail(error: string, message?: string, details?: unknown, init?: ResponseInit & { status?: number }): Response {
+export function fail(error: ErrorCode, message?: string, details?: unknown, init?: ResponseInit & { status?: number }): Response {
   return jsonResponse(createError(error, message, details), { status: init?.status, headers: init?.headers });
 }

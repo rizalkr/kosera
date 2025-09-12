@@ -188,8 +188,13 @@ Internal Error:
 - Tests must be updated to assert new codes where changed
 
 ## Future Enhancements (TODO)
-- Central registry (enum) of error codes exported for test compile-time safety
+- Central registry (enum) of error codes exported for test compile-time safety (DONE: see `src/types/error-codes.ts`)
 - Structured booking transition errors: include `from`, `to`, `allowed` arrays in `details`
 - Consistent i18n layer for `message` with locale negotiation
 - Rate limit responses include `details.retryAfterSeconds`
 - Add correlation ID injection for tracing (surface in `details` for internal_error in non-production only)
+- Add cache layer hints (e.g., `details.cache` metadata for cacheable list endpoints)
+- Introduce ETag/If-None-Match handling for idempotent GET list/detail endpoints
+- Rate limiting middleware implementation & integration tests
+- Add global error classification with retryability flag (`details.retryable: boolean`)
+- Add envelope versioning field if/when breaking changes required (`_v: 1`)

@@ -5,12 +5,21 @@ import { eq, desc, and, gte, lte, or, count } from 'drizzle-orm';
 import { ok, fail } from '@/types/api';
 import { z } from 'zod';
 import { parsePagination, buildPaginationMeta } from '@/lib/pagination';
+import { ERROR_CODES } from '@/types/error-codes';
 
 // Schema for booking creation
 const createBookingSchema = z.object({
   kosId: z.coerce.number().int().positive(),
-  checkInDate: z.string().refine((date) => !isNaN(Date.parse(date)), { message: 'Invalid date format' }),
-  duration: z.coerce.number().int().positive().max(12), // max 12 months
+  checkInDate: z
+    .string()
+    .refine((date) => !isNaN(Date.parse(date)), { message: 'Invalid date format' })
+    .refine((date) => {
+      const d = new Date(date);
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      return d >= today;
+    }, { message: 'Check-in date cannot be in the past' }),
+  duration: z.coerce.number().int().positive().max(12, 'Duration cannot exceed 12 months'),
   notes: z.string().max(500).optional(),
 });
 
@@ -112,7 +121,7 @@ export const GET = withAnyRole(async (request: AuthenticatedRequest) => {
     });
   } catch (error) {
     console.error('bookings.GET error', error);
-    return fail('internal_error', 'Failed to retrieve bookings', undefined, { status: 500 });
+    return fail(ERROR_CODES.internal_error, 'Failed to retrieve bookings', undefined, { status: 500 });
   }
 });
 
@@ -122,7 +131,7 @@ export const POST = withAnyRole(async (request: AuthenticatedRequest) => {
     const json = await request.json().catch(() => ({}));
     const parsed = createBookingSchema.safeParse(json);
     if (!parsed.success) {
-      return fail('validation_error', 'Invalid input data', parsed.error.flatten(), { status: 400 });
+      return fail(ERROR_CODES.validation_error, 'Invalid input data', parsed.error.flatten(), { status: 400 });
     }
 
     const { kosId, checkInDate: checkInDateStr, duration, notes } = parsed.data;
@@ -136,11 +145,11 @@ export const POST = withAnyRole(async (request: AuthenticatedRequest) => {
       .limit(1);
 
     if (kosData.length === 0) {
-      return fail('not_found', 'Kos not found', undefined, { status: 404 });
+      return fail(ERROR_CODES.not_found, 'Kos not found', undefined, { status: 404 });
     }
 
     if (kosData[0].userId === request.user!.userId) {
-      return fail('forbidden', 'You cannot book your own kos', undefined, { status: 400 });
+      return fail(ERROR_CODES.forbidden, 'You cannot book your own kos', undefined, { status: 400 });
     }
 
     const checkInDate = new Date(checkInDateStr);
@@ -194,6 +203,6 @@ export const POST = withAnyRole(async (request: AuthenticatedRequest) => {
     });
   } catch (error) {
     console.error('bookings.POST error', error);
-    return fail('internal_error', 'Failed to create booking', undefined, { status: 500 });
+    return fail(ERROR_CODES.internal_error, 'Failed to create booking', undefined, { status: 500 });
   }
 });
