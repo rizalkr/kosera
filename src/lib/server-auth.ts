@@ -1,4 +1,3 @@
-import { NextRequest } from 'next/server';
 import { verifyToken, extractTokenFromHeader } from './auth';
 
 export interface ServerAuthResult {
@@ -11,10 +10,11 @@ export interface ServerAuthResult {
   error?: string;
 }
 
-export const serverAuth = (request: NextRequest): ServerAuthResult => {
+// Accept standard Fetch API Request (removes NextRequest dependency for testability)
+export const serverAuth = (request: Request): ServerAuthResult => {
   try {
     const token = extractTokenFromHeader(request.headers.get('authorization'));
-    
+
     if (!token) {
       return {
         isAuthenticated: false,
@@ -24,7 +24,7 @@ export const serverAuth = (request: NextRequest): ServerAuthResult => {
     }
 
     const decoded = verifyToken(token);
-    
+
     if (!decoded) {
       return {
         isAuthenticated: false,
@@ -50,9 +50,9 @@ export const serverAuth = (request: NextRequest): ServerAuthResult => {
   }
 };
 
-export const requireAuth = (request: NextRequest): ServerAuthResult => {
+export const requireAuth = (request: Request): ServerAuthResult => {
   const auth = serverAuth(request);
-  
+
   if (!auth.isAuthenticated) {
     return {
       isAuthenticated: false,
@@ -60,20 +60,20 @@ export const requireAuth = (request: NextRequest): ServerAuthResult => {
       error: auth.error || 'Authentication required'
     };
   }
-  
+
   return auth;
 };
 
 export const requireRole = (
-  request: NextRequest, 
+  request: Request,
   requiredRoles: ('ADMIN' | 'SELLER' | 'RENTER')[]
 ): ServerAuthResult => {
   const auth = requireAuth(request);
-  
+
   if (!auth.isAuthenticated || !auth.user) {
     return auth;
   }
-  
+
   if (!requiredRoles.includes(auth.user.role)) {
     return {
       isAuthenticated: false,
@@ -81,18 +81,18 @@ export const requireRole = (
       error: `Access denied. Required roles: ${requiredRoles.join(', ')}`
     };
   }
-  
+
   return auth;
 };
 
-export const requireAdmin = (request: NextRequest): ServerAuthResult => {
+export const requireAdmin = (request: Request): ServerAuthResult => {
   return requireRole(request, ['ADMIN']);
 };
 
-export const requireSeller = (request: NextRequest): ServerAuthResult => {
+export const requireSeller = (request: Request): ServerAuthResult => {
   return requireRole(request, ['SELLER', 'ADMIN']);
 };
 
-export const requireRenter = (request: NextRequest): ServerAuthResult => {
+export const requireRenter = (request: Request): ServerAuthResult => {
   return requireRole(request, ['RENTER']);
 };

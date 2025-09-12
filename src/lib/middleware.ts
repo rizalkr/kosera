@@ -1,14 +1,13 @@
-import { NextRequest } from 'next/server';
 import { verifyToken, extractTokenFromHeader, JWTPayload, UserRole } from './auth';
 import { jsonError } from './api-response';
 
-export interface AuthenticatedRequest extends NextRequest {
+export interface AuthenticatedRequest extends Request {
   user?: JWTPayload;
 }
 
-// Middleware for authentication
+// Middleware for authentication (framework-agnostic)
 export function withAuth(handler: (req: AuthenticatedRequest) => Promise<Response>) {
-  return async (request: NextRequest) => {
+  return async (request: Request) => {
     const authHeader = request.headers.get('authorization');
     const token = extractTokenFromHeader(authHeader);
 
@@ -22,7 +21,6 @@ export function withAuth(handler: (req: AuthenticatedRequest) => Promise<Respons
       return jsonError('invalid_token', { status: 401, message: 'Invalid or expired token' });
     }
 
-    // Add user to request
     const authenticatedRequest = request as AuthenticatedRequest;
     authenticatedRequest.user = payload;
 
@@ -45,11 +43,6 @@ export function withRole(roles: UserRole[]) {
   };
 }
 
-// Admin-only middleware
 export const withAdmin = withRole(['ADMIN']);
-
-// Seller and Admin middleware
 export const withSellerOrAdmin = withRole(['SELLER', 'ADMIN']);
-
-// Any authenticated user middleware
 export const withAnyRole = withRole(['ADMIN', 'SELLER', 'RENTER']);

@@ -85,7 +85,8 @@ async function updateUserHandler(request: AuthenticatedRequest) {
     if (username !== existingUser[0].username) {
       const usernameCheck = await db.select().from(users).where(eq(users.username, username)).limit(1);
       if (usernameCheck.length > 0) {
-        return fail('username_taken', 'Username already exists', undefined, { status: 400 });
+        // Standardize to username_exists (used in other admin user endpoints)
+        return fail('username_exists', 'Username already exists', undefined, { status: 409 });
       }
     }
 
@@ -185,3 +186,4 @@ export const DELETE = withAdmin(deleteUserHandler);
 export const PATCH = withAdmin(restoreUserHandler);
 
 // TODO: Add audit logging for user update/delete/restore actions.
+// TODO: Standardize any remaining error codes across admin user endpoints.

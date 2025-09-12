@@ -46,8 +46,7 @@ export async function POST(
       return fail('forbidden', 'You can only upload photos to your own kos', undefined, { status: 403 });
     }
 
-    // Cast to any to satisfy current parseFormData signature expecting NextRequest; TODO: update parseFormData to accept Fetch API Request
-    const { files } = await parseFormData(request as unknown as import('next/server').NextRequest);
+    const { files } = await parseFormData(request);
     const isPrimary = new URL(request.url).searchParams.get('isPrimary') === 'true';
 
     if (files.length === 0) {

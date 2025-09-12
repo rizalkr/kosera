@@ -1,5 +1,4 @@
 import multer from 'multer';
-import { NextRequest } from 'next/server';
 
 // Configure multer for memory storage (since we'll upload to Cloudinary)
 const upload = multer({
@@ -27,10 +26,9 @@ export interface MulterFile {
 }
 
 /**
- * Parse multipart form data from Next.js request
- * This is a workaround since Next.js doesn't have built-in multer support
+ * Parse multipart form data from a standard Fetch API Request
  */
-export const parseFormData = async (request: NextRequest): Promise<{
+export const parseFormData = async (request: Request): Promise<{
   fields: Record<string, string>;
   files: MulterFile[];
 }> => {
@@ -41,7 +39,6 @@ export const parseFormData = async (request: NextRequest): Promise<{
 
     for (const [key, value] of formData.entries()) {
       if (value instanceof File) {
-        // Handle file
         const buffer = Buffer.from(await value.arrayBuffer());
         files.push({
           fieldname: key,
@@ -52,7 +49,6 @@ export const parseFormData = async (request: NextRequest): Promise<{
           size: buffer.length,
         });
       } else {
-        // Handle text field
         fields[key] = value as string;
       }
     }
@@ -68,12 +64,10 @@ export const parseFormData = async (request: NextRequest): Promise<{
  * Validate image file
  */
 export const validateImageFile = (file: MulterFile): { isValid: boolean; error?: string } => {
-  // Check file size (5MB limit)
   if (file.size > 5 * 1024 * 1024) {
     return { isValid: false, error: 'File size must be less than 5MB' };
   }
 
-  // Check file type
   const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
   if (!allowedTypes.includes(file.mimetype)) {
     return { isValid: false, error: 'Only JPEG, PNG, and WebP images are allowed' };

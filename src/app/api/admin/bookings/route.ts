@@ -7,8 +7,8 @@ import { ok, fail } from '@/types/api';
 
 // Query validation schema
 const querySchema = z.object({
-  page: z.string().regex(/^\d+$/).optional(),
-  limit: z.string().regex(/^\d+$/).optional(),
+  page: z.string().regex(/^[\d]+$/).optional(),
+  limit: z.string().regex(/^[\d]+$/).optional(),
   status: z.string().optional(),
   startDate: z.string().optional(),
   endDate: z.string().optional(),
@@ -29,7 +29,7 @@ interface BookingsListData { bookings: BookingItem[]; pagination: { page: number
  */
 export async function GET(request: Request): Promise<Response> {
   try {
-    const auth = requireAdmin(request as unknown as import('next/server').NextRequest);
+    const auth = requireAdmin(request);
     if (!auth.isAuthenticated) return fail('unauthorized', auth.error || 'Unauthorized', undefined, { status: 401 });
 
     const { searchParams } = new URL(request.url);

@@ -5,7 +5,7 @@ export default defineConfig({
   test: {
     environment: 'node',
     globals: true,
-    setupFiles: ['./tests/setup.ts'],
+    setupFiles: ['./tests/setup/global.ts'],
     include: ['tests/**/*.test.ts'],
     exclude: ['node_modules', 'dist', '.next', 'tests/api/kos-recommendations.test.ts', 'tests/api/kos-endpoints.test.ts', 'tests/api/admin-analytics.test.ts'],
     testTimeout: 30000,

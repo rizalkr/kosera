@@ -63,7 +63,10 @@
     "docker:logs:follow": "docker logs -f kosera-app",
     "docker:shell": "docker exec -it kosera-app /bin/sh",
     "docker:restart": "docker restart kosera-app",
-    "docker:status": "docker ps --filter name=kosera"
+    "docker:status": "docker ps --filter name=kosera",
+    "db:migrate:test": "dotenv -e .env.test -- drizzle-kit migrate",
+    "db:push:test": "dotenv -e .env.test -- drizzle-kit push",
+    "db:seed:test": "dotenv -e .env.test -- tsx src/db/seed.ts"
   },
   "dependencies": {
     "@tanstack/react-query": "^5.81.5",

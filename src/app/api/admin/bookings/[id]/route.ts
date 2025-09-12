@@ -5,7 +5,6 @@ import { bookings } from '@/db/schema';
 import { eq } from 'drizzle-orm';
 import { z } from 'zod';
 import { ok, fail } from '@/types/api';
-import { NextRequest } from 'next/server';
 
 /**
  * Zod schema for validating booking status update payload.
@@ -25,7 +24,7 @@ export async function PATCH(
 ) {
   const { id } = await params;
 
-  const auth: ServerAuthResult = requireAdmin(req as unknown as NextRequest);
+  const auth: ServerAuthResult = requireAdmin(req);
   if (!auth.isAuthenticated) {
     return fail('unauthorized', `Unauthorized - ${auth.error}`, undefined, { status: 401 });
   }
