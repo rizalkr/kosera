@@ -45,6 +45,10 @@ interface BasicUser {
 }
 
 function parseQuery(url: string): GetUsersQuery {
+  /**
+   * Parse and sanitize query parameters for the admin users listing endpoint.
+   * Ensures numeric constraints and provides safe defaults.
+   */
   const { searchParams } = new URL(url);
   return {
     page: Math.max(1, parseInt(searchParams.get('page') || '1', 10)),
@@ -166,7 +170,7 @@ async function getAllUsersHandler(request: AuthenticatedRequest) {
     });
   } catch (error) {
     console.error('Get users error:', error);
-    return fail('Internal server error');
+    return fail('internal_error', 'Internal server error', undefined, { status: 500 });
   }
 }
 
@@ -176,7 +180,7 @@ async function createUserHandler(request: AuthenticatedRequest) {
     const parsed = createUserSchema.safeParse(body);
 
     if (!parsed.success) {
-      return fail('Validation error', 'Invalid input', parsed.error.flatten(), { status: 400 });
+      return fail('validation_error', 'Invalid input', parsed.error.flatten(), { status: 400 });
     }
 
     const { name, username, contact, role, password } = parsed.data;
@@ -190,7 +194,7 @@ async function createUserHandler(request: AuthenticatedRequest) {
       .limit(1);
 
     if (existingUser.length > 0) {
-      return fail('Username already exists', undefined, undefined, { status: 409 });
+      return fail('username_exists', 'Username already exists', undefined, { status: 409 });
     }
 
     const hashedPassword = await bcrypt.hash(password, 10);
@@ -218,7 +222,7 @@ async function createUserHandler(request: AuthenticatedRequest) {
     return ok('User created successfully', { user: newUser });
   } catch (error) {
     console.error('Create user error:', error);
-    return fail('Internal server error');
+    return fail('internal_error', 'Internal server error', undefined, { status: 500 });
   }
 }
 

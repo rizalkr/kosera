@@ -1,4 +1,3 @@
-import { NextRequest } from 'next/server';
 import { withSellerOrAdmin, AuthenticatedRequest } from '@/lib/middleware';
 import { db } from '@/db';
 import { kos, posts } from '@/db/schema';
@@ -7,7 +6,6 @@ import type { SQL } from 'drizzle-orm';
 import { ok, fail } from '@/types/api';
 import { z } from 'zod';
 
-// Query parsing helper
 function parseKosQuery(url: string) {
   const { searchParams } = new URL(url);
   const city = searchParams.get('city') || undefined;
@@ -19,7 +17,7 @@ function parseKosQuery(url: string) {
 }
 
 // GET /api/kos - public list
-export async function GET(request: NextRequest) {
+export async function GET(request: Request) {
   try {
     const { city, minPrice, maxPrice } = parseKosQuery(request.url);
 
@@ -58,12 +56,11 @@ export async function GET(request: NextRequest) {
       count: result.length,
     });
   } catch (error) {
-    console.error('Error retrieving kos:', error);
-    return fail('Failed to retrieve kos');
+    console.error('kos.list.GET error', error);
+    return fail('internal_error', 'Failed to retrieve kos', undefined, { status: 500 });
   }
 }
 
-// Validation schema for creation
 const createKosSchema = z.object({
   name: z.string().min(1),
   address: z.string().min(1),
@@ -76,21 +73,21 @@ const createKosSchema = z.object({
   occupiedRooms: z.coerce.number().int().min(0).optional(),
 });
 
-// POST /api/kos - create (seller/admin)
 export const POST = withSellerOrAdmin(async (request: AuthenticatedRequest) => {
   try {
-    const json = await request.json();
+    const json = await request.json().catch(() => null);
+    if (!json) return fail('invalid_json', 'Invalid JSON body', undefined, { status: 400 });
+
     const parsed = createKosSchema.safeParse(json);
     if (!parsed.success) {
-      return fail('Validation error', 'Invalid input', parsed.error.flatten(), { status: 400 });
+      return fail('validation_error', 'Invalid input', parsed.error.flatten(), { status: 400 });
     }
     const { name, address, city, facilities, title, description, price, totalRooms, occupiedRooms } = parsed.data;
 
     if (occupiedRooms !== undefined && occupiedRooms > totalRooms) {
-      return fail('Occupied exceeds total rooms', 'occupiedRooms cannot exceed totalRooms', undefined, { status: 400 });
+      return fail('invalid_rooms', 'occupiedRooms cannot exceed totalRooms', undefined, { status: 400 });
     }
 
-    // Normalize facilities to a single string for DB (column is text)
     const facilitiesValue: string | null = facilities == null
       ? null
       : Array.isArray(facilities)
@@ -142,7 +139,7 @@ export const POST = withSellerOrAdmin(async (request: AuthenticatedRequest) => {
       },
     });
   } catch (error) {
-    console.error('Error creating kos:', error);
-    return fail('Failed to create kos');
+    console.error('kos.create.POST error', error);
+    return fail('internal_error', 'Failed to create kos', undefined, { status: 500 });
   }
 });

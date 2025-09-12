@@ -1,10 +1,9 @@
-import { NextRequest } from 'next/server';
 import { db } from '@/db';
 import { kos, posts, users } from '@/db/schema';
 import { sql, eq, and, or, gte, lte, like, ilike, desc, asc, type SQLWrapper } from 'drizzle-orm';
 import { ok, fail } from '@/types/api';
 
-export async function GET(request: NextRequest) {
+export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url);
     const query = searchParams.get('q') || '';

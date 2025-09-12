@@ -120,21 +120,6 @@ async function seed() {
     console.log('📝 Created 100 diversified posts');
 
     // Insert 100 kos details
-    const addresses = [
-      'Jl. Mawar No.', 'Jl. Anggrek No.', 'Jl. Melati No.', 'Jl. Kenanga No.', 'Jl. Tulip No.',
-      'Jl. Dahlia No.', 'Jl. Sakura No.', 'Jl. Flamboyan No.', 'Jl. Bougenville No.', 'Jl. Cempaka No.'
-    ];
-    
-    const areas = ['Tembalang', 'Tlogosari', 'Pleburan', 'Pedurungan', 'Candisari', 'Gajahmungkur', 'Banyumanik'];
-    const facilitiesOptions = [
-      'AC, WiFi, Kamar Mandi Dalam, Dapur Bersama, Parkir Motor',
-      'AC, WiFi, Kamar Mandi Dalam, Lemari, Kasur Queen, TV, Kulkas Mini',
-      'WiFi, Kamar Mandi Luar, Dapur Bersama, Parkir Motor',
-      'AC, WiFi, Kamar Mandi Dalam, Laundry, Security 24 Jam',
-      'WiFi, Kamar Mandi Dalam, Dapur Pribadi, Balkon',
-      'AC, WiFi, Kamar Mandi Dalam, Gym, Rooftop Garden'
-    ];
-    
     const facilitiesPool = [
       'AC', 'WiFi', 'Kamar Mandi Dalam', 'Kamar Mandi Luar', 'Dapur Bersama', 'Parkir Motor', 'Parkir Mobil', 'Laundry', 'Security 24 Jam', 'TV', 'Kasur Queen', 'Kasur Single', 'Lemari', 'Meja Belajar', 'Balkon', 'Gym', 'Rooftop', 'Dapur Pribadi'
     ];

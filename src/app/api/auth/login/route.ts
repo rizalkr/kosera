@@ -1,4 +1,3 @@
-import { NextRequest } from 'next/server';
 import { db, users } from '@/db';
 import { eq } from 'drizzle-orm';
 import { verifyPassword, generateToken } from '@/lib/auth';
@@ -10,29 +9,23 @@ const loginSchema = z.object({
   password: z.string().min(1),
 });
 
-export async function POST(request: NextRequest) {
+export async function POST(request: Request) {
   try {
-    const parseJson = await request.json().catch(() => null);
-    if (!parseJson) {
-      return fail('Invalid JSON format', undefined, undefined, { status: 400 });
-    }
-    const parsed = loginSchema.safeParse(parseJson);
+    const json = await request.json().catch(() => null);
+    if (!json) return fail('invalid_json', 'Invalid JSON format', undefined, { status: 400 });
+
+    const parsed = loginSchema.safeParse(json);
     if (!parsed.success) {
-      return fail('Validation error', 'Invalid input', parsed.error.flatten(), { status: 400 });
+      return fail('validation_error', 'Invalid input', parsed.error.flatten(), { status: 400 });
     }
     const { username, password } = parsed.data;
 
     const [user] = await db.select().from(users).where(eq(users.username, username)).limit(1);
-
     const targetUser = user || (await db.select().from(users).where(eq(users.contact, username)).limit(1))[0];
-    if (!targetUser) {
-      return fail('Invalid credentials', undefined, undefined, { status: 401 });
-    }
+    if (!targetUser) return fail('invalid_credentials', 'Invalid credentials', undefined, { status: 401 });
 
     const isValidPassword = await verifyPassword(password, targetUser.password);
-    if (!isValidPassword) {
-      return fail('Invalid credentials', undefined, undefined, { status: 401 });
-    }
+    if (!isValidPassword) return fail('invalid_credentials', 'Invalid credentials', undefined, { status: 401 });
 
     const token = generateToken({ userId: targetUser.id, username: targetUser.username, role: targetUser.role });
 
@@ -48,7 +41,7 @@ export async function POST(request: NextRequest) {
       token,
     });
   } catch (error) {
-    console.error('Login error:', error);
-    return fail('Internal server error', 'Unexpected server error');
+    console.error('auth.login.POST error', error);
+    return fail('internal_error', 'Unexpected server error', undefined, { status: 500 });
   }
 }

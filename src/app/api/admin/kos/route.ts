@@ -156,7 +156,7 @@ async function getAdminKosHandler(request: AuthenticatedRequest) {
     });
   } catch (error) {
     console.error('Admin get kos error:', error);
-    return fail('Internal server error');
+    return fail('internal_error', 'Internal server error', undefined, { status: 500 });
   }
 }
 

@@ -1,4 +1,3 @@
-import { NextRequest } from 'next/server';
 import { db, users } from '@/db';
 import { eq } from 'drizzle-orm';
 import { hashPassword, generateToken } from '@/lib/auth';
@@ -13,14 +12,14 @@ const registerSchema = z.object({
   role: z.enum(['ADMIN', 'SELLER', 'RENTER']).optional().default('RENTER'),
 });
 
-export async function POST(request: NextRequest) {
+export async function POST(request: Request) {
   try {
     const json = await request.json().catch(() => null);
-    if (!json) return fail('Invalid JSON format', undefined, undefined, { status: 400 });
+    if (!json) return fail('invalid_json', 'Invalid JSON format', undefined, { status: 400 });
 
     const parsed = registerSchema.safeParse(json);
     if (!parsed.success) {
-      return fail('Validation error', 'Invalid input', parsed.error.flatten(), { status: 400 });
+      return fail('validation_error', 'Invalid input', parsed.error.flatten(), { status: 400 });
     }
     const { name, username, contact, password, role } = parsed.data;
 
@@ -51,15 +50,15 @@ export async function POST(request: NextRequest) {
 
     return ok('User registered successfully', { user: result.user, token: result.token });
   } catch (error) {
-    console.error('Registration error:', error);
+    console.error('auth.register.POST error', error);
     if (error instanceof Error) {
       if (error.message === 'USERNAME_EXISTS') {
-        return fail('Username already exists', 'Username yang Anda pilih sudah digunakan oleh user lain', undefined, { status: 409 });
+        return fail('username_exists', 'Username sudah digunakan', undefined, { status: 409 });
       }
       if (error.message === 'CONTACT_EXISTS') {
-        return fail('Contact already exists', 'Nomor HP/Email yang Anda masukkan sudah terdaftar', undefined, { status: 409 });
+        return fail('contact_exists', 'Nomor HP/Email sudah terdaftar', undefined, { status: 409 });
       }
     }
-    return fail('Internal server error', 'Terjadi kesalahan server, silakan coba lagi');
+    return fail('internal_error', 'Terjadi kesalahan server, silakan coba lagi', undefined, { status: 500 });
   }
 }
