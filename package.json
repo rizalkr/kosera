@@ -29,7 +29,7 @@
     "test:ui": "NODE_ENV=test vitest --ui",
     "test:coverage": "NODE_ENV=test vitest run --coverage",
     "test:unit": "NODE_ENV=test vitest run tests/unit/",
-    "test:integration": "NODE_ENV=test vitest run tests/integration/",
+  "test:integration": "NODE_ENV=test INTEGRATION_PERSIST=1 vitest run tests/integration/",
     "test:all": "tsx tests/runner.ts",
     "ci:test": "npm run typecheck && npm run lint && npm run test:unit && npm run test:integration",
 
@@ -46,7 +46,7 @@
     "docker:db:seed": "docker exec kosera-app npm run db:seed",
     "docker:db:migrate:test": "docker exec kosera-app npx dotenv -e .env.test -- drizzle-kit migrate",
     "docker:test:unit": "docker exec -e NODE_ENV=test kosera-app npm run test:unit",
-    "docker:test:integration": "docker exec kosera-app npm run test:integration",
+    "docker:test:integration": "docker exec -e NODE_ENV=test -e INTEGRATION_PERSIST=1 kosera-app npm run test:integration",
     "docker:test:integration:persist": "docker exec -e NODE_ENV=test -e INTEGRATION_PERSIST=1 kosera-app npm run test:integration",
     "docker:test:all": "docker exec kosera-app npm run test:all",
 
