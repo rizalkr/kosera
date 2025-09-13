@@ -7,10 +7,11 @@ services:
     container_name: kosera-db
     restart: unless-stopped
     environment:
-      POSTGRES_DB: kosera
-      POSTGRES_USER: kosera
-      POSTGRES_PASSWORD: kosera123
-      PGDATA: /var/lib/postgresql/data/pgdata
+    -  TERM=xterm-256color
+    -  POSTGRES_DB: kosera
+    -  POSTGRES_USER: kosera
+    -  POSTGRES_PASSWORD: kosera123
+    -  PGDATA: /var/lib/postgresql/data/pgdata
     ports:
       - "5432:5432"
     volumes:

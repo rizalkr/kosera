@@ -29,6 +29,8 @@ RUN npm ci
 # Copy source code
 COPY . .
 
+ENV TERM xterm-256color
+
 # Expose port
 EXPOSE 3000
 
