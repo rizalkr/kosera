@@ -48,7 +48,22 @@ export default function FeaturedList() {
     );
   }
 
-  const kosList = data?.data || [];
+  // API returns envelope: { success, message, data: { items: FeaturedKos[], count: number } }
+  // We defensively extract items; if shape changes, fallback to [] to avoid runtime errors.
+  interface LegacyShape { success: boolean; data?: PublicKosData[] }
+  interface NewShape { success: boolean; data?: { items?: PublicKosData[]; count?: number } }
+  type FeaturedEnvelope = LegacyShape | NewShape;
+
+  const envelope: FeaturedEnvelope | undefined = (data && typeof data === 'object') ? (data as FeaturedEnvelope) : undefined;
+
+  let kosList: PublicKosData[] = [];
+  if (envelope?.data) {
+    if (Array.isArray((envelope as LegacyShape).data)) {
+      kosList = (envelope as LegacyShape).data ?? [];
+    } else if (Array.isArray((envelope as NewShape).data?.items)) {
+      kosList = (envelope as NewShape).data?.items ?? [];
+    }
+  }
 
   if (kosList.length === 0) {
     return (
@@ -60,7 +75,7 @@ export default function FeaturedList() {
 
   return (
     <div className="space-y-6">
-      {kosList.map((kos: PublicKosData) => (
+  {kosList.map((kos: PublicKosData) => (
         <FeaturedCard 
           key={kos.id} 
           id={kos.id}

@@ -159,7 +159,7 @@ export const LoginPage = () => {
         await showSuccess('Login berhasil!', `Selamat datang kembali, ${user.username}!`);
         const from = searchParams.get('from') || '/';
         router.push(from);
-        router.refresh();
+        // router.refresh(); // Possibly unnecessary; comment out while debugging token persistence
       } else {
         await showError(response.error || response.message || 'Username atau password salah', 'Login Gagal');
       }

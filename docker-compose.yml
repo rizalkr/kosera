@@ -7,11 +7,10 @@ services:
     container_name: kosera-db
     restart: unless-stopped
     environment:
-    -  TERM=xterm-256color
-    -  POSTGRES_DB: kosera
-    -  POSTGRES_USER: kosera
-    -  POSTGRES_PASSWORD: kosera123
-    -  PGDATA: /var/lib/postgresql/data/pgdata
+      POSTGRES_DB: kosera
+      POSTGRES_USER: kosera
+      POSTGRES_PASSWORD: kosera123
+      PGDATA: /var/lib/postgresql/data/pgdata
     ports:
       - "5432:5432"
     volumes:
@@ -24,6 +23,28 @@ services:
       interval: 30s
       timeout: 10s
       retries: 5
+
+  # PostgreSQL Test Database (Isolated)
+  db_test:
+    image: postgres:16-alpine
+    container_name: kosera-db-test
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: kosera_test
+      POSTGRES_USER: kosera
+      POSTGRES_PASSWORD: kosera123
+      PGDATA: /var/lib/postgresql/data/pgdata
+    ports:
+      - "5433:5432"
+    volumes:
+      - postgres_test_data:/var/lib/postgresql/data
+    networks:
+      - kosera-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U kosera -d kosera_test"]
+      interval: 20s
+      timeout: 5s
+      retries: 10
 
   # Next.js Application (Development)
   app:
@@ -72,6 +93,8 @@ services:
 
 volumes:
   postgres_data:
+    driver: local
+  postgres_test_data:
     driver: local
   pgadmin_data:
     driver: local

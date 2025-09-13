@@ -202,7 +202,7 @@ export default function Header() {
           
           {/* Authentication Section for Desktop */}
           {isLoading ? (
-            <div className="ml-4 bg-gray-200 animate-pulse rounded px-4 py-2 w-20"></div>
+            <div className="ml-4 bg-gray-200 animate-pulse rounded px-4 py-2 w-20" aria-label="Memuat status akun" />
           ) : isAuthenticated ? (
             <button
               onClick={handleLogout}
@@ -328,7 +328,7 @@ export default function Header() {
           
           {/* Authentication Section */}
           {isLoading ? (
-            <div className="bg-gray-200 animate-pulse rounded px-4 py-2 w-20"></div>
+            <div className="bg-gray-200 animate-pulse rounded px-4 py-2 w-20" aria-label="Memuat status akun" />
           ) : isAuthenticated ? (
             <button
               onClick={handleLogout}
