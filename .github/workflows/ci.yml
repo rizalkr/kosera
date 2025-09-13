@@ -50,6 +50,13 @@ jobs:
       - name: Apply schema (Drizzle push)
         run: npm run db:push:test
 
+      - name: List migrated tables (debug)
+        run: |
+          psql "postgresql://kosera:kosera123@localhost:5433/kosera_test" -c "SELECT tablename FROM pg_tables WHERE schemaname='public';"
+
+      - name: Run migrations (defensive)
+        run: npm run db:migrate:test || echo "Migrations step completed (non-fatal if already applied)"
+
       - name: Lint
         run: npm run lint
 

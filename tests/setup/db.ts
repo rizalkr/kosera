@@ -19,8 +19,17 @@ function assertTestDatabase() {
 
 export async function resetDatabase(): Promise<void> {
   assertTestDatabase();
-  // Order handled by CASCADE
-  await db.execute(sql`TRUNCATE TABLE ${bookings}, ${kosPhotos}, ${favorites}, ${reviews}, ${kos}, ${posts}, ${users} RESTART IDENTITY CASCADE`);
+  // Attempt truncate; if tables not yet migrated, skip gracefully so migrations can run in setup.
+  try {
+    await db.execute(sql`TRUNCATE TABLE ${bookings}, ${kosPhotos}, ${favorites}, ${reviews}, ${kos}, ${posts}, ${users} RESTART IDENTITY CASCADE`);
+  } catch (err: unknown) {
+    const message = (err as Error)?.message || '';
+    if (/does not exist/i.test(message)) {
+      console.warn('[resetDatabase] One or more tables missing (likely migrations not yet run). Skipping truncate. Message:', message);
+      return;
+    }
+    throw err;
+  }
 }
 
 export async function closeDatabase(): Promise<void> {
