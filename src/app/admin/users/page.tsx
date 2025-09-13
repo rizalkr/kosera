@@ -17,7 +17,7 @@ import { UsersErrorState } from '@/components/features/admin/users/organisms/Use
 import { UsersLoadingState } from '@/components/features/admin/users/organisms/UsersLoadingState';
 import { adminApi } from '@/lib/api/admin';
 
-export const AdminUsersPageComponent = () => {
+function AdminUsersPage() {
   useAuthGuard();
   const router = useRouter();
 
@@ -149,7 +149,6 @@ export const AdminUsersPageComponent = () => {
       </div>
     </ProtectedRoute>
   );
-};
+}
 
-const AdminUsersPage = AdminUsersPageComponent;
 export default AdminUsersPage;

@@ -10,7 +10,7 @@ import { UserDetailCard } from '@/components/features/admin/users/organisms/User
 import Header from '@/components/layouts/Header';
 import Footer from '@/components/layouts/Footer';
 
-export const UserDetailPage = () => {
+function UserDetailPage() {
   const router = useRouter();
   const params = useParams();
   const userId = params.id as string;
@@ -77,6 +77,6 @@ export const UserDetailPage = () => {
       </div>
     </ProtectedRoute>
   );
-};
+}
 
 export default UserDetailPage;

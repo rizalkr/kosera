@@ -19,7 +19,7 @@ import type { PublicKosData } from '@/types/kos';
 // Temporary type until Zod schema for detail response is added
 interface Review { id: number; rating: number; comment: string; createdAt: string; user: { id: number; name: string; username: string }; }
 
-export const KosDetailPage = () => {
+function KosDetailPage() {
   const {
     kos, // kosId removed (unused)
     isLoading,
@@ -56,7 +56,6 @@ export const KosDetailPage = () => {
       </div>
     );
   }
-
   if (error || !kos) {
     return (
       <div className="min-h-screen bg-[#A9E4DE] pt-20">
@@ -204,5 +203,4 @@ export const KosDetailPage = () => {
   );
 };
 
-// Provide required default export for Next.js App Router page
 export default KosDetailPage;

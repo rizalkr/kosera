@@ -19,7 +19,7 @@ const FACILITIES = [
   'Kulkas', 'Dispenser', 'Jemuran', 'Taman', 'Musholla'
 ];
 
-export const EditKosPage = () => {
+function EditKosPage() {
   const { kosId, formData, errors, isLoading, isSubmitting, handleChange, handleSubmit, handleCancel } = useEditKos();
 
   if (isLoading) {
@@ -46,7 +46,6 @@ export const EditKosPage = () => {
       </ProtectedRoute>
     );
   }
-
   return (
     <ProtectedRoute requireAuth={true} allowedRoles={['SELLER']}>
       <div className="min-h-screen bg-[#A9E4DE] pt-20">
@@ -111,5 +110,4 @@ export const EditKosPage = () => {
     </ProtectedRoute>
   );
 };
-
-export { EditKosPage as default };
+export default EditKosPage;

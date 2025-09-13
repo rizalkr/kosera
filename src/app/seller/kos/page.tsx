@@ -9,7 +9,7 @@ import { KosTips } from '@/components/features/seller/kos/list/organisms/KosTips
 import { SellerKosListLoading } from '@/components/features/seller/kos/list/atoms/LoadingState';
 import { SellerKosListError } from '@/components/features/seller/kos/list/atoms/ErrorState';
 
-export const SellerKosPage = () => {
+function SellerKosPage() {
   const { user, kosList, isLoading, error, refetch, isRefreshing, handleRefresh, counts, formatPrice, getKosStatus } = useSellerKosListView();
 
   if (isLoading) {
@@ -74,6 +74,6 @@ export const SellerKosPage = () => {
       </div>
     </ProtectedRoute>
   );
-};
+}
 
-export { SellerKosPage as default };
+export default SellerKosPage;

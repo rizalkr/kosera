@@ -26,7 +26,7 @@ interface TextInputProps extends BaseInputProps {
   type?: string;
   autoComplete?: string;
 }
-export const TextInput = ({ id, name, label, value, onChange, disabled, placeholder, error, type = 'text', autoComplete }: TextInputProps) => (
+const TextInput = ({ id, name, label, value, onChange, disabled, placeholder, error, type = 'text', autoComplete }: TextInputProps) => (
   <div>
     <label htmlFor={id} className="block text-sm font-medium text-gray-700 mb-1">{label}</label>
     <input
@@ -51,7 +51,7 @@ interface PasswordInputProps extends Omit<TextInputProps, 'type'> {
   show: boolean;
   toggle: () => void;
 }
-export const PasswordInput = ({ id, name, label, value, onChange, disabled, placeholder, show, toggle, error }: PasswordInputProps) => (
+const PasswordInput = ({ id, name, label, value, onChange, disabled, placeholder, show, toggle, error }: PasswordInputProps) => (
   <div>
     <label htmlFor={id} className="block text-sm font-medium text-gray-700 mb-1">{label}</label>
     <div className="relative">
@@ -92,7 +92,7 @@ export const PasswordInput = ({ id, name, label, value, onChange, disabled, plac
 interface SelectInputProps extends Omit<BaseInputProps, 'placeholder'> {
   options: { label: string; value: string }[];
 }
-export const SelectInput = ({ id, name, label, value, onChange, disabled, options, error }: SelectInputProps) => (
+const SelectInput = ({ id, name, label, value, onChange, disabled, options, error }: SelectInputProps) => (
   <div>
     <label htmlFor={id} className="block text-sm font-medium text-gray-700 mb-1">{label}</label>
     <select
@@ -113,7 +113,7 @@ export const SelectInput = ({ id, name, label, value, onChange, disabled, option
 );
 
 interface SubmitButtonProps { loading: boolean; children: React.ReactNode; }
-export const SubmitButton = ({ loading, children }: SubmitButtonProps) => (
+const SubmitButton = ({ loading, children }: SubmitButtonProps) => (
   <button
     type="submit"
     disabled={loading}
@@ -135,7 +135,7 @@ export const SubmitButton = ({ loading, children }: SubmitButtonProps) => (
 type FormState = RegisterSchema;
 interface FormErrors { [k: string]: string | undefined }
 
-export const RegisterPage = () => {
+function RegisterPage() {
   const router = useRouter();
   const { login } = useAuth();
 
@@ -223,6 +223,6 @@ export const RegisterPage = () => {
       </div>
     </div>
   );
-};
+}
 
 export default RegisterPage;

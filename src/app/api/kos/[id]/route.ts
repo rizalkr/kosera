@@ -6,7 +6,8 @@ import { ok, fail } from '@/types/api';
 import { z } from 'zod';
 
 // GET /api/kos/[id] - Get specific kos by ID with reviews and statistics (public)
-export async function GET(request: Request, { params }: { params: { id: string } }) {
+export async function GET(request: Request, context: { params: Promise<{ id: string }> }) {
+  const params = await context.params;
   try {
     const idSchema = z.coerce.number().int().positive();
     const parsedId = idSchema.safeParse(params.id);

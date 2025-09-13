@@ -13,7 +13,7 @@ import { OverviewTab } from '@/components/features/seller/kos/detail/organisms/O
 import { PlaceholderTab } from '@/components/features/seller/kos/detail/organisms/PlaceholderTab';
 import { SellerKosTab } from '@/hooks/seller/kos/useSellerKosDetailView';
 
-export const SellerKosDetailPage = () => {
+function SellerKosDetailPage() {
   const router = useRouter();
   const { kos, isLoading, error, activeTab, setActiveTab, isRefreshing, handleRefresh, statistics, occupancyRate, formatCurrency, formatDate, getKosStatus, refetch } = useSellerKosDetailView();
 
@@ -30,7 +30,6 @@ export const SellerKosDetailPage = () => {
       </ProtectedRoute>
     );
   }
-
   if (error || !kos) {
     return (
       <ProtectedRoute requireAuth={true} allowedRoles={['SELLER']}>
@@ -92,5 +91,4 @@ export const SellerKosDetailPage = () => {
     </ProtectedRoute>
   );
 };
-
-export { SellerKosDetailPage as default };
+export default SellerKosDetailPage;

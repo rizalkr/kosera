@@ -10,7 +10,7 @@ import { UserErrorState } from '@/components/features/admin/users/organisms/User
 import { UserEditForm } from '@/components/features/admin/users/molecules/UserEditForm';
 import { showSuccess } from '@/lib/sweetalert';
 
-export const EditUserPage = () => {
+function EditUserPage() {
   const router = useRouter();
   const params = useParams();
   const userId = params.id as string;
@@ -66,3 +66,4 @@ export const EditUserPage = () => {
 };
 
 export default EditUserPage;
+

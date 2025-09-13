@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Header from '@/components/layouts/Header';
 import Footer from '@/components/layouts/Footer';
@@ -15,7 +15,7 @@ import type { ApiResponse, BookingListData, BookingStatus } from '@/types';
 
 const STATUS_VALUES: (BookingStatus | 'all')[] = ['all','pending','confirmed','completed'];
 
-export default function RenterBookingsPage() {
+function RenterBookingsPageInner() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const pageParam = parseInt(searchParams.get('page') || '1', 10);
@@ -172,5 +172,13 @@ export default function RenterBookingsPage() {
         <Footer />
       </div>
     </ProtectedRoute>
+  );
+}
+
+export default function RenterBookingsPage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen flex items-center justify-center bg-[#A9E4DE] pt-20"><div className="text-gray-600">Loading...</div></div>}>
+      <RenterBookingsPageInner />
+    </Suspense>
   );
 }

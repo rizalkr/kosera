@@ -23,7 +23,7 @@ const DetailRow = ({ label, value }: { label: string; value: React.ReactNode }) 
   </div>
 );
 
-export const SellerBookingDetailPage = () => {
+function SellerBookingDetailPage() {
   const params = useParams<{ id: string }>();
   const router = useRouter();
   const bookingId = params?.id as string;
@@ -146,6 +146,6 @@ export const SellerBookingDetailPage = () => {
       </div>
     </div>
   );
-};
+}
 
 export default SellerBookingDetailPage;

@@ -12,7 +12,7 @@ import { TipsInsightsPanel } from '@/components/organisms/SellerDashboard/TipsIn
 import { QuickActionsPanel } from '@/components/organisms/SellerDashboard/QuickActionsPanel';
 import type { SellerDashboardKosItem } from '@/types/dashboard';
 
-export const SellerDashboard = () => {
+function SellerDashboard() {
   const { data, isLoading, error, refetch } = useSellerDashboard();
   const router = useRouter();
 
@@ -135,8 +135,6 @@ export const SellerDashboard = () => {
       </div>
     </div>
   );
-};
+}
 
-// Provide a default exported page component required by Next.js while keeping named export
-export const SellerDashboardPage: React.FC = () => <SellerDashboard />;
-export default SellerDashboardPage;
+export default SellerDashboard;

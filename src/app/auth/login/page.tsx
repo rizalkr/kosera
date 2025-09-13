@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { useAuth } from '@/contexts/AuthContext';
@@ -22,7 +22,7 @@ interface TextInputProps {
   placeholder?: string;
   error?: string;
 }
-export const TextInput = ({ id, name, label, type = 'text', value, onChange, disabled, placeholder, error }: TextInputProps) => (
+const TextInput = ({ id, name, label, type = 'text', value, onChange, disabled, placeholder, error }: TextInputProps) => (
   <div>
     <label htmlFor={id} className="block text-sm font-medium text-gray-700 mb-2">{label}</label>
     <input
@@ -46,7 +46,7 @@ interface PasswordInputProps extends Omit<TextInputProps, 'type'> {
   show: boolean;
   toggle: () => void;
 }
-export const PasswordInput = ({ id, name, label, value, onChange, disabled, placeholder, show, toggle, error }: PasswordInputProps) => (
+const PasswordInput = ({ id, name, label, value, onChange, disabled, placeholder, show, toggle, error }: PasswordInputProps) => (
   <div>
     <label htmlFor={id} className="block text-sm font-medium text-gray-700 mb-2">{label}</label>
     <div className="relative">
@@ -88,7 +88,7 @@ interface SubmitButtonProps {
   loading: boolean;
   children: React.ReactNode;
 }
-export const SubmitButton = ({ loading, children }: SubmitButtonProps) => (
+const SubmitButton = ({ loading, children }: SubmitButtonProps) => (
   <button
     type="submit"
     disabled={loading}
@@ -115,7 +115,7 @@ interface FormErrors {
   general?: string;
 }
 
-export const LoginPage = () => {
+function LoginPageInner() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { login } = useAuth();
@@ -218,6 +218,20 @@ export const LoginPage = () => {
       </div>
     </div>
   );
-};
+}
+
+function LoginPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-blue-100">
+          <div className="text-gray-600">Loading...</div>
+        </div>
+      }
+    >
+      <LoginPageInner />
+    </Suspense>
+  );
+}
 
 export default LoginPage;

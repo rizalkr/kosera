@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, Suspense } from 'react';
 import { useBookings, useUpdateBooking } from '@/hooks/useApi';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { showConfirm } from '@/lib/sweetalert';
@@ -13,7 +13,7 @@ import type { ApiResponse, BookingListData, BookingStatus } from '@/types';
 const STATUS_VALUES: (BookingStatus | 'all')[] = ['all','pending','confirmed','cancelled','completed'];
 
 // ---------------- Page ----------------
-export const SellerBookingsPage = () => {
+function SellerBookingsPageInner() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const pageParam = parseInt(searchParams.get('page') || '1', 10);
@@ -170,6 +170,12 @@ export const SellerBookingsPage = () => {
       </div>
     </div>
   );
-};
+}
 
-export default SellerBookingsPage;
+export default function SellerBookingsPage() {
+  return (
+    <Suspense fallback={<div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-10"><div className="text-gray-600">Loading...</div></div>}>
+      <SellerBookingsPageInner />
+    </Suspense>
+  );
+}
