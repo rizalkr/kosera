@@ -20,6 +20,7 @@ jobs:
       NODE_ENV: test
       JWT_SECRET: ci-test-secret
       DATABASE_URL: postgresql://kosera:kosera123@localhost:5433/kosera_test
+      TEST_BASE_URL: http://localhost:3000
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -57,6 +58,22 @@ jobs:
       - name: Run migrations (defensive)
         run: npm run db:migrate:test || echo "Migrations step completed (non-fatal if already applied)"
 
+      - name: Start Next.js server (background)
+        run: |
+          npm run dev &
+          echo $! > server.pid
+
+      - name: Wait for server readiness
+        run: |
+          for i in {1..40}; do
+            code=$(curl -o /dev/null -s -w "%{http_code}" http://localhost:3000/api/auth/verify || echo 000)
+            if [ "$code" != "000" ]; then
+              echo "Server responded with HTTP $code";
+              break;
+            fi
+            sleep 2;
+          done
+
       - name: Lint
         run: npm run lint
 
@@ -68,6 +85,11 @@ jobs:
 
       - name: Integration Tests
         run: npm run test:integration
+
+      - name: Stop server
+        if: always()
+        run: |
+          if [ -f server.pid ]; then kill $(cat server.pid) || true; fi
 
       - name: Coverage (optional)
         run: npm run test:coverage || true
