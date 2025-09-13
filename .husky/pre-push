@@ -1,7 +1,7 @@
 echo "[husky] Running pre-push checks..."
 
 npm run lint || exit 1
-npm run test:unit || exit 1
+npm run docker:test:unit || exit 1
 
 # Optional fast integration smoke (uncomment if needed)
 # npm run test:integration -- -t "auth" || exit 1
