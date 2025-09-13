@@ -19,7 +19,8 @@ for (const file of candidates) {
 const required = ['DATABASE_URL', 'JWT_SECRET'];
 for (const key of required) {
   if (!process.env[key]) {
-    // eslint-disable-next-line no-console
     console.warn(`[test:env] Missing env var ${key}`);
   }
 }
+
+// Intentionally no host rewrite: rely on explicit .env.test DATABASE_URL for determinism.

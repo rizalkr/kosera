@@ -7,6 +7,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
+    "hooks:setup": "git config core.hooksPath .husky && echo 'Husky hooks path set'",
     "db:generate": "dotenv -e .env.local -- drizzle-kit generate",
     "db:migrate": "dotenv -e .env.local -- drizzle-kit migrate",
     "db:push": "dotenv -e .env.local -- drizzle-kit push",
@@ -15,37 +16,39 @@
     "db:seed-photos": "dotenv -e .env.local -- tsx src/db/seed-photos.ts",
     "db:clear-photos": "dotenv -e .env.local -- tsx src/db/seed-photos.ts --clear",
     "db:drop": "dotenv -e .env.local -- drizzle-kit drop",
-    "docker:db:generate": "docker exec kosera-app npm run db:generate",
+
+    
+    "db:migrate:test": "dotenv -e .env.test -- drizzle-kit migrate",
+    "db:push:test": "dotenv -e .env.test -- drizzle-kit push",
+    "db:seed:test": "dotenv -e .env.test -- tsx src/db/seed.ts",
+
+    
+    "test": "NODE_ENV=test vitest run",
+    "test:watch": "NODE_ENV=test vitest",
+    "test:ui": "NODE_ENV=test vitest --ui",
+    "test:coverage": "NODE_ENV=test vitest run --coverage",
+    "test:unit": "NODE_ENV=test vitest run tests/unit/",
+    "test:integration": "NODE_ENV=test vitest run tests/integration/",
+    "test:all": "tsx tests/runner.ts",
+
+    
+    "test:search": "tsx tests/search-test-runner.ts",
+    "test:search-unit": "NODE_ENV=test vitest run tests/unit/search-api.test.ts",
+    "test:search-integration": "NODE_ENV=test vitest run tests/integration/search-api.integration.test.ts",
+
+    
+    "docker:test:setup": "docker compose up -d db_test && sleep 2",
     "docker:db:migrate": "docker exec kosera-app npm run db:migrate",
     "docker:db:push": "docker exec kosera-app npm run db:push",
-    "docker:db:studio": "docker exec kosera-app npm run db:studio",
+    "docker:db:push:test": "docker exec kosera-app npm run db:push:test",
     "docker:db:seed": "docker exec kosera-app npm run db:seed",
-    "docker:db:seed-photos": "docker exec kosera-app npm run db:seed-photos",
-    "docker:db:clear-photos": "docker exec kosera-app npm run db:clear-photos",
-    "docker:db:drop": "docker exec kosera-app npm run db:drop",
-    "cloudinary:test": "dotenv -e .env.local -- node scripts/test-cloudinary.js",
-    "cloudinary:migrate": "dotenv -e .env.local -- node scripts/migrate-to-cloudinary.js",
-    "test-db": "tsx test-db.ts",
-    "test-drizzle": "tsx test-db-drizzle.ts",
-    "test:auth-manual": "tsx test-auth.ts",
-    "test": "vitest run",
-    "test:run": "vitest run",
-    "test:watch": "vitest",
-    "test:ui": "vitest --ui",
-    "test:coverage": "vitest run --coverage",
-    "test:unit": "vitest run tests/unit/",
-    "test:integration": "vitest run tests/integration/",
-    "test:performance": "vitest run tests/performance/",
-    "test:auth-integration": "tsx test-auth.ts",
-    "test:auth-api": "vitest run tests/auth/",
-    "docker:test": "docker exec kosera-app npm run test",
-    "docker:test:run": "docker exec kosera-app npm run test:run",
-    "docker:test:unit": "docker exec kosera-app npm run test:unit",
+    "docker:db:migrate:test": "docker exec kosera-app npx dotenv -e .env.test -- drizzle-kit migrate",
+    "docker:test:unit": "docker exec -e NODE_ENV=test kosera-app npm run test:unit",
     "docker:test:integration": "docker exec kosera-app npm run test:integration",
-    "docker:test:performance": "docker exec kosera-app npm run test:performance",
-    "docker:test:auth-api": "docker exec kosera-app npm run test:auth-api",
-    "docker:test:search": "docker exec kosera-app npm run test:search",
+    "docker:test:integration:persist": "docker exec -e NODE_ENV=test -e INTEGRATION_PERSIST=1 kosera-app npm run test:integration",
     "docker:test:all": "docker exec kosera-app npm run test:all",
+
+    
     "docker:dev": "docker-compose up --build",
     "docker:dev:detach": "docker-compose up --build -d",
     "docker:dev:down": "docker-compose down",
@@ -53,20 +56,11 @@
     "docker:prod": "docker-compose -f docker-compose.prod.yml up --build",
     "docker:prod:detach": "docker-compose -f docker-compose.prod.yml up --build -d",
     "docker:prod:down": "docker-compose -f docker-compose.prod.yml down",
-    "docker:build": "docker build -t kosera-api .",
-    "docker:build:prod": "docker build --target production -t kosera-api:prod .",
-    "test:search": "tsx tests/search-test-runner.ts",
-    "test:search-unit": "vitest run tests/unit/search-api.test.ts",
-    "test:search-integration": "vitest run tests/integration/search-api.integration.test.ts",
-    "test:all": "tsx tests/runner.ts",
     "docker:logs": "docker logs kosera-app",
     "docker:logs:follow": "docker logs -f kosera-app",
     "docker:shell": "docker exec -it kosera-app /bin/sh",
     "docker:restart": "docker restart kosera-app",
-    "docker:status": "docker ps --filter name=kosera",
-    "db:migrate:test": "dotenv -e .env.test -- drizzle-kit migrate",
-    "db:push:test": "dotenv -e .env.test -- drizzle-kit push",
-    "db:seed:test": "dotenv -e .env.test -- tsx src/db/seed.ts"
+    "docker:status": "docker ps --filter name=kosera"
   },
   "dependencies": {
     "@tanstack/react-query": "^5.81.5",
@@ -123,6 +117,7 @@
     "tailwindcss": "^4.1.6",
     "tsx": "^4.20.3",
     "typescript": "^5",
-    "vitest": "^3.2.4"
+    "vitest": "^3.2.4",
+    "husky": "^9.0.0"
   }
 }

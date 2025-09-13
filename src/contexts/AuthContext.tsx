@@ -1,6 +1,6 @@
 'use client';
 
-import { createContext, useContext, useEffect, useState, useCallback, ReactNode } from 'react';
+import { createContext, useContext, useEffect, useState, useCallback, ReactNode, useRef } from 'react';
 import { JWTPayload } from '../lib/auth';
 import { apiClient } from '@/lib/api/client';
 import { z } from 'zod';
@@ -27,14 +27,17 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-// Zod schema for verify response
+// Zod schema for verify response (supports both root-level user and data.user)
+const userPayloadSchema = z.object({
+  userId: z.number(),
+  username: z.string(),
+  role: z.string(),
+});
+
 const verifyResponseSchema = z.object({
   message: z.string().optional(),
-  user: z.object({
-    userId: z.number(),
-    username: z.string(),
-    role: z.string(),
-  }).optional(),
+  user: userPayloadSchema.optional(),
+  data: z.object({ user: userPayloadSchema.optional() }).partial().optional(),
   error: z.string().optional(),
 }).passthrough();
 
@@ -44,12 +47,29 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<JWTPayload | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [token, setToken] = useState<string | null>(null);
+  const initialisedRef = useRef(false);
+
 
   // Initialize token from localStorage on mount
   useEffect(() => {
-    const storedToken = localStorage.getItem('auth_token');
-    if (storedToken) {
-      setToken(storedToken);
+    if (initialisedRef.current) return;
+    initialisedRef.current = true;
+    try {
+      const storedToken = localStorage.getItem('auth_token');
+      const storedUser = localStorage.getItem('user_data');
+      if (storedToken) {
+        setToken(storedToken);
+      }
+      if (storedUser) {
+        try {
+          const parsed = JSON.parse(storedUser) as JWTPayload;
+          setUser(parsed);
+        } catch {
+          // Silently ignore parse errors
+        }
+      }
+    } catch {
+      // Ignore localStorage access errors
     }
   }, []);
 
@@ -84,12 +104,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         }
         // Use validated client (pass requireAuth false because we manually attach header below) 
         const response = await apiClient.getValidated<VerifyResponse>('/api/auth/verify', verifyResponseSchema, undefined, { headers: { Authorization: `Bearer ${currentToken}` } });
-        if (response.user) {
+  interface NestedUser { data?: { user?: { userId: number; username: string; role: string } } }
+  const nested = (response as VerifyResponse & NestedUser).data?.user;
+  const extractedUser = response.user || nested;
+        if (extractedUser) {
           const userData = JSON.parse(userDataStr) as JWTPayload;
           setUser(userData);
           setToken(currentToken);
         } else {
-          logout();
+          // Do not aggressively logout; just mark unauthenticated gracefully
+          setUser(null);
+          setToken(null);
         }
       } else {
         // No token or user data, make sure state is clean

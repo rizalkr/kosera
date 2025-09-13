@@ -9,13 +9,11 @@ function assertTestDatabase() {
   if (nodeEnv !== 'test') {
     throw new Error('[resetDatabase] NODE_ENV must be test');
   }
-  // Simple heuristic: ensure URL contains neon host AND NOT production db name
-  if (!/neon\.tech/.test(url)) {
-    throw new Error('[resetDatabase] DATABASE_URL must point to Neon test instance');
-  }
-  if (!/(test|_test|neondb)/i.test(url)) {
-    // Adjust regex to your actual test db naming convention
-    console.warn('[resetDatabase] WARNING: Database name does not look like a test DB. Proceeding cautiously.');
+  // Ensure we are pointing to an isolated docker test DB (convention: host db_test service or port 5433 or db name contains _test)
+  const lower = url.toLowerCase();
+  const isTestDb = /_test|test|5433/.test(lower);
+  if (!isTestDb) {
+    console.warn('[resetDatabase] DATABASE_URL does not look like a dedicated test database. Proceeding but be careful.');
   }
 }
 
